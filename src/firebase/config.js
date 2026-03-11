@@ -4,12 +4,12 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: "AIzaSyDdDQ31fULX7qBzhv8eIW44IUWBZz9IM1o",
+  authDomain: "telemed-connect-6e817.firebaseapp.com",
+  projectId: "telemed-connect-6e817",
+  storageBucket: "telemed-connect-6e817.firebasestorage.app",
+  messagingSenderId: "148297093284",
+  appId: "1:148297093284:web:aac5e8630990b9deb61631"
 };
 
 const app = initializeApp(firebaseConfig);
