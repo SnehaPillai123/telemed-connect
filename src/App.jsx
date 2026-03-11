@@ -1,3 +1,4 @@
+import EditProfile from "./pages/EditProfile";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Toaster } from "react-hot-toast";
@@ -34,7 +35,7 @@ function App() {
             <PrivateRoute allowedRole="doctor">
               <DoctorDashboard />
             </PrivateRoute>
-          } />
+          } /><Route path="/edit-profile" element={<PrivateRoute><EditProfile /></PrivateRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

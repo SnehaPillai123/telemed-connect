@@ -28,7 +28,7 @@ export default function Navbar() {
         style={{ boxShadow: '0 1px 20px rgba(0,0,0,0.06)' }}>
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <Link to={role === "doctor" ? "/doctor-dashboard" : "/patient-dashboard"}
-            className="flex items-center gap-3">
+           className="flex items-center gap-3" style={{textDecoration:'none'}}>
             <div style={{
               width: 36, height: 36, borderRadius: 10,
               background: 'linear-gradient(135deg, #0d9488, #0284c7)',
@@ -41,7 +41,7 @@ export default function Navbar() {
               </svg>
             </div>
             <div>
-              <p style={{ fontFamily: 'DM Serif Display', fontSize: 18, color: '#0f172a', lineHeight: 1 }}>
+              <p style={{ fontFamily: 'DM Serif Display', fontSize: 15, color: '#0f172a', lineHeight: 1 }}>
                 TeleMed Connect
               </p>
               <p style={{ fontSize: 10, color: '#94a3b8', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
