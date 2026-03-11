@@ -89,7 +89,7 @@ export default function DoctorDashboard() {
                 {[
                   { to: '/edit-profile', label: 'Complete Your Profile', desc: 'Add specialization and availability', color: '#0284c7' },
                   { to: '/edit-profile', label: 'Set Availability', desc: 'Manage your consultation hours', color: '#0d9488' },
-                  { to: '/edit-profile', label: 'Practice Settings', desc: 'Fees, bio, and more', color: '#7c3aed' },
+                  { to: '/doctor-appointments', label: 'View Appointments', desc: 'Manage your bookings', color: '#7c3aed' },
                 ].map((item, i) => (
                   <Link key={i} to={item.to} className="action-btn" style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
