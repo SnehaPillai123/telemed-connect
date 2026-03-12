@@ -4,6 +4,7 @@ import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
 import toast from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
 
 const STATUS_COLORS = {
   pending: { bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' },
@@ -17,6 +18,7 @@ export default function DoctorAppointments() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetch = async () => {
@@ -173,10 +175,16 @@ export default function DoctorAppointments() {
                           Mark Complete
                         </button>
                       )}
-                      {(apt.status === "completed" || apt.status === "cancelled") && (
-                        <span style={{ fontSize: 12, color: '#94a3b8' }}>—</span>
-                      )}
-                    </div>
+{apt.status === "completed" && (
+  <button className="action-btn"
+    onClick={() => navigate(`/prescription/${apt.id}`)}
+    style={{ background: '#f0fdfa', color: '#0d9488' }}>
+    Write Prescription
+  </button>
+)}
+{apt.status === "cancelled" && (
+  <span style={{ fontSize: 12, color: '#94a3b8' }}>—</span>
+)}                    </div>
                   </div>
                 );
               })}
