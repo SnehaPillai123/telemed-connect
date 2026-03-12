@@ -88,6 +88,7 @@ export default function PatientDashboard() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {[
                   { to: '/search-doctors', label: 'Find a Specialist', desc: 'Search and book consultations', color: '#0d9488' },
+                  { to: '/symptom-checker', label: 'AI Symptom Checker', desc: 'Get AI-powered specialist advice', color: '#7c3aed' },
                   { to: '/my-appointments', label: 'My Appointments', desc: 'View and manage bookings', color: '#0284c7' },             
                   { to: '/edit-profile', label: 'Edit Profile', desc: 'Update personal information', color: '#7c3aed' },
                 ].map((item, i) => (
