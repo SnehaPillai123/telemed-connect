@@ -1,4 +1,4 @@
-import DoctorAppointments from "./pages/DoctorAppointments";import BookAppointment from "./pages/BookAppointment";import SearchDoctors from "./pages/SearchDoctors";import EditProfile from "./pages/EditProfile";
+import PatientAppointments from "./pages/PatientAppointments";import DoctorAppointments from "./pages/DoctorAppointments";import BookAppointment from "./pages/BookAppointment";import SearchDoctors from "./pages/SearchDoctors";import EditProfile from "./pages/EditProfile";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Toaster } from "react-hot-toast";
@@ -36,7 +36,7 @@ function App() {
               <DoctorDashboard />
             </PrivateRoute>
           } /><Route path="/edit-profile" element={<PrivateRoute><EditProfile /></PrivateRoute>} />
-         <Route path="/search-doctors" element={<PrivateRoute><SearchDoctors /></PrivateRoute>} /><Route path="/book/:doctorId" element={<PrivateRoute><BookAppointment /></PrivateRoute>} /><Route path="/doctor-appointments" element={<PrivateRoute><DoctorAppointments /></PrivateRoute>} />
+         <Route path="/search-doctors" element={<PrivateRoute><SearchDoctors /></PrivateRoute>} /><Route path="/book/:doctorId" element={<PrivateRoute><BookAppointment /></PrivateRoute>} /><Route path="/doctor-appointments" element={<PrivateRoute><DoctorAppointments /></PrivateRoute>} /><Route path="/my-appointments" element={<PrivateRoute><PatientAppointments /></PrivateRoute>} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

@@ -88,7 +88,7 @@ export default function PatientDashboard() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {[
                   { to: '/search-doctors', label: 'Find a Specialist', desc: 'Search and book consultations', color: '#0d9488' },
-                  { to: '/medical-records', label: 'Medical Records', desc: 'View and upload your records', color: '#0284c7' },
+                  { to: '/my-appointments', label: 'My Appointments', desc: 'View and manage bookings', color: '#0284c7' },             
                   { to: '/edit-profile', label: 'Edit Profile', desc: 'Update personal information', color: '#7c3aed' },
                 ].map((item, i) => (
                   <Link key={i} to={item.to} className="action-btn" style={{
