@@ -1,205 +1,323 @@
 import { useState, useEffect } from "react";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
-import Navbar from "../components/Navbar";
 import { Link } from "react-router-dom";
 
-export default function DoctorDashboard() {
+const NEARBY_HOSPITALS = [
+  { name: "Apollo Hospital", dist: "1.2 km", phone: "1066", type: "Multi-speciality" },
+  { name: "Fortis Healthcare", dist: "2.4 km", phone: "1800-103-8989", type: "Emergency Care" },
+  { name: "Manipal Hospital", dist: "3.1 km", phone: "080-2222-4444", type: "Multi-speciality" },
+  { name: "Columbia Asia", dist: "4.8 km", phone: "1800-210-1111", type: "Emergency Care" },
+];
+
+const EMERGENCY_CONTACTS = [
+  { name: "National Emergency", number: "112", desc: "Police, Fire, Ambulance" },
+  { name: "Ambulance", number: "108", desc: "Free ambulance service" },
+  { name: "Medical Helpline", number: "104", desc: "Health advice & guidance" },
+  { name: "Poison Control", number: "1800-116-117", desc: "Poisoning emergencies" },
+];
+
+export default function Emergency() {
   const { user } = useAuth();
-  const [stats, setStats] = useState({ today: 0, pending: 0, total: 0, completed: 0 });
-  const [recentApts, setRecentApts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-  const firstName = user?.displayName?.split(" ")[0] || "Doctor";
+  const [sosActive, setSosActive] = useState(false);
+  const [countdown, setCountdown] = useState(5);
+  const [location, setLocation] = useState(null);
+  const [locationStatus, setLocationStatus] = useState("idle");
+  const [sosTriggered, setSosTriggered] = useState(false);
+  const [holding, setHolding] = useState(false);
+  const [holdProgress, setHoldProgress] = useState(0);
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!user) return;
-      const q = query(collection(db, "appointments"), where("doctorId", "==", user.uid));
-      const snap = await getDocs(q);
-      const apts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const today = new Date().toISOString().split("T")[0];
-      setStats({
-        today: apts.filter(a => a.appointmentDate === today).length,
-        pending: apts.filter(a => a.status === "pending").length,
-        total: apts.length,
-        completed: apts.filter(a => a.status === "completed").length,
-      });
-      const sorted = [...apts].sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      setRecentApts(sorted.slice(0, 5));
-      setLoading(false);
-    };
-    fetchData();
-  }, [user]);
+    if (holding) {
+      const interval = setInterval(() => {
+        setHoldProgress(p => {
+          if (p >= 100) {
+            clearInterval(interval);
+            activateSOS();
+            return 100;
+          }
+          return p + 5;
+        });
+      }, 150);
+      return () => clearInterval(interval);
+    } else {
+      setHoldProgress(0);
+    }
+  }, [holding]);
 
-  const STATUS_STYLE = {
-    pending: { bg: '#fff7ed', color: '#c2410c', label: 'Pending' },
-    confirmed: { bg: '#f0fdfa', color: '#0d9488', label: 'Confirmed' },
-    completed: { bg: '#f0fdf4', color: '#16a34a', label: 'Completed' },
-    cancelled: { bg: '#fef2f2', color: '#dc2626', label: 'Cancelled' },
+  useEffect(() => {
+    if (sosActive && countdown > 0) {
+      const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+    if (sosActive && countdown === 0) {
+      triggerEmergency();
+    }
+  }, [sosActive, countdown]);
+
+  const activateSOS = () => {
+    setSosActive(true);
+    setCountdown(5);
+    setLocationStatus("getting");
+    navigator.geolocation?.getCurrentPosition(
+      pos => {
+        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocationStatus("success");
+      },
+      () => setLocationStatus("error")
+    );
+  };
+
+  const triggerEmergency = () => {
+    setSosTriggered(true);
+    setSosActive(false);
+  };
+
+  const cancelSOS = () => {
+    setSosActive(false);
+    setCountdown(5);
+    setHolding(false);
+    setHoldProgress(0);
+  };
+
+  const resetSOS = () => {
+    setSosTriggered(false);
+    setLocation(null);
+    setLocationStatus("idle");
+    setHoldProgress(0);
   };
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         * { font-family: 'Inter', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
-        .stat-card { background: white; border-radius: 10px; padding: 20px 24px; border: 1px solid #e5e7eb; transition: all 0.2s; }
-        .stat-card:hover { border-color: #0d9488; box-shadow: 0 4px 16px rgba(13,148,136,0.08); }
-        .action-card { background: white; border-radius: 10px; padding: 16px 20px; border: 1px solid #e5e7eb; text-decoration: none; display: flex; align-items: center; gap: 14px; transition: all 0.2s; }
-        .action-card:hover { border-color: #0d9488; box-shadow: 0 4px 16px rgba(13,148,136,0.08); transform: translateY(-1px); }
-        .apt-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f3f4f6; }
-        .apt-row:last-child { border-bottom: none; }
+        @keyframes pulse-ring { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.6); opacity: 0; } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .fade-up { animation: fadeUp 0.4s ease forwards; }
+        .hospital-card { background: white; border-radius: 10px; border: 1px solid #e5e7eb; padding: 16px 18px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
+        .hospital-card:hover { border-color: #0d9488; box-shadow: 0 4px 16px rgba(13,148,136,0.08); }
+        .contact-card { background: white; border-radius: 10px; border: 1px solid #e5e7eb; padding: 16px 18px; transition: all 0.2s; }
+        .contact-card:hover { border-color: #ef4444; }
+        .call-btn { padding: 8px 16px; background: #0d9488; color: white; border: none; border-radius: 7px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-family: Inter, sans-serif; transition: all 0.15s; }
+        .call-btn:hover { background: #0f766e; }
+        .back-link { display: inline-flex; align-items: center; gap: 8px; color: #6b7280; font-size: 14px; font-weight: 500; text-decoration: none; transition: color 0.15s; }
+        .back-link:hover { color: #0d9488; }
       `}</style>
 
       <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
-        <Navbar />
 
-        {/* Page header */}
-        <div style={{ background: 'white', borderBottom: '1px solid #e5e7eb', padding: '24px 40px' }}>
-          <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 4 }}>{greeting},</p>
-              <h1 style={{ fontSize: 26, fontWeight: 700, color: '#111827', letterSpacing: '-0.02em' }}>Dr. {firstName}</h1>
-            </div>
-            <Link to="/doctor-appointments" style={{ padding: '10px 20px', background: '#0d9488', color: 'white', borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
-                <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+        {/* Header */}
+        <header style={{ background: 'white', borderBottom: '1px solid #e5e7eb', padding: '16px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <Link to="/patient-dashboard" className="back-link" aria-label="Back to dashboard">
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
               </svg>
-              View Appointments
+              Back to Dashboard
             </Link>
           </div>
-        </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 7, background: '#0d9488', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="17" height="17" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 7v10M7 12h10" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+              </svg>
+            </div>
+            <p style={{ fontWeight: 800, fontSize: 14, color: '#111827' }}>TeleMed Connect</p>
+          </div>
+        </header>
 
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 40px' }}>
+        <main style={{ maxWidth: 1100, margin: '0 auto', padding: '40px' }}>
 
-          {/* Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 32 }}>
-            {[
-              { label: "Today's Appointments", value: stats.today, color: '#0d9488', bg: '#f0fdfa', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
-              { label: 'Pending Requests', value: stats.pending, color: '#d97706', bg: '#fffbeb', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-              { label: 'Total Appointments', value: stats.total, color: '#2563eb', bg: '#eff6ff', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
-              { label: 'Completed', value: stats.completed, color: '#16a34a', bg: '#f0fdf4', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
-            ].map((s, i) => (
-              <div key={i} className="stat-card" style={{ borderTop: `3px solid ${s.color}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 8 }}>{s.label}</p>
-                    <p style={{ fontSize: 34, fontWeight: 700, color: s.color, lineHeight: 1 }}>
-                      {loading ? '—' : s.value}
-                    </p>
-                  </div>
-                  <div style={{ width: 38, height: 38, borderRadius: 8, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
-                      <path d={s.icon} stroke={s.color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            ))}
+          {/* Page title */}
+          <div style={{ marginBottom: 40, textAlign: 'center' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 50, padding: '6px 16px', marginBottom: 16 }}>
+              <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#ef4444' }} aria-hidden="true"/>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#dc2626', letterSpacing: '0.06em' }}>EMERGENCY SERVICES</span>
+            </div>
+            <h1 style={{ fontSize: 'clamp(28px,4vw,40px)', fontWeight: 800, color: '#111827', letterSpacing: '-0.02em', marginBottom: 12 }}>
+              Emergency SOS
+            </h1>
+            <p style={{ fontSize: 16, color: '#6b7280', maxWidth: 500, margin: '0 auto' }}>
+              In a medical emergency, use the SOS button below. It will share your location and alert emergency services instantly.
+            </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, alignItems: 'start' }}>
 
-            {/* Recent appointments */}
-            <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-              <div style={{ padding: '16px 20px', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <p style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Recent Appointments</p>
-                <Link to="/doctor-appointments" style={{ fontSize: 13, color: '#0d9488', fontWeight: 500, textDecoration: 'none' }}>View all →</Link>
-              </div>
-              <div style={{ padding: '0 20px' }}>
-                {recentApts.length === 0 && !loading && (
-                  <div style={{ padding: '40px 0', textAlign: 'center' }}>
-                    <svg width="40" height="40" fill="none" viewBox="0 0 24 24" style={{ margin: '0 auto 12px', display: 'block' }}>
-                      <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round"/>
-                    </svg>
-                    <p style={{ fontSize: 13, color: '#9ca3af' }}>No appointments yet</p>
-                  </div>
-                )}
-                {recentApts.map((apt, i) => {
-                  const st = STATUS_STYLE[apt.status] || STATUS_STYLE.pending;
-                  return (
-                    <div key={i} className="apt-row">
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#f0fdfa', border: '1px solid #ccfbf1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: '#0d9488' }}>
-                            {apt.patientName?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
-                          </span>
-                        </div>
-                        <div>
-                          <p style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 2 }}>{apt.patientName}</p>
-                          <p style={{ fontSize: 12, color: '#6b7280' }}>{apt.appointmentDate} · {apt.appointmentTime}</p>
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ fontSize: 11, fontWeight: 600, color: st.color, background: st.bg, padding: '3px 10px', borderRadius: 20 }}>{st.label}</span>
-                        <Link to="/doctor-appointments" style={{ fontSize: 12, color: '#0d9488', textDecoration: 'none', fontWeight: 500 }}>View</Link>
-                      </div>
+            {/* SOS Section */}
+            <section aria-label="Emergency SOS activation">
+
+              {/* SOS Button Area */}
+              {!sosTriggered ? (
+                <div style={{ background: sosActive ? '#fef2f2' : 'white', borderRadius: 16, border: `2px solid ${sosActive ? '#fecaca' : '#e5e7eb'}`, padding: '48px 32px', textAlign: 'center', marginBottom: 20, transition: 'all 0.3s' }}>
+
+                  {sosActive ? (
+                    <div>
+                      <p style={{ fontSize: 16, fontWeight: 700, color: '#dc2626', marginBottom: 8 }}>SOS activating in...</p>
+                      <div style={{ fontSize: 80, fontWeight: 900, color: '#dc2626', lineHeight: 1, marginBottom: 24 }}>{countdown}</div>
+                      <p style={{ fontSize: 14, color: '#991b1b', marginBottom: 24 }}>
+                        {locationStatus === 'getting' && 'Getting your location...'}
+                        {locationStatus === 'success' && `Location found: ${location?.lat?.toFixed(4)}, ${location?.lng?.toFixed(4)}`}
+                        {locationStatus === 'error' && 'Location unavailable — SOS will still be sent'}
+                      </p>
+                      <button onClick={cancelSOS}
+                        style={{ padding: '12px 32px', background: 'white', color: '#dc2626', border: '2px solid #fecaca', borderRadius: 10, fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                        Cancel SOS
+                      </button>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
+                  ) : (
+                    <div>
+                      {/* Pulse rings */}
+                      <div style={{ position: 'relative', width: 180, height: 180, margin: '0 auto 28px' }}>
+                        <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(239,68,68,0.1)', animation: 'pulse-ring 2s ease-out infinite' }} aria-hidden="true"/>
+                        <div style={{ position: 'absolute', inset: 16, borderRadius: '50%', background: 'rgba(239,68,68,0.15)', animation: 'pulse-ring 2s ease-out infinite 0.5s' }} aria-hidden="true"/>
 
-            {/* Right column */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                        {/* Hold button */}
+                        <button
+                          onMouseDown={() => setHolding(true)}
+                          onMouseUp={() => setHolding(false)}
+                          onMouseLeave={() => setHolding(false)}
+                          onTouchStart={() => setHolding(true)}
+                          onTouchEnd={() => setHolding(false)}
+                          aria-label="Hold to activate emergency SOS"
+                          style={{ position: 'absolute', inset: 24, borderRadius: '50%', background: '#ef4444', border: 'none', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'transform 0.15s', transform: holding ? 'scale(0.95)' : 'scale(1)', overflow: 'hidden' }}>
 
-              {/* Quick actions */}
-              <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
-                <div style={{ padding: '16px 20px', borderBottom: '1px solid #f3f4f6' }}>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Quick Actions</p>
-                </div>
-                <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {[
-                    { to: '/doctor-appointments', label: 'Manage Appointments', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
-                    { to: '/edit-profile', label: 'Update Profile & Availability', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
-                  ].map((a, i) => (
-                    <Link key={i} to={a.to} className="action-card">
-                      <div style={{ width: 34, height: 34, borderRadius: 7, background: '#f0fdfa', border: '1px solid #ccfbf1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
-                          <path d={a.icon} stroke="#0d9488" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
+                          {/* Progress ring */}
+                          {holdProgress > 0 && (
+                            <svg style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }} viewBox="0 0 132 132" aria-hidden="true">
+                              <circle cx="66" cy="66" r="60" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="6"/>
+                              <circle cx="66" cy="66" r="60" fill="none" stroke="white" strokeWidth="6"
+                                strokeDasharray={`${2 * Math.PI * 60}`}
+                                strokeDashoffset={`${2 * Math.PI * 60 * (1 - holdProgress/100)}`}
+                                strokeLinecap="round"/>
+                            </svg>
+                          )}
+
+                          <svg width="32" height="32" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                          </svg>
+                          <span style={{ fontSize: 13, fontWeight: 800, color: 'white', letterSpacing: '0.04em' }}>SOS</span>
+                        </button>
                       </div>
-                      <p style={{ fontSize: 13, fontWeight: 500, color: '#374151' }}>{a.label}</p>
-                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" style={{ marginLeft: 'auto', flexShrink: 0 }}>
-                        <path d="M9 18l6-6-6-6" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round"/>
+
+                      <p style={{ fontSize: 16, fontWeight: 700, color: '#111827', marginBottom: 8 }}>Hold to Activate SOS</p>
+                      <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.6 }}>
+                        Press and hold the button above for 3 seconds to activate emergency mode.
+                        This will share your location with nearby hospitals.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // SOS Triggered
+                <div className="fade-up" style={{ background: '#fef2f2', borderRadius: 16, border: '2px solid #fecaca', padding: '40px 32px', textAlign: 'center', marginBottom: 20 }}>
+                  <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                    <svg width="32" height="32" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M5 13l4 4L19 7" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                  <h2 style={{ fontSize: 22, fontWeight: 800, color: '#dc2626', marginBottom: 12 }}>SOS Activated!</h2>
+                  <p style={{ fontSize: 14, color: '#991b1b', lineHeight: 1.7, marginBottom: 8 }}>
+                    Emergency alert has been sent. Nearby hospitals have been notified.
+                  </p>
+                  {location && (
+                    <p style={{ fontSize: 13, color: '#991b1b', marginBottom: 24 }}>
+                      Your location: {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+                    </p>
+                  )}
+                  <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+                    <a href="tel:112" style={{ padding: '12px 24px', background: '#ef4444', color: 'white', borderRadius: 9, fontSize: 14, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
                       </svg>
-                    </Link>
+                      Call 112
+                    </a>
+                    <a href="tel:108" style={{ padding: '12px 24px', background: 'white', color: '#dc2626', border: '2px solid #fecaca', borderRadius: 9, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
+                      Call Ambulance (108)
+                    </a>
+                  </div>
+                  <button onClick={resetSOS}
+                    style={{ marginTop: 20, padding: '10px 24px', background: 'none', border: '1.5px solid #fecaca', borderRadius: 8, fontSize: 13, color: '#dc2626', cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>
+                    Reset SOS
+                  </button>
+                </div>
+              )}
+
+              {/* What happens */}
+              <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e5e7eb', padding: '20px' }}>
+                <p style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginBottom: 14 }}>What happens when you activate SOS:</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {[
+                    'Your GPS location is captured instantly',
+                    'Nearby hospitals are alerted with your location',
+                    'Emergency contacts receive a WhatsApp message',
+                    'Emergency helpline numbers are displayed',
+                  ].map((s, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                      <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#f0fdfa', border: '1px solid #ccfbf1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: '#0d9488' }}>{i+1}</span>
+                      </div>
+                      <p style={{ fontSize: 13, color: '#374151', lineHeight: 1.5 }}>{s}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Right side */}
+            <section aria-label="Emergency contacts and hospitals">
+
+              {/* Emergency numbers */}
+              <div style={{ marginBottom: 24 }}>
+                <p style={{ fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 14 }}>Emergency Helpline Numbers</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  {EMERGENCY_CONTACTS.map((c, i) => (
+                    <div key={i} className="contact-card">
+                      <p style={{ fontSize: 22, fontWeight: 800, color: '#dc2626', marginBottom: 4 }}>{c.number}</p>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 2 }}>{c.name}</p>
+                      <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 12 }}>{c.desc}</p>
+                      <a href={`tel:${c.number}`} className="call-btn" style={{ background: '#ef4444' }} aria-label={`Call ${c.name} at ${c.number}`}>
+                        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" stroke="white" strokeWidth="1.8"/>
+                        </svg>
+                        Call Now
+                      </a>
+                    </div>
                   ))}
                 </div>
               </div>
 
-              {/* Profile reminder */}
-              <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
-                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#0d9488" strokeWidth="1.8" strokeLinecap="round"/>
-                  </svg>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>Profile Status</p>
+              {/* Nearby hospitals */}
+              <div>
+                <p style={{ fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 14 }}>Nearby Hospitals</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {NEARBY_HOSPITALS.map((h, i) => (
+                    <div key={i} className="hospital-card">
+                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                        <div style={{ width: 40, height: 40, borderRadius: 9, background: '#fef2f2', border: '1px solid #fecaca', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" stroke="#dc2626" strokeWidth="1.5" strokeLinecap="round"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', marginBottom: 2 }}>{h.name}</p>
+                          <p style={{ fontSize: 12, color: '#6b7280' }}>{h.type} · {h.dist}</p>
+                        </div>
+                      </div>
+                      <a href={`tel:${h.phone}`} className="call-btn" aria-label={`Call ${h.name}`}>
+                        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" stroke="white" strokeWidth="1.8"/>
+                        </svg>
+                        Call
+                      </a>
+                    </div>
+                  ))}
                 </div>
-                <div style={{ height: 6, background: '#f3f4f6', borderRadius: 4, marginBottom: 10 }}>
-                  <div style={{ width: '70%', height: '100%', background: '#0d9488', borderRadius: 4 }}/>
-                </div>
-                <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 10, lineHeight: 1.6 }}>
-                  Complete your profile so patients can find and book with you.
-                </p>
-                <Link to="/edit-profile" style={{ fontSize: 13, fontWeight: 600, color: '#0d9488', textDecoration: 'none' }}>
-                  Complete Profile →
-                </Link>
               </div>
-
-              {/* Notice */}
-              <div style={{ background: '#f0fdfa', borderRadius: 10, border: '1px solid #ccfbf1', padding: '16px 20px', borderLeft: '4px solid #0d9488' }}>
-                <p style={{ fontSize: 13, fontWeight: 600, color: '#134e4a', marginBottom: 6 }}>Reminder</p>
-                <p style={{ fontSize: 12, color: '#374151', lineHeight: 1.7 }}>
-                  Review and confirm pending appointment requests promptly to give patients timely care.
-                </p>
-              </div>
-            </div>
+            </section>
           </div>
-        </div>
+        </main>
       </div>
     </>
   );
