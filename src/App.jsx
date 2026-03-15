@@ -12,15 +12,11 @@ import SearchDoctors from "./pages/SearchDoctors";
 import BookAppointment from "./pages/BookAppointment";
 import DoctorAppointments from "./pages/DoctorAppointments";
 import PatientAppointments from "./pages/PatientAppointments";
-import SymptomChecker from "./pages/SymptomChecker";
 import MyPrescriptions from "./pages/MyPrescriptions";
 import Prescription from "./pages/Prescription";
 import Chat from "./pages/Chat";
-import Emergency from "./pages/Emergency";
-import NearbyHospitals from "./pages/NearbyHospitals";
-import HealthRecords from "./pages/HealthRecords";
-import MedicationTracker from "./pages/MedicationTracker";
-import AskBeforeBook from "./pages/AskBeforeBook";
+import HealthCenter from "./pages/HealthCenter";
+import HospitalsEmergency from "./pages/HospitalsEmergency";
 
 function PrivateRoute({ children, doctorOnly = false, patientOnly = false }) {
   const { user, role, loading } = useAuth();
@@ -67,15 +63,17 @@ function App() {
           <Route path="/book/:doctorId" element={<PrivateRoute patientOnly><BookAppointment /></PrivateRoute>} />
           <Route path="/doctor-appointments" element={<PrivateRoute doctorOnly><DoctorAppointments /></PrivateRoute>} />
           <Route path="/my-appointments" element={<PrivateRoute patientOnly><PatientAppointments /></PrivateRoute>} />
-          <Route path="/symptom-checker" element={<PrivateRoute patientOnly><SymptomChecker /></PrivateRoute>} />
           <Route path="/my-prescriptions" element={<PrivateRoute patientOnly><MyPrescriptions /></PrivateRoute>} />
           <Route path="/prescription/:appointmentId" element={<PrivateRoute doctorOnly><Prescription /></PrivateRoute>} />
           <Route path="/chat/:otherId" element={<PrivateRoute><Chat /></PrivateRoute>} />
-          <Route path="/emergency" element={<PrivateRoute patientOnly><Emergency /></PrivateRoute>} />
-          <Route path="/nearby-hospitals" element={<PrivateRoute patientOnly><NearbyHospitals /></PrivateRoute>} />
-          <Route path="/health-records" element={<PrivateRoute patientOnly><HealthRecords /></PrivateRoute>} />
-          <Route path="/medication-tracker" element={<PrivateRoute patientOnly><MedicationTracker /></PrivateRoute>} />
-          <Route path="/ask-before-book" element={<PrivateRoute patientOnly><AskBeforeBook /></PrivateRoute>} />
+          <Route path="/health-center" element={<PrivateRoute patientOnly><HealthCenter /></PrivateRoute>} />
+          <Route path="/nearby-hospitals" element={<PrivateRoute patientOnly><HospitalsEmergency /></PrivateRoute>} />
+          {/* Old routes redirect to new combined pages */}
+          <Route path="/symptom-checker" element={<Navigate to="/health-center" />} />
+          <Route path="/ask-before-book" element={<Navigate to="/health-center" />} />
+          <Route path="/medication-tracker" element={<Navigate to="/my-prescriptions" />} />
+          <Route path="/health-records" element={<Navigate to="/my-appointments" />} />
+          <Route path="/emergency" element={<Navigate to="/nearby-hospitals" />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Router>
