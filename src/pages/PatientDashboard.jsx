@@ -54,10 +54,8 @@ export default function PatientDashboard() {
         * { font-family: 'Inter', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
         .stat-card { background: white; border-radius: 10px; padding: 20px 24px; border: 1px solid #e5e7eb; transition: all 0.2s; }
         .stat-card:hover { border-color: #0d9488; box-shadow: 0 4px 16px rgba(13,148,136,0.08); }
-        .action-card { background: white; border-radius: 10px; padding: 18px 20px; border: 1px solid #e5e7eb; text-decoration: none; display: flex; align-items: center; gap: 14px; transition: all 0.2s; }
+        .action-card { background: white; border-radius: 10px; padding: 16px 20px; border: 1px solid #e5e7eb; text-decoration: none; display: flex; align-items: center; gap: 14px; transition: all 0.2s; }
         .action-card:hover { border-color: #0d9488; box-shadow: 0 4px 16px rgba(13,148,136,0.08); transform: translateY(-1px); }
-        @keyframes countUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .count { animation: countUp 0.4s ease forwards; }
       `}</style>
 
       <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
@@ -67,11 +65,13 @@ export default function PatientDashboard() {
         <div style={{ background: 'white', borderBottom: '1px solid #e5e7eb', padding: '24px 40px' }}>
           <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 4 }}>{greeting},</p>
-              <h1 style={{ fontSize: 26, fontWeight: 700, color: '#111827', letterSpacing: '-0.02em' }}>{firstName} 👋</h1>
+              <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 4 }}>{greeting}</p>
+              <h1 style={{ fontSize: 26, fontWeight: 700, color: '#111827', letterSpacing: '-0.02em' }}>Welcome, {firstName}</h1>
             </div>
             <Link to="/search-doctors" style={{ padding: '10px 20px', background: '#0d9488', color: 'white', borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke="white" strokeWidth="2.5" strokeLinecap="round"/></svg>
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+              </svg>
               Book Appointment
             </Link>
           </div>
@@ -79,7 +79,7 @@ export default function PatientDashboard() {
 
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 40px' }}>
 
-          {/* Stats row */}
+          {/* Stats */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 32 }}>
             {[
               { label: 'Upcoming Appointments', value: stats.upcoming, color: '#0d9488', bg: '#f0fdfa', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
@@ -90,7 +90,7 @@ export default function PatientDashboard() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div>
                     <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 8 }}>{s.label}</p>
-                    <p className="count" style={{ fontSize: 36, fontWeight: 700, color: s.color, lineHeight: 1 }}>
+                    <p style={{ fontSize: 36, fontWeight: 700, color: s.color, lineHeight: 1 }}>
                       {loading ? '—' : s.value}
                     </p>
                   </div>
@@ -132,45 +132,47 @@ export default function PatientDashboard() {
             {/* Right column */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-              {/* Health tip of the day */}
+              {/* Health tip */}
               <div style={{ background: 'white', borderRadius: 10, padding: '20px', border: '1px solid #e5e7eb', borderLeft: '4px solid #0d9488' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <svg width="15" height="15" fill="none" viewBox="0 0 24 24">
                     <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" stroke="#0d9488" strokeWidth="1.8" strokeLinecap="round"/>
                   </svg>
-                  <p style={{ fontSize: 12, fontWeight: 600, color: '#0d9488', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Health Tip of the Day</p>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: '#0d9488', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Health Tip of the Day</p>
                 </div>
                 <p style={{ fontSize: 13, color: '#374151', lineHeight: 1.7 }}>{HEALTH_TIPS[tipIndex]}</p>
               </div>
 
               {/* Emergency SOS */}
               <div style={{ background: '#fef2f2', borderRadius: 10, padding: '20px', border: '1px solid #fecaca' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 8, background: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <div style={{ width: 30, height: 30, borderRadius: 7, background: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24">
                       <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
                     </svg>
                   </div>
                   <p style={{ fontSize: 13, fontWeight: 600, color: '#dc2626' }}>Emergency SOS</p>
                 </div>
                 <p style={{ fontSize: 12, color: '#991b1b', lineHeight: 1.6, marginBottom: 14 }}>
-                  In case of a medical emergency, tap the button below to alert nearby hospitals and share your location.
+                  In a medical emergency, tap below to alert nearby hospitals and share your location instantly.
                 </p>
-                <Link to="/emergency" style={{ display: 'block', width: '100%', padding: '10px', background: '#ef4444', color: 'white', borderRadius: 8, fontSize: 13, fontWeight: 600, textAlign: 'center', textDecoration: 'none' }}>
+                <Link to="/emergency" style={{ display: 'block', padding: '10px', background: '#ef4444', color: 'white', borderRadius: 7, fontSize: 13, fontWeight: 600, textAlign: 'center', textDecoration: 'none' }}>
                   Activate Emergency SOS
                 </Link>
               </div>
 
               {/* Profile completion */}
               <div style={{ background: 'white', borderRadius: 10, padding: '20px', border: '1px solid #e5e7eb' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                   <p style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>Profile Completion</p>
                   <span style={{ fontSize: 13, fontWeight: 700, color: '#0d9488' }}>60%</span>
                 </div>
-                <div style={{ height: 6, background: '#f3f4f6', borderRadius: 4, marginBottom: 12 }}>
+                <div style={{ height: 6, background: '#f3f4f6', borderRadius: 4, marginBottom: 10 }}>
                   <div style={{ width: '60%', height: '100%', background: '#0d9488', borderRadius: 4 }}/>
                 </div>
-                <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 10 }}>Complete your profile to get better doctor recommendations.</p>
+                <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 10, lineHeight: 1.6 }}>
+                  Complete your profile to get better doctor recommendations.
+                </p>
                 <Link to="/edit-profile" style={{ fontSize: 13, fontWeight: 600, color: '#0d9488', textDecoration: 'none' }}>
                   Complete Profile →
                 </Link>
