@@ -1,4 +1,4 @@
-import MyPrescriptions from "./pages/MyPrescriptions";import Prescription from "./pages/Prescription";import Chat from "./pages/Chat";import SymptomChecker from "./pages/SymptomChecker";import PatientAppointments from "./pages/PatientAppointments";import DoctorAppointments from "./pages/DoctorAppointments";import BookAppointment from "./pages/BookAppointment";import SearchDoctors from "./pages/SearchDoctors";import EditProfile from "./pages/EditProfile";
+import Landing from "./pages/Landing";import MyPrescriptions from "./pages/MyPrescriptions";import Prescription from "./pages/Prescription";import Chat from "./pages/Chat";import SymptomChecker from "./pages/SymptomChecker";import PatientAppointments from "./pages/PatientAppointments";import DoctorAppointments from "./pages/DoctorAppointments";import BookAppointment from "./pages/BookAppointment";import SearchDoctors from "./pages/SearchDoctors";import EditProfile from "./pages/EditProfile";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Toaster } from "react-hot-toast";
@@ -23,7 +23,7 @@ function App() {
       <BrowserRouter>
         <Toaster position="top-right" />
         <Routes>
-          <Route path="/" element={<Navigate to="/login" />} />
+          <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/patient-dashboard" element={
