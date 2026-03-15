@@ -87,22 +87,17 @@ export default function PatientDashboard() {
 
         <main className="main-content">
           <header className="top-bar">
-            <div>
-              <p style={{ fontSize: 12, color: '#6b7280' }}>{greeting}</p>
-              <h1 style={{ fontSize: 19, fontWeight: 700, color: '#111827', letterSpacing: '-0.01em' }}>Welcome back, {firstName}</h1>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', background: '#f0fdfa', borderRadius: 7, border: '1px solid #ccfbf1' }}>
-                <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#10b981' }}/>
-                <span style={{ fontSize: 11, color: '#0f766e', fontWeight: 600 }}>Online</span>
-              </div>
-              <Link to="/search-doctors" style={{ padding: '8px 16px', background: '#0d9488', color: 'white', borderRadius: 8, fontSize: 13, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 7 }}>
-                <svg width="13" height="13" fill="none" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke="white" strokeWidth="2.5" strokeLinecap="round"/></svg>
-                Book Appointment
-              </Link>
-            </div>
-          </header>
-
+  <div>
+    <p style={{ fontSize: 12, color: '#6b7280' }}>{greeting}</p>
+    <h1 style={{ fontSize: 19, fontWeight: 700, color: '#111827', letterSpacing: '-0.01em' }}>Welcome back, {firstName}</h1>
+  </div>
+  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', background: '#f0fdfa', borderRadius: 7, border: '1px solid #ccfbf1' }}>
+      <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#10b981' }}/>
+      <span style={{ fontSize: 11, color: '#0f766e', fontWeight: 600 }}>Online</span>
+    </div>
+  </div>
+</header>
           <div className="content">
 
             {/* Stats */}
