@@ -73,7 +73,7 @@ export default function PatientDashboard() {
         .content { padding: 28px 32px; flex: 1; }
         .stat-card { background: white; border-radius: 12px; border: 1px solid #e5e7eb; padding: 20px 24px; transition: all 0.2s; text-decoration: none; display: block; }
         .stat-card:hover { border-color: #0d9488; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(13,148,136,0.08); }
-        .action-tile { background: white; border-radius: 10px; border: 1px solid #e5e7eb; padding: 16px; text-decoration: none; display: flex; align-items: center; gap: 12px; transition: all 0.2s; }
+        .action-tile { background: white; border-radius: 10px; border: 1px solid #e5e7eb; padding: 14px 16px; text-decoration: none; display: flex; align-items: center; gap: 12px; transition: all 0.2s; }
         .action-tile:hover { border-color: #0d9488; box-shadow: 0 4px 16px rgba(13,148,136,0.08); transform: translateX(3px); }
         .apt-row { padding: 12px 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #f9fafb; }
         .apt-row:last-child { border-bottom: none; }
@@ -86,7 +86,6 @@ export default function PatientDashboard() {
         <PatientSidebar />
 
         <main className="main-content">
-          {/* Top bar */}
           <header className="top-bar">
             <div>
               <p style={{ fontSize: 12, color: '#6b7280' }}>{greeting}</p>
@@ -105,25 +104,26 @@ export default function PatientDashboard() {
           </header>
 
           <div className="content">
+
             {/* Stats */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 24 }}>
               {[
-                { label: 'Upcoming', value: stats.upcoming, color: '#0d9488', to: '/my-appointments' },
+                { label: 'Upcoming Appointments', value: stats.upcoming, color: '#0d9488', to: '/my-appointments' },
                 { label: 'Confirmed', value: stats.confirmed, color: '#2563eb', to: '/my-appointments' },
-                { label: 'Completed', value: stats.completed, color: '#16a34a', to: '/my-appointments' },
+                { label: 'Completed Visits', value: stats.completed, color: '#16a34a', to: '/my-appointments' },
               ].map((s, i) => (
                 <Link key={i} to={s.to} className="stat-card fade-up" style={{ animationDelay: `${i*0.07}s`, opacity: 0 }}>
-                  <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 8, fontWeight: 500 }}>{s.label} Appointments</p>
+                  <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 8, fontWeight: 500 }}>{s.label}</p>
                   <p style={{ fontSize: 36, fontWeight: 800, color: s.color, lineHeight: 1 }}>{loading ? '—' : s.value}</p>
                 </Link>
               ))}
             </div>
 
-            {/* Main 3 column grid */}
+            {/* Main grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 300px', gap: 20 }}>
 
               {/* Recent appointments */}
-              <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e5e7eb' }} className="fade-up" style={{ animationDelay: '0.2s', opacity: 0 }}>
+              <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e5e7eb', animationDelay: '0.2s', opacity: 0 }} className="fade-up">
                 <div style={{ padding: '16px 20px', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <p style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>Recent Appointments</p>
                   <Link to="/my-appointments" style={{ fontSize: 12, color: '#0d9488', fontWeight: 600, textDecoration: 'none' }}>View all →</Link>
@@ -155,13 +155,13 @@ export default function PatientDashboard() {
               </div>
 
               {/* Quick Actions */}
-              <div>
+              <div style={{ animationDelay: '0.25s', opacity: 0 }} className="fade-up">
                 <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 12 }}>Quick Actions</p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {quickActions.map((a, i) => (
                     <Link key={i} to={a.to} className="action-tile">
-                      <div style={{ width: 36, height: 36, borderRadius: 8, background: '#f0fdfa', border: '1px solid #ccfbf1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+                      <div style={{ width: 34, height: 34, borderRadius: 8, background: '#f0fdfa', border: '1px solid #ccfbf1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <svg width="15" height="15" fill="none" viewBox="0 0 24 24">
                           <path d={a.icon} stroke="#0d9488" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </div>
@@ -172,7 +172,7 @@ export default function PatientDashboard() {
                         </div>
                         <p style={{ fontSize: 11, color: '#9ca3af' }}>{a.desc}</p>
                       </div>
-                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24">
                         <path d="M9 18l6-6-6-6" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round"/>
                       </svg>
                     </Link>
@@ -184,7 +184,7 @@ export default function PatientDashboard() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
                 {/* Health tip */}
-                <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e5e7eb', animationDelay: '0.2s', opacity: 0 }} className="fade-up">
+                <div style={{ background: 'white', borderRadius: 10, padding: '16px', border: '1px solid #e5e7eb', borderLeft: '4px solid #0d9488' }}>
                   <p style={{ fontSize: 10, fontWeight: 700, color: '#0d9488', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 7 }}>Health Tip of the Day</p>
                   <p style={{ fontSize: 12, color: '#374151', lineHeight: 1.7 }}>{HEALTH_TIPS[tipIndex]}</p>
                 </div>
@@ -193,21 +193,21 @@ export default function PatientDashboard() {
                 <Link to="/ask-before-book" style={{ background: 'linear-gradient(135deg, #f0fdfa, #e0f2fe)', borderRadius: 10, padding: '16px', border: '1px solid #ccfbf1', textDecoration: 'none', display: 'block', transition: 'all 0.2s' }}
                   onMouseEnter={e => e.currentTarget.style.transform='translateY(-1px)'}
                   onMouseLeave={e => e.currentTarget.style.transform='none'}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: 7, background: '#0d9488', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="white" strokeWidth="1.8" strokeLinecap="round"/></svg>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}>
+                    <div style={{ width: 26, height: 26, borderRadius: 6, background: '#0d9488', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24"><path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="white" strokeWidth="1.8" strokeLinecap="round"/></svg>
                     </div>
                     <p style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>Not sure if you need a doctor?</p>
                   </div>
-                  <p style={{ fontSize: 12, color: '#374151', lineHeight: 1.6, marginBottom: 10 }}>Answer 5 quick questions and get instant guidance.</p>
+                  <p style={{ fontSize: 12, color: '#374151', lineHeight: 1.6, marginBottom: 8 }}>Answer 5 quick questions and get instant guidance.</p>
                   <p style={{ fontSize: 12, fontWeight: 700, color: '#0d9488' }}>Try Ask Before You Book →</p>
                 </Link>
 
                 {/* Emergency */}
                 <div style={{ background: '#fef2f2', borderRadius: 10, padding: '16px', border: '1px solid #fecaca' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: 7, background: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke="white" strokeWidth="1.8" strokeLinecap="round"/></svg>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}>
+                    <div style={{ width: 26, height: 26, borderRadius: 6, background: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <svg width="13" height="13" fill="none" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke="white" strokeWidth="1.8" strokeLinecap="round"/></svg>
                     </div>
                     <p style={{ fontSize: 13, fontWeight: 700, color: '#dc2626' }}>Emergency SOS</p>
                   </div>
