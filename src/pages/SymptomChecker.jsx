@@ -43,155 +43,174 @@ export default function SymptomChecker() {
   };
 
   const URGENCY_STYLE = {
-    low: { bg: '#f0fdfa', color: '#0d9488', border: '#99f6e4', label: 'Low Urgency' },
-    medium: { bg: '#fff7ed', color: '#c2410c', border: '#fed7aa', label: 'Medium Urgency' },
-    high: { bg: '#fef2f2', color: '#ef4444', border: '#fecaca', label: 'High Urgency — Seek care soon' },
+    low:    { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0', label: 'Low Urgency — Symptoms appear mild' },
+    medium: { bg: '#fffbeb', color: '#d97706', border: '#fde68a', label: 'Medium Urgency — Consult a doctor soon' },
+    high:   { bg: '#fef2f2', color: '#dc2626', border: '#fecaca', label: 'High Urgency — Seek care promptly' },
   };
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
-        * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
-        .card { background: white; border-radius: 16px; padding: 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
-        .input-field { width: 100%; padding: 13px 16px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; color: #0f172a; background: #f8fafc; outline: none; transition: all 0.2s; appearance: none; }
-        .input-field:focus { border-color: #0d9488; background: white; box-shadow: 0 0 0 3px rgba(13,148,136,0.08); }
-        .primary-btn { padding: 13px 32px; background: linear-gradient(135deg, #0d9488, #0284c7); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .primary-btn:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(13,148,136,0.3); }
-        .primary-btn:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
-        label { font-size: 13px; font-weight: 500; color: #374151; display: block; margin-bottom: 6px; }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-up { animation: fadeUp 0.4s ease forwards; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        * { font-family: 'Inter', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
+        .form-input { width: 100%; padding: 11px 14px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; color: #111827; background: white; outline: none; transition: all 0.2s; font-family: Inter, sans-serif; appearance: none; }
+        .form-input:focus { border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,0.1); }
+        .form-input::placeholder { color: #9ca3af; }
+        .analyze-btn { width: 100%; padding: 12px; background: #0d9488; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: Inter, sans-serif; }
+        .analyze-btn:hover { background: #0f766e; }
+        .analyze-btn:disabled { background: #5eead4; cursor: not-allowed; }
+        .result-card { background: white; border-radius: 10px; border: 1px solid #e5e7eb; padding: 20px; }
+        .condition-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
+        .condition-row:last-child { border-bottom: none; }
+        .redflag-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #fee2e2; }
+        .redflag-row:last-child { border-bottom: none; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.4s ease forwards; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        label { font-size: 13px; font-weight: 600; color: #374151; display: block; margin-bottom: 6px; }
       `}</style>
 
-      <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
+      <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
         <Navbar />
 
-        <div style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #0d9488 100%)', padding: '40px 48px' }}>
-          <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <p style={{ color: '#64748b', fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>AI-Powered</p>
-            <h1 style={{ fontFamily: 'DM Serif Display', color: 'white', fontSize: 34, fontWeight: 400, marginBottom: 8 }}>Symptom Checker</h1>
-            <p style={{ color: '#94a3b8', fontSize: 15 }}>Describe your symptoms and our AI will suggest the right specialist for you.</p>
-          </div>
-        </div>
-
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 48px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div className="card">
-                <p style={{ fontSize: 15, fontWeight: 600, color: '#0f172a', marginBottom: 20, paddingBottom: 14, borderBottom: '1px solid #f1f5f9' }}>
-                  Tell us about your symptoms
-                </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                    <div>
-                      <label>Age</label>
-                      <input className="input-field" type="number" placeholder="25" value={age} onChange={e => setAge(e.target.value)} min="1" max="120"/>
-                    </div>
-                    <div>
-                      <label>Gender</label>
-                      <select className="input-field" value={gender} onChange={e => setGender(e.target.value)}>
-                        <option value="female">Female</option>
-                        <option value="male">Male</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div>
-                    <label>Describe your symptoms</label>
-                    <textarea className="input-field" value={symptoms} onChange={e => setSymptoms(e.target.value)}
-                      placeholder="e.g. I have been experiencing chest pain for 2 days, shortness of breath when walking..."
-                      rows={6} style={{ resize: 'vertical' }}/>
-                  </div>
-                  <button className="primary-btn" onClick={analyze} disabled={loading || !symptoms.trim()} style={{ width: '100%' }}>
-                    {loading ? "Analyzing symptoms..." : "Analyze Symptoms"}
-                  </button>
-                </div>
-              </div>
-
-              <div style={{ background: '#fff7ed', borderRadius: 12, padding: 16, border: '1px solid #fed7aa' }}>
-                <p style={{ fontSize: 12, fontWeight: 600, color: '#c2410c', marginBottom: 4 }}>Medical Disclaimer</p>
-                <p style={{ fontSize: 12, color: '#92400e', lineHeight: 1.6 }}>
-                  This tool is for informational purposes only and does not replace professional medical advice. Always consult a qualified doctor for diagnosis and treatment.
-                </p>
-              </div>
+        <main>
+          <header style={{ background: 'white', borderBottom: '1px solid #e5e7eb', padding: '24px 40px' }}>
+            <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+              <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 4 }}>AI-Powered</p>
+              <h1 style={{ fontSize: 24, fontWeight: 700, color: '#111827', letterSpacing: '-0.01em' }}>Symptom Checker</h1>
+              <p style={{ fontSize: 14, color: '#6b7280', marginTop: 4 }}>Describe your symptoms and our AI will suggest the right specialist for you.</p>
             </div>
+          </header>
 
-            <div>
-              {loading && (
-                <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300, gap: 16 }}>
-                  <div style={{ width: 44, height: 44, border: '3px solid #e2e8f0', borderTopColor: '#0d9488', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}/>
-                  <p style={{ color: '#64748b', fontSize: 14 }}>Analyzing your symptoms...</p>
-                </div>
-              )}
+          <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 40px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
 
-              {result && (
-                <div className="fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                  {(() => {
-                    const us = URGENCY_STYLE[result.urgency] || URGENCY_STYLE.low;
-                    return (
-                      <div style={{ background: us.bg, borderRadius: 12, padding: '14px 20px', border: `1.5px solid ${us.border}` }}>
-                        <p style={{ fontSize: 13, fontWeight: 700, color: us.color }}>{us.label}</p>
-                        <p style={{ fontSize: 12, color: us.color, opacity: 0.8, marginTop: 2 }}>{result.urgencyReason}</p>
+              {/* Input form */}
+              <section aria-label="Symptom input form">
+                <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '24px', marginBottom: 16 }}>
+                  <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', marginBottom: 20, paddingBottom: 14, borderBottom: '1px solid #f3f4f6' }}>
+                    Tell us about your symptoms
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                      <div>
+                        <label htmlFor="age">Age</label>
+                        <input id="age" className="form-input" type="number" placeholder="25" value={age} onChange={e => setAge(e.target.value)} min="1" max="120" aria-label="Your age"/>
                       </div>
-                    );
-                  })()}
-
-                  <div className="card" style={{ borderTop: '3px solid #0d9488' }}>
-                    <p style={{ fontSize: 12, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Recommended Specialist</p>
-                    <p style={{ fontSize: 22, fontWeight: 600, color: '#0d9488', marginBottom: 16 }}>{result.recommendedSpecialist}</p>
-                    <button onClick={() => navigate('/search-doctors')}
-                      style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #0d9488, #0284c7)', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-                      Find {result.recommendedSpecialist}
+                      <div>
+                        <label htmlFor="gender">Gender</label>
+                        <select id="gender" className="form-input" value={gender} onChange={e => setGender(e.target.value)} aria-label="Your gender">
+                          <option value="female">Female</option>
+                          <option value="male">Male</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label htmlFor="symptoms">Describe your symptoms</label>
+                      <textarea id="symptoms" className="form-input" value={symptoms} onChange={e => setSymptoms(e.target.value)}
+                        placeholder="e.g. I have been experiencing chest pain for 2 days, shortness of breath when walking..."
+                        rows={6} style={{ resize: 'vertical' }}
+                        aria-required="true"/>
+                    </div>
+                    <button className="analyze-btn" onClick={analyze} disabled={loading || !symptoms.trim()} aria-busy={loading}>
+                      {loading ? "Analyzing symptoms..." : "Analyze Symptoms"}
                     </button>
                   </div>
+                </div>
 
-                  <div className="card">
-                    <p style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', marginBottom: 14 }}>Possible Conditions</p>
-                    {result.possibleConditions?.map((c, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: i < result.possibleConditions.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
-                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0d9488', flexShrink: 0 }}/>
-                        <p style={{ fontSize: 14, color: '#374151' }}>{c}</p>
-                      </div>
-                    ))}
+                {/* Disclaimer */}
+                <div style={{ background: '#fffbeb', borderRadius: 10, padding: '14px 18px', border: '1px solid #fde68a', borderLeft: '4px solid #f59e0b' }}>
+                  <p style={{ fontSize: 12, fontWeight: 600, color: '#92400e', marginBottom: 4 }}>Medical Disclaimer</p>
+                  <p style={{ fontSize: 12, color: '#78350f', lineHeight: 1.6 }}>
+                    This tool is for informational purposes only and does not replace professional medical advice. Always consult a qualified doctor for diagnosis and treatment.
+                  </p>
+                </div>
+              </section>
+
+              {/* Results */}
+              <section aria-label="Analysis results" aria-live="polite">
+                {loading && (
+                  <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300, gap: 16 }}>
+                    <div style={{ width: 36, height: 36, border: '3px solid #e5e7eb', borderTopColor: '#0d9488', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} role="status" aria-label="Analyzing symptoms"/>
+                    <p style={{ color: '#6b7280', fontSize: 14 }}>Analyzing your symptoms...</p>
                   </div>
+                )}
 
-                  <div className="card">
-                    <p style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', marginBottom: 12 }}>General Advice</p>
-                    <p style={{ fontSize: 14, color: '#64748b', lineHeight: 1.7 }}>{result.generalAdvice}</p>
-                  </div>
+                {result && (
+                  <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-                  {result.redFlags?.length > 0 && (
-                    <div className="card" style={{ background: '#fef2f2', border: '1px solid #fecaca' }}>
-                      <p style={{ fontSize: 14, fontWeight: 600, color: '#ef4444', marginBottom: 12 }}>Seek immediate care if you experience:</p>
-                      {result.redFlags.map((f, i) => (
-                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: i < result.redFlags.length - 1 ? '1px solid #fee2e2' : 'none' }}>
-                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#ef4444', flexShrink: 0 }}/>
-                          <p style={{ fontSize: 13, color: '#991b1b' }}>{f}</p>
+                    {/* Urgency */}
+                    {(() => {
+                      const us = URGENCY_STYLE[result.urgency] || URGENCY_STYLE.low;
+                      return (
+                        <div style={{ background: us.bg, borderRadius: 10, padding: '14px 18px', border: `1px solid ${us.border}`, borderLeft: `4px solid ${us.color}` }} role="alert">
+                          <p style={{ fontSize: 13, fontWeight: 700, color: us.color }}>{us.label}</p>
+                          <p style={{ fontSize: 12, color: us.color, opacity: 0.85, marginTop: 3 }}>{result.urgencyReason}</p>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Recommended specialist */}
+                    <div className="result-card" style={{ borderTop: '3px solid #0d9488' }}>
+                      <p style={{ fontSize: 11, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Recommended Specialist</p>
+                      <p style={{ fontSize: 20, fontWeight: 700, color: '#0d9488', marginBottom: 14 }}>{result.recommendedSpecialist}</p>
+                      <button onClick={() => navigate('/search-doctors')}
+                        style={{ padding: '9px 18px', background: '#0d9488', color: 'white', border: 'none', borderRadius: 7, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                        Find {result.recommendedSpecialist}
+                      </button>
+                    </div>
+
+                    {/* Possible conditions */}
+                    <div className="result-card">
+                      <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', marginBottom: 12 }}>Possible Conditions</p>
+                      {result.possibleConditions?.map((c, i) => (
+                        <div key={i} className="condition-row">
+                          <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0d9488', flexShrink: 0 }}/>
+                          <p style={{ fontSize: 14, color: '#374151' }}>{c}</p>
                         </div>
                       ))}
                     </div>
-                  )}
-                </div>
-              )}
 
-              {!loading && !result && (
-                <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300, gap: 16, textAlign: 'center' }}>
-                  <div style={{ width: 64, height: 64, borderRadius: 16, background: '#f0fdfa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg width="32" height="32" fill="none" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="9" stroke="#0d9488" strokeWidth="1.5"/>
-                      <path d="M12 8v4M12 16h.01" stroke="#0d9488" strokeWidth="1.8" strokeLinecap="round"/>
-                    </svg>
+                    {/* General advice */}
+                    <div className="result-card" style={{ borderLeft: '4px solid #0d9488' }}>
+                      <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', marginBottom: 10 }}>General Advice</p>
+                      <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.7 }}>{result.generalAdvice}</p>
+                    </div>
+
+                    {/* Red flags */}
+                    {result.redFlags?.length > 0 && (
+                      <div style={{ background: '#fef2f2', borderRadius: 10, border: '1px solid #fecaca', padding: '18px 20px' }}>
+                        <p style={{ fontSize: 14, fontWeight: 600, color: '#dc2626', marginBottom: 12 }}>Seek immediate care if you experience:</p>
+                        {result.redFlags.map((f, i) => (
+                          <div key={i} className="redflag-row">
+                            <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#dc2626', flexShrink: 0 }}/>
+                            <p style={{ fontSize: 13, color: '#991b1b' }}>{f}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <p style={{ fontSize: 15, fontWeight: 600, color: '#0f172a', marginBottom: 6 }}>Ready to analyze</p>
-                  <p style={{ fontSize: 14, color: '#94a3b8' }}>Enter your symptoms on the left to get an AI-powered analysis</p>
-                </div>
-              )}
+                )}
+
+                {!loading && !result && (
+                  <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300, gap: 14, textAlign: 'center', padding: 32 }}>
+                    <div style={{ width: 52, height: 52, borderRadius: 12, background: '#f0fdfa', border: '1px solid #ccfbf1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="24" height="24" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9" stroke="#0d9488" strokeWidth="1.5"/>
+                        <path d="M12 8v4M12 16h.01" stroke="#0d9488" strokeWidth="1.8" strokeLinecap="round"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 15, fontWeight: 600, color: '#111827', marginBottom: 6 }}>Ready to analyze</p>
+                      <p style={{ fontSize: 13, color: '#9ca3af' }}>Enter your symptoms on the left to get an AI-powered analysis</p>
+                    </div>
+                  </div>
+                )}
+              </section>
             </div>
           </div>
-        </div>
+        </main>
       </div>
     </>
   );
