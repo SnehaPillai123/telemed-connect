@@ -9,7 +9,7 @@ const NAV_SECTIONS = [
     title: "Main",
     items: [
       { to: '/patient-dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-      { to: '/my-appointments', label: 'Appointments', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
+      { to: '/my-appointments', label: 'My Appointments', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
       { to: '/search-doctors', label: 'Find Doctors', icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' },
     ]
   },
@@ -28,6 +28,7 @@ const NAV_SECTIONS = [
     items: [
       { to: '/nearby-hospitals', label: 'Nearby Hospitals', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
       { to: '/edit-profile', label: 'Health Profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
+      { to: '/emergency', label: 'Emergency SOS', icon: 'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9', emergency: true },
     ]
   }
 ];
@@ -50,8 +51,9 @@ export default function PatientSidebar() {
         .ps-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; text-decoration: none; color: #6b7280; font-size: 13px; font-weight: 500; transition: all 0.15s; }
         .ps-item:hover { background: #f0fdfa; color: #0d9488; }
         .ps-item.active { background: #f0fdfa; color: #0d9488; font-weight: 600; }
-        .ps-item.emergency { color: #dc2626; }
-        .ps-item.emergency:hover { background: #fef2f2; }
+        .ps-item.emer { color: #dc2626; }
+        .ps-item.emer:hover { background: #fef2f2; color: #dc2626; }
+        .ps-item.emer.active { background: #fef2f2; color: #dc2626; }
         .ps-badge { font-size: 9px; font-weight: 700; color: #0d9488; background: #f0fdfa; padding: 1px 6px; border-radius: 20px; border: 1px solid #ccfbf1; flex-shrink: 0; }
         .ps-signout { width: 100%; padding: 9px 12px; background: none; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 13px; font-weight: 500; color: #374151; cursor: pointer; display: flex; align-items: center; gap: 8px; font-family: Inter, sans-serif; transition: all 0.15s; }
         .ps-signout:hover { border-color: #0d9488; color: #0d9488; }
@@ -60,7 +62,7 @@ export default function PatientSidebar() {
       <aside style={{ width: 250, background: 'white', borderRight: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 50, overflowY: 'auto' }}>
 
         {/* Logo */}
-        <div style={{ padding: '18px 16px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ padding: '18px 16px', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           <div style={{ width: 32, height: 32, borderRadius: 7, background: '#0d9488', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <svg width="17" height="17" fill="none" viewBox="0 0 24 24">
               <path d="M12 7v10M7 12h10" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
@@ -75,10 +77,11 @@ export default function PatientSidebar() {
         {/* Nav */}
         <nav style={{ flex: 1, padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
           {NAV_SECTIONS.map((section, si) => (
-            <div key={si} style={{ marginBottom: 6 }}>
+            <div key={si} style={{ marginBottom: 4 }}>
               <p style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '6px 12px 3px' }}>{section.title}</p>
               {section.items.map((item, ii) => (
-                <Link key={ii} to={item.to} className={`ps-item ${location.pathname === item.to ? 'active' : ''}`}>
+                <Link key={ii} to={item.to}
+                  className={`ps-item ${item.emergency ? 'emer' : ''} ${location.pathname === item.to ? 'active' : ''}`}>
                   <svg width="15" height="15" fill="none" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
                     <path d={item.icon} stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
@@ -88,21 +91,10 @@ export default function PatientSidebar() {
               ))}
             </div>
           ))}
-
-          {/* Emergency */}
-          <div style={{ marginTop: 4 }}>
-            <p style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '6px 12px 3px' }}>Emergency</p>
-            <Link to="/emergency" className={`ps-item emergency ${location.pathname === '/emergency' ? 'active' : ''}`}>
-              <svg width="15" height="15" fill="none" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
-                <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-              </svg>
-              Emergency SOS
-            </Link>
-          </div>
         </nav>
 
         {/* User + signout */}
-        <div style={{ padding: '10px 8px', borderTop: '1px solid #f3f4f6' }}>
+        <div style={{ padding: '10px 8px', borderTop: '1px solid #f3f4f6', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 12px', borderRadius: 8, background: '#f9fafb', marginBottom: 8 }}>
             <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#0d9488', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>
               {initials}
