@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
-import PatientSidebar from "../components/PatientSidebar";
+import Layout from "../components/Layout";
+import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 
 const STATUS_STYLE = {
@@ -24,8 +25,7 @@ export default function PatientAppointments() {
       const snap = await getDocs(q);
       const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      setAppointments(data);
-      setLoading(false);
+      setAppointments(data); setLoading(false);
     };
     fetch();
   }, [user]);
@@ -40,109 +40,74 @@ export default function PatientAppointments() {
   };
 
   const filtered = filter === "all" ? appointments : appointments.filter(a => a.status === filter);
-  const counts = {
-    all: appointments.length,
-    pending: appointments.filter(a => a.status === "pending").length,
-    confirmed: appointments.filter(a => a.status === "confirmed").length,
-    completed: appointments.filter(a => a.status === "completed").length,
-    cancelled: appointments.filter(a => a.status === "cancelled").length,
-  };
+  const counts = { all: appointments.length, pending: appointments.filter(a => a.status === "pending").length, confirmed: appointments.filter(a => a.status === "confirmed").length, completed: appointments.filter(a => a.status === "completed").length, cancelled: appointments.filter(a => a.status === "cancelled").length };
 
   return (
-    <>
+    <Layout title="My Appointments" subtitle="Patient Portal">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        * { font-family: 'Inter', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
-        .filter-btn { padding: 7px 16px; border-radius: 20px; border: 1.5px solid #e5e7eb; background: white; font-size: 13px; font-weight: 500; color: #374151; cursor: pointer; transition: all 0.15s; font-family: Inter, sans-serif; display: inline-flex; align-items: center; gap: 6px; }
-        .filter-btn:hover { border-color: #0d9488; color: #0d9488; }
-        .filter-btn.active { background: #0d9488; border-color: #0d9488; color: white; }
-        .apt-card { background: white; border-radius: 10px; border: 1px solid #e5e7eb; overflow: hidden; transition: all 0.2s; margin-bottom: 12px; }
-        .apt-card:hover { border-color: #0d9488; box-shadow: 0 4px 16px rgba(13,148,136,0.08); }
-        .cancel-btn { padding: 7px 14px; background: white; color: #dc2626; border: 1.5px solid #fecaca; border-radius: 7px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; font-family: Inter, sans-serif; }
-        .cancel-btn:hover { background: #fef2f2; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in { animation: fadeIn 0.3s ease forwards; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .filter-btn { padding: 6px 14px; border-radius: 20px; border: 1.5px solid #e5e7eb; background: white; font-size: 12px; font-weight: 500; color: #374151; cursor: pointer; transition: all 0.15s; font-family: Inter, sans-serif; display: inline-flex; align-items: center; gap: 5px; }
+        .filter-btn:hover { border-color: #0d9488; color: #0d9488; }
+        .filter-btn.active { background: #0d9488; border-color: #0d9488; color: white; }
+        .apt-card { background: white; border-radius: 10px; border: 1px solid #e5e7eb; padding: 16px 18px; transition: all 0.2s; margin-bottom: 10px; }
+        .apt-card:hover { border-color: #0d9488; box-shadow: 0 4px 14px rgba(13,148,136,0.07); }
       `}</style>
 
-      <div style={{ display: 'flex', minHeight: '100vh', background: '#f9fafb' }}>
-        <PatientSidebar />
-        <main style={{ marginLeft: 250, flex: 1, display: 'flex', flexDirection: 'column' }}>
-
-          <header style={{ background: 'white', borderBottom: '1px solid #e5e7eb', padding: '24px 32px', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 4 }}>Patient Portal</p>
-              <h1 style={{ fontSize: 22, fontWeight: 800, color: '#111827', letterSpacing: '-0.01em' }}>My Appointments</h1>
-            </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              {[{ l: 'Upcoming', v: counts.pending + counts.confirmed, c: '#0d9488' }, { l: 'Completed', v: counts.completed, c: '#16a34a' }].map((s, i) => (
-                <div key={i} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: '10px 16px', textAlign: 'center' }}>
-                  <p style={{ fontSize: 20, fontWeight: 700, color: s.c, lineHeight: 1 }}>{s.v}</p>
-                  <p style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>{s.l}</p>
-                </div>
-              ))}
-            </div>
-          </header>
-
-          <div style={{ padding: '28px 32px', flex: 1 }}>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
-              {[{ key: 'all', label: 'All' }, { key: 'pending', label: 'Pending' }, { key: 'confirmed', label: 'Confirmed' }, { key: 'completed', label: 'Completed' }, { key: 'cancelled', label: 'Cancelled' }].map(f => (
-                <button key={f.key} className={`filter-btn ${filter === f.key ? 'active' : ''}`} onClick={() => setFilter(f.key)}>
-                  {f.label}
-                  <span style={{ fontSize: 11, background: filter === f.key ? 'rgba(255,255,255,0.25)' : '#f3f4f6', color: filter === f.key ? 'white' : '#6b7280', padding: '1px 7px', borderRadius: 20, fontWeight: 600 }}>{counts[f.key]}</span>
-                </button>
-              ))}
-            </div>
-
-            {loading && <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}><div style={{ width: 32, height: 32, border: '3px solid #e5e7eb', borderTopColor: '#0d9488', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}/></div>}
-
-            {!loading && filtered.length === 0 && (
-              <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '60px', textAlign: 'center' }}>
-                <p style={{ fontSize: 15, fontWeight: 600, color: '#374151', marginBottom: 6 }}>No appointments found</p>
-                <p style={{ fontSize: 13, color: '#9ca3af' }}>{filter === 'all' ? 'Book your first consultation to get started.' : `No ${filter} appointments.`}</p>
-              </div>
-            )}
-
-            {filtered.map((apt, i) => {
-              const st = STATUS_STYLE[apt.status] || STATUS_STYLE.pending;
-              return (
-                <article key={apt.id} className="apt-card fade-in" style={{ animationDelay: `${i*0.04}s`, opacity: 0 }}>
-                  <div style={{ padding: '18px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
-                    <div style={{ display: 'flex', gap: 14, flex: 1, minWidth: 0 }}>
-                      <div style={{ width: 44, height: 44, borderRadius: 10, background: '#f0fdfa', border: '1px solid #ccfbf1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: '#0d9488' }}>
-                          {apt.doctorName?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
-                        </span>
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <p style={{ fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 3 }}>Dr. {apt.doctorName}</p>
-                        <p style={{ fontSize: 13, color: '#0d9488', fontWeight: 500, marginBottom: 8 }}>{apt.doctorSpecialization}</p>
-                        <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                            <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke="#9ca3af" strokeWidth="1.8" strokeLinecap="round"/></svg>
-                            <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{new Date(apt.appointmentDate + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                            <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="#9ca3af" strokeWidth="1.8" strokeLinecap="round"/></svg>
-                            <span style={{ fontSize: 13, color: '#374151', fontWeight: 500 }}>{apt.appointmentTime}</span>
-                          </div>
-                        </div>
-                        {apt.reason && <p style={{ fontSize: 12, color: '#6b7280', marginTop: 8, lineHeight: 1.5 }}><strong>Reason:</strong> {apt.reason}</p>}
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 10, flexShrink: 0 }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: st.color, background: st.bg, padding: '4px 12px', borderRadius: 20 }}>{st.label}</span>
-                      {(apt.status === 'pending' || apt.status === 'confirmed') && (
-                        <button className="cancel-btn" onClick={() => handleCancel(apt.id)}>Cancel</button>
-                      )}
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </main>
+      {/* Stats + filters row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18, flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {[{ k: 'all', l: 'All' }, { k: 'pending', l: 'Pending' }, { k: 'confirmed', l: 'Confirmed' }, { k: 'completed', l: 'Completed' }, { k: 'cancelled', l: 'Cancelled' }].map(f => (
+            <button key={f.k} className={`filter-btn ${filter === f.k ? 'active' : ''}`} onClick={() => setFilter(f.k)}>
+              {f.l}
+              <span style={{ fontSize: 10, background: filter === f.k ? 'rgba(255,255,255,0.25)' : '#f3f4f6', color: filter === f.k ? 'white' : '#6b7280', padding: '1px 6px', borderRadius: 20, fontWeight: 600 }}>{counts[f.k]}</span>
+            </button>
+          ))}
+        </div>
+        <Link to="/search-doctors" style={{ padding: '8px 16px', background: '#0d9488', color: 'white', borderRadius: 8, fontSize: 12, fontWeight: 600, textDecoration: 'none' }}>
+          + Book New
+        </Link>
       </div>
-    </>
+
+      {loading && <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}><div style={{ width: 30, height: 30, border: '3px solid #e5e7eb', borderTopColor: '#0d9488', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}/></div>}
+
+      {!loading && filtered.length === 0 && (
+        <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '48px', textAlign: 'center' }}>
+          <p style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 6 }}>No appointments found</p>
+          <p style={{ fontSize: 13, color: '#9ca3af' }}>{filter === 'all' ? 'Book your first consultation to get started.' : `No ${filter} appointments.`}</p>
+        </div>
+      )}
+
+      {filtered.map((apt, i) => {
+        const st = STATUS_STYLE[apt.status] || STATUS_STYLE.pending;
+        return (
+          <article key={apt.id} className="apt-card fade-in" style={{ animationDelay: `${i*0.04}s`, opacity: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+              <div style={{ display: 'flex', gap: 12, flex: 1, minWidth: 0 }}>
+                <div style={{ width: 42, height: 42, borderRadius: 9, background: '#f0fdfa', border: '1px solid #ccfbf1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#0d9488' }}>{apt.doctorName?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}</span>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 2 }}>Dr. {apt.doctorName}</p>
+                  <p style={{ fontSize: 12, color: '#0d9488', fontWeight: 500, marginBottom: 6 }}>{apt.doctorSpecialization}</p>
+                  <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 12, color: '#374151' }}>📅 {new Date(apt.appointmentDate + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                    <span style={{ fontSize: 12, color: '#374151' }}>🕐 {apt.appointmentTime}</span>
+                  </div>
+                  {apt.reason && <p style={{ fontSize: 12, color: '#6b7280', marginTop: 6 }}>{apt.reason}</p>}
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: st.color, background: st.bg, padding: '4px 10px', borderRadius: 20 }}>{st.label}</span>
+                {(apt.status === 'pending' || apt.status === 'confirmed') && (
+                  <button onClick={() => handleCancel(apt.id)} style={{ padding: '6px 12px', background: 'white', color: '#dc2626', border: '1.5px solid #fecaca', borderRadius: 7, fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Cancel</button>
+                )}
+              </div>
+            </div>
+          </article>
+        );
+      })}
+    </Layout>
   );
 }
