@@ -184,7 +184,7 @@ export default function PatientDashboard() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
                 {/* Health tip */}
-                <div style={{ background: 'white', borderRadius: 10, padding: '16px', border: '1px solid #e5e7eb', borderLeft: '4px solid #0d9488' }}>
+                <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e5e7eb', animationDelay: '0.2s', opacity: 0 }} className="fade-up">
                   <p style={{ fontSize: 10, fontWeight: 700, color: '#0d9488', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 7 }}>Health Tip of the Day</p>
                   <p style={{ fontSize: 12, color: '#374151', lineHeight: 1.7 }}>{HEALTH_TIPS[tipIndex]}</p>
                 </div>
