@@ -58,7 +58,7 @@ export default function DoctorDashboard() {
       `}</style>
 
       {/* Stats */}
-      <div className="doc-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 20 }}>
+     <div className="grid-4col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 20 }}>
         {[
           { label: "Today's", value: stats.today, color: '#0d9488', bg: '#f0fdfa', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
           { label: 'Pending', value: stats.pending, color: '#d97706', bg: '#fffbeb', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
@@ -76,8 +76,7 @@ export default function DoctorDashboard() {
       </div>
 
       {/* Two column */}
-      <div className="doc-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16 }}>
-
+      <div className="grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16 }}>
         {/* Appointments list */}
         <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
           <div style={{ padding: '14px 16px', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
