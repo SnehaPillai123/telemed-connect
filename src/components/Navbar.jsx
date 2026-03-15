@@ -8,81 +8,69 @@ export default function Navbar() {
   const { user, role } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = async () => {
+  const handleSignOut = async () => {
     await signOut(auth);
     toast.success("Logged out successfully");
     navigate("/login");
   };
 
+  const initials = user?.displayName?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "U";
+
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
-        .navbar { font-family: 'DM Sans', sans-serif; }
-        .nav-link { transition: color 0.2s ease; }
-        .nav-link:hover { color: #0d9488; }
-        .logout-btn { transition: all 0.2s ease; }
-        .logout-btn:hover { background: #fee2e2; color: #dc2626; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        .navbar * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
+        .nav-link { font-size: 13px; font-weight: 500; color: #374151; text-decoration: none; padding: 6px 12px; border-radius: 6px; transition: all 0.15s; }
+        .nav-link:hover { background: #f0fdfa; color: #0d9488; }
+        .signout-btn { padding: 7px 16px; background: white; color: #374151; border: 1.5px solid #e5e7eb; border-radius: 7px; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; font-family: Inter, sans-serif; }
+        .signout-btn:hover { border-color: #0d9488; color: #0d9488; }
       `}</style>
-      <nav className="navbar bg-white border-b border-slate-100 px-8 py-4 sticky top-0 z-50"
-        style={{ boxShadow: '0 1px 20px rgba(0,0,0,0.06)' }}>
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <Link to={role === "doctor" ? "/doctor-dashboard" : "/patient-dashboard"}
-           className="flex items-center gap-3" style={{textDecoration:'none'}}>
-            <div style={{
-              width: 36, height: 36, borderRadius: 10,
-              background: 'linear-gradient(135deg, #0d9488, #0284c7)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center'
-            }}>
-              <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"
-                  fill="white" opacity="0.3"/>
-                <path d="M12 6v4M12 14v4M8 12H4M20 12h-4" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-            </div>
-            <div>
-              <p style={{ fontFamily: 'DM Serif Display', fontSize: 15, color: '#0f172a', lineHeight: 1 }}>
-                TeleMed Connect
-              </p>
-              <p style={{ fontSize: 10, color: '#94a3b8', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                Healthcare Platform
-              </p>
-            </div>
-          </Link>
 
-          <div className="flex items-center gap-6">
-            {user && (
-              <>
-                <div className="flex items-center gap-3">
-                  <div style={{
-                    width: 36, height: 36, borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #0d9488, #0284c7)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: 'white', fontWeight: 600, fontSize: 14
-                  }}>
-                    {user.displayName?.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>
-                      {user.displayName}
-                    </p>
-                    <p style={{ fontSize: 11, color: '#94a3b8' }}>
-                      {role === "doctor" ? "Medical Professional" : "Patient"}
-                    </p>
-                  </div>
-                </div>
-                <div style={{ width: 1, height: 28, background: '#e2e8f0' }}/>
-                <button onClick={handleLogout} className="logout-btn"
-                  style={{
-                    fontSize: 13, fontWeight: 500, color: '#64748b',
-                    padding: '6px 14px', borderRadius: 8, border: 'none',
-                    background: 'transparent', cursor: 'pointer'
-                  }}>
-                  Sign out
-                </button>
-              </>
-            )}
+      <nav className="navbar" style={{ background: 'white', borderBottom: '1px solid #e5e7eb', padding: '0 40px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 100 }}>
+
+        <Link to={role === 'doctor' ? '/doctor-dashboard' : '/patient-dashboard'} style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+          <div style={{ width: 32, height: 32, borderRadius: 7, background: '#0d9488', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="17" height="17" fill="none" viewBox="0 0 24 24">
+              <path d="M12 7v10M7 12h10" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+            </svg>
           </div>
+          <div>
+            <p style={{ fontWeight: 700, fontSize: 14, color: '#111827', margin: 0, lineHeight: 1.2 }}>TeleMed Connect</p>
+            <p style={{ fontSize: 10, color: '#0d9488', margin: 0, fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Healthcare Platform</p>
+          </div>
+        </Link>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {role === 'patient' && <>
+            <Link to="/patient-dashboard" className="nav-link">Dashboard</Link>
+            <Link to="/search-doctors" className="nav-link">Find Doctors</Link>
+            <Link to="/my-appointments" className="nav-link">Appointments</Link>
+            <Link to="/symptom-checker" className="nav-link">Symptom Checker</Link>
+            <Link to="/my-prescriptions" className="nav-link">Prescriptions</Link>
+          </>}
+          {role === 'doctor' && <>
+            <Link to="/doctor-dashboard" className="nav-link">Dashboard</Link>
+            <Link to="/doctor-appointments" className="nav-link">Appointments</Link>
+            <Link to="/edit-profile" className="nav-link">Profile</Link>
+          </>}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', background: '#f0fdfa', borderRadius: 6, border: '1px solid #ccfbf1' }}>
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#10b981' }}/>
+            <span style={{ fontSize: 12, color: '#0f766e', fontWeight: 500 }}>Online</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#0d9488', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
+              {initials}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#111827', lineHeight: 1.2 }}>{user?.displayName}</span>
+              <span style={{ fontSize: 11, color: '#0d9488', fontWeight: 500, textTransform: 'capitalize' }}>{role === 'doctor' ? 'Medical Professional' : 'Patient'}</span>
+            </div>
+          </div>
+          <button className="signout-btn" onClick={handleSignOut}>Sign out</button>
         </div>
       </nav>
     </>

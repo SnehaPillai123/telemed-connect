@@ -1,1 +1,197 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+body {
+  background: #f9fafb;
+  color: #111827;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Responsive grid helpers ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+/* ── Tablet: 768px–1024px ── */
+@media (max-width: 1024px) {
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ── Mobile: below 768px ── */
+@media (max-width: 768px) {
+
+  /* All 2-column split layouts become single column */
+  div[style*="grid-template-columns: 1.1fr"] ,
+  div[style*="grid-template-columns: 1fr 1fr"],
+  div[style*="gridTemplateColumns: '1fr 1fr'"],
+  div[style*="gridTemplateColumns: '1.1fr"],
+  div[style*="gridTemplateColumns: '1fr 360px'"] {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Stat grids */
+  div[style*="gridTemplateColumns: 'repeat(3,1fr)'"],
+  div[style*="gridTemplateColumns: 'repeat(3, 1fr)'"],
+  div[style*="grid-template-columns: repeat(3,1fr)"],
+  div[style*="gridTemplateColumns: '2fr 1fr 1fr 1fr'"] {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Navbar */
+  nav[class*="navbar"] {
+    height: auto !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 14px 20px !important;
+    gap: 12px !important;
+  }
+
+  nav[class*="navbar"] > div:nth-child(2) {
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+  }
+
+  nav[class*="navbar"] > div:nth-child(3) {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  /* Page padding */
+  div[style*="padding: '32px 40px'"],
+  div[style*="padding: '40px 48px'"],
+  div[style*="padding: '48px 44px'"],
+  div[style*="padding: '24px 40px'"],
+  div[style*="padding: '40px 44px'"] {
+    padding: 16px !important;
+  }
+
+  /* Login/Register left panel — hide on mobile */
+  div[style*="background: '#f0fdfa'"][style*="borderRight"] {
+    display: none !important;
+  }
+
+  /* Cards full width */
+  div[style*="maxWidth: 380"],
+  div[style*="maxWidth: 400"],
+  div[style*="maxWidth: 420"],
+  div[style*="max-width: 380px"],
+  div[style*="max-width: 400px"] {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* Typography scale down */
+  h1[style*="fontSize: 40"],
+  h1[style*="fontSize: 38"],
+  h1[style*="fontSize: 46"] {
+    font-size: 28px !important;
+  }
+
+  h1[style*="fontSize: 26"],
+  h2[style*="fontSize: 24"] {
+    font-size: 22px !important;
+  }
+
+  /* Buttons full width on mobile */
+  button[style*="padding: '10px 20px'"] {
+    width: 100% !important;
+  }
+
+  /* Doctor cards grid */
+  div[style*="gridTemplateColumns"][style*="repeat(auto-fill"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Appointment cards */
+  div[style*="gridTemplateColumns: '2fr 1fr 1fr 1fr'"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Book appointment grid */
+  div[style*="gridTemplateColumns: '1fr 1fr'"][style*="gap: 12"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Role cards on register */
+  div[style*="display: 'flex'"][style*="gap: 12"] > div[class*="role-card"] {
+    padding: 12px !important;
+  }
+
+  /* Prescription medicines grid */
+  div[style*="gridTemplateColumns: '2fr 1fr 1fr 1fr'"] {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Max widths */
+  div[style*="maxWidth: 1100"],
+  div[style*="maxWidth: 1000"],
+  div[style*="maxWidth: 900"],
+  div[style*="max-width: 1100px"],
+  div[style*="max-width: 900px"] {
+    max-width: 100% !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+
+  /* Tables scroll horizontally */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* Chat page */
+  div[style*="padding: '24px 48px'"] {
+    padding: 16px !important;
+  }
+
+  div[style*="padding: '16px 48px'"] {
+    padding: 12px 16px !important;
+  }
+}
+
+/* ── Small mobile: below 480px ── */
+@media (max-width: 480px) {
+  div[style*="gridTemplateColumns: 'repeat(3,1fr)'"],
+  div[style*="gridTemplateColumns: 'repeat(3, 1fr)'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  div[style*="gridTemplateColumns: '1fr 1fr'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  .grid-2, .grid-3, .grid-4 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Scrollbar styling ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #0d9488; }
+
+/* ── Smooth transitions ── */
+a, button { transition: all 0.15s ease; }
+
+/* ── Focus styles ── */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+}
+
+/* ── Remove default list styles ── */
+ul, ol { list-style: none; }
+
+/* ── Images responsive ── */
+img { max-width: 100%; height: auto; }
