@@ -48,15 +48,6 @@ export default function PatientDashboard() {
     cancelled: { color: '#dc2626', bg: '#fef2f2', label: 'Cancelled' },
   };
 
-  const quickActions = [
-    { to: '/search-doctors', label: 'Find a Doctor', desc: 'Book a consultation', icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z', color: '#0d9488', bg: '#f0fdfa' },
-    { to: '/ask-before-book', label: 'Ask Before You Book', desc: 'Not sure if you need a doctor?', icon: 'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', badge: 'Smart', color: '#2563eb', bg: '#eff6ff' },
-    { to: '/symptom-checker', label: 'Symptom Checker', desc: 'AI-powered analysis', icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z', badge: 'AI', color: '#7c3aed', bg: '#f5f3ff' },
-    { to: '/medication-tracker', label: 'Medication Tracker', desc: 'Track daily medicines', icon: 'M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z', badge: 'New', color: '#059669', bg: '#f0fdf4' },
-    { to: '/health-records', label: 'Health Records', desc: 'Medical history', icon: 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', color: '#d97706', bg: '#fffbeb' },
-    { to: '/nearby-hospitals', label: 'Nearby Hospitals', desc: 'Find hospitals near you', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', color: '#dc2626', bg: '#fef2f2' },
-  ];
-
   return (
     <Layout title={`${greeting}, ${firstName} 👋`} subtitle="Patient Dashboard">
       <style>{`
@@ -74,7 +65,7 @@ export default function PatientDashboard() {
       `}</style>
 
       {/* Stats */}
-<div className="grid-3col" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: 20 }}>
+<div className="grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 16 }}>
         {[
           { label: 'Upcoming', value: stats.upcoming, color: '#0d9488', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', to: '/my-appointments' },
           { label: 'Confirmed', value: stats.confirmed, color: '#2563eb', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', to: '/my-appointments' },
@@ -123,29 +114,6 @@ export default function PatientDashboard() {
             );
           })}
         </div>
-
-        {/* Quick Actions */}
-        <div>
-          <p style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginBottom: 10 }}>Quick Actions</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-            {quickActions.map((a, i) => (
-              <Link key={i} to={a.to} className="action-tile">
-                <div style={{ width: 32, height: 32, borderRadius: 7, background: a.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><path d={a.icon} stroke={a.color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 1 }}>
-                    <p style={{ fontSize: 12, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.label}</p>
-                    {a.badge && <span style={{ fontSize: 9, fontWeight: 700, color: a.color, background: a.bg, padding: '1px 5px', borderRadius: 20, flexShrink: 0 }}>{a.badge}</span>}
-                  </div>
-                  <p style={{ fontSize: 11, color: '#9ca3af' }}>{a.desc}</p>
-                </div>
-                <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round"/></svg>
-              </Link>
-            ))}
-          </div>
-        </div>
-
         {/* Right column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
