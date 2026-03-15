@@ -43,9 +43,9 @@ export default function SymptomChecker() {
   };
 
   const URGENCY_STYLE = {
-    low:    { bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0', label: 'Low Urgency — Symptoms appear mild' },
-    medium: { bg: '#fffbeb', color: '#d97706', border: '#fde68a', label: 'Medium Urgency — Consult a doctor soon' },
-    high:   { bg: '#fef2f2', color: '#dc2626', border: '#fecaca', label: 'High Urgency — Seek care promptly' },
+    low:    { bg: '#f0fdfa', color: '#0d9488', border: '#ccfbf1', label: 'Low Urgency' },
+    medium: { bg: '#fffbeb', color: '#d97706', border: '#fde68a', label: 'Medium Urgency' },
+    high:   { bg: '#fef2f2', color: '#dc2626', border: '#fecaca', label: 'High Urgency — Seek care soon' },
   };
 
   return (
@@ -53,21 +53,17 @@ export default function SymptomChecker() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         * { font-family: 'Inter', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
+        .card { background: white; border-radius: 10px; padding: 24px; border: 1px solid #e5e7eb; }
         .form-input { width: 100%; padding: 11px 14px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; color: #111827; background: white; outline: none; transition: all 0.2s; font-family: Inter, sans-serif; appearance: none; }
         .form-input:focus { border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,0.1); }
         .form-input::placeholder { color: #9ca3af; }
         .analyze-btn { width: 100%; padding: 12px; background: #0d9488; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: Inter, sans-serif; }
         .analyze-btn:hover { background: #0f766e; }
         .analyze-btn:disabled { background: #5eead4; cursor: not-allowed; }
-        .result-card { background: white; border-radius: 10px; border: 1px solid #e5e7eb; padding: 20px; }
-        .condition-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
-        .condition-row:last-child { border-bottom: none; }
-        .redflag-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #fee2e2; }
-        .redflag-row:last-child { border-bottom: none; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-in { animation: fadeIn 0.4s ease forwards; }
-        @keyframes spin { to { transform: rotate(360deg); } }
         label { font-size: 13px; font-weight: 600; color: #374151; display: block; margin-bottom: 6px; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-up { animation: fadeUp 0.4s ease forwards; }
+        @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
 
       <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
@@ -78,16 +74,16 @@ export default function SymptomChecker() {
             <div style={{ maxWidth: 1100, margin: '0 auto' }}>
               <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 4 }}>AI-Powered</p>
               <h1 style={{ fontSize: 24, fontWeight: 700, color: '#111827', letterSpacing: '-0.01em' }}>Symptom Checker</h1>
-              <p style={{ fontSize: 14, color: '#6b7280', marginTop: 4 }}>Describe your symptoms and our AI will suggest the right specialist for you.</p>
+              <p style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>Describe your symptoms and our AI will suggest the right specialist for you.</p>
             </div>
           </header>
 
           <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 40px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
 
-              {/* Input form */}
+              {/* Input Form */}
               <section aria-label="Symptom input form">
-                <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '24px', marginBottom: 16 }}>
+                <div className="card" style={{ marginBottom: 16 }}>
                   <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', marginBottom: 20, paddingBottom: 14, borderBottom: '1px solid #f3f4f6' }}>
                     Tell us about your symptoms
                   </p>
@@ -95,11 +91,11 @@ export default function SymptomChecker() {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                       <div>
                         <label htmlFor="age">Age</label>
-                        <input id="age" className="form-input" type="number" placeholder="25" value={age} onChange={e => setAge(e.target.value)} min="1" max="120" aria-label="Your age"/>
+                        <input id="age" className="form-input" type="number" placeholder="25" value={age} onChange={e => setAge(e.target.value)} min="1" max="120"/>
                       </div>
                       <div>
                         <label htmlFor="gender">Gender</label>
-                        <select id="gender" className="form-input" value={gender} onChange={e => setGender(e.target.value)} aria-label="Your gender">
+                        <select id="gender" className="form-input" value={gender} onChange={e => setGender(e.target.value)}>
                           <option value="female">Female</option>
                           <option value="male">Male</option>
                           <option value="other">Other</option>
@@ -120,7 +116,7 @@ export default function SymptomChecker() {
                 </div>
 
                 {/* Disclaimer */}
-                <div style={{ background: '#fffbeb', borderRadius: 10, padding: '14px 18px', border: '1px solid #fde68a', borderLeft: '4px solid #f59e0b' }}>
+                <div style={{ background: '#fffbeb', borderRadius: 10, padding: 16, border: '1px solid #fde68a', borderLeft: '4px solid #f59e0b' }}>
                   <p style={{ fontSize: 12, fontWeight: 600, color: '#92400e', marginBottom: 4 }}>Medical Disclaimer</p>
                   <p style={{ fontSize: 12, color: '#78350f', lineHeight: 1.6 }}>
                     This tool is for informational purposes only and does not replace professional medical advice. Always consult a qualified doctor for diagnosis and treatment.
@@ -131,28 +127,28 @@ export default function SymptomChecker() {
               {/* Results */}
               <section aria-label="Analysis results" aria-live="polite">
                 {loading && (
-                  <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300, gap: 16 }}>
-                    <div style={{ width: 36, height: 36, border: '3px solid #e5e7eb', borderTopColor: '#0d9488', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} role="status" aria-label="Analyzing symptoms"/>
+                  <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300, gap: 16 }}>
+                    <div style={{ width: 36, height: 36, border: '3px solid #e5e7eb', borderTopColor: '#0d9488', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} role="status" aria-label="Analyzing"/>
                     <p style={{ color: '#6b7280', fontSize: 14 }}>Analyzing your symptoms...</p>
                   </div>
                 )}
 
                 {result && (
-                  <div className="fade-in" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div className="fade-up" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
                     {/* Urgency */}
                     {(() => {
                       const us = URGENCY_STYLE[result.urgency] || URGENCY_STYLE.low;
                       return (
-                        <div style={{ background: us.bg, borderRadius: 10, padding: '14px 18px', border: `1px solid ${us.border}`, borderLeft: `4px solid ${us.color}` }} role="alert">
+                        <div style={{ background: us.bg, borderRadius: 10, padding: '14px 18px', border: `1px solid ${us.border}`, borderLeft: `4px solid ${us.color}` }}>
                           <p style={{ fontSize: 13, fontWeight: 700, color: us.color }}>{us.label}</p>
                           <p style={{ fontSize: 12, color: us.color, opacity: 0.85, marginTop: 3 }}>{result.urgencyReason}</p>
                         </div>
                       );
                     })()}
 
-                    {/* Recommended specialist */}
-                    <div className="result-card" style={{ borderTop: '3px solid #0d9488' }}>
+                    {/* Specialist */}
+                    <div className="card" style={{ borderTop: '3px solid #0d9488' }}>
                       <p style={{ fontSize: 11, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Recommended Specialist</p>
                       <p style={{ fontSize: 20, fontWeight: 700, color: '#0d9488', marginBottom: 14 }}>{result.recommendedSpecialist}</p>
                       <button onClick={() => navigate('/search-doctors')}
@@ -161,31 +157,31 @@ export default function SymptomChecker() {
                       </button>
                     </div>
 
-                    {/* Possible conditions */}
-                    <div className="result-card">
+                    {/* Conditions */}
+                    <div className="card">
                       <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', marginBottom: 12 }}>Possible Conditions</p>
                       {result.possibleConditions?.map((c, i) => (
-                        <div key={i} className="condition-row">
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: i < result.possibleConditions.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
                           <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#0d9488', flexShrink: 0 }}/>
-                          <p style={{ fontSize: 14, color: '#374151' }}>{c}</p>
+                          <p style={{ fontSize: 13, color: '#374151' }}>{c}</p>
                         </div>
                       ))}
                     </div>
 
-                    {/* General advice */}
-                    <div className="result-card" style={{ borderLeft: '4px solid #0d9488' }}>
+                    {/* Advice */}
+                    <div className="card" style={{ borderLeft: '4px solid #0d9488' }}>
                       <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', marginBottom: 10 }}>General Advice</p>
                       <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.7 }}>{result.generalAdvice}</p>
                     </div>
 
                     {/* Red flags */}
                     {result.redFlags?.length > 0 && (
-                      <div style={{ background: '#fef2f2', borderRadius: 10, border: '1px solid #fecaca', padding: '18px 20px' }}>
-                        <p style={{ fontSize: 14, fontWeight: 600, color: '#dc2626', marginBottom: 12 }}>Seek immediate care if you experience:</p>
+                      <div className="card" style={{ background: '#fef2f2', border: '1px solid #fecaca' }}>
+                        <p style={{ fontSize: 13, fontWeight: 600, color: '#dc2626', marginBottom: 10 }}>Seek immediate care if you experience:</p>
                         {result.redFlags.map((f, i) => (
-                          <div key={i} className="redflag-row">
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: i < result.redFlags.length - 1 ? '1px solid #fee2e2' : 'none' }}>
                             <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#dc2626', flexShrink: 0 }}/>
-                            <p style={{ fontSize: 13, color: '#991b1b' }}>{f}</p>
+                            <p style={{ fontSize: 12, color: '#991b1b' }}>{f}</p>
                           </div>
                         ))}
                       </div>
@@ -194,15 +190,15 @@ export default function SymptomChecker() {
                 )}
 
                 {!loading && !result && (
-                  <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300, gap: 14, textAlign: 'center', padding: 32 }}>
+                  <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300, gap: 14, textAlign: 'center' }}>
                     <div style={{ width: 52, height: 52, borderRadius: 12, background: '#f0fdfa', border: '1px solid #ccfbf1', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg width="24" height="24" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                      <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="9" stroke="#0d9488" strokeWidth="1.5"/>
                         <path d="M12 8v4M12 16h.01" stroke="#0d9488" strokeWidth="1.8" strokeLinecap="round"/>
                       </svg>
                     </div>
                     <div>
-                      <p style={{ fontSize: 15, fontWeight: 600, color: '#111827', marginBottom: 6 }}>Ready to analyze</p>
+                      <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', marginBottom: 6 }}>Ready to analyze</p>
                       <p style={{ fontSize: 13, color: '#9ca3af' }}>Enter your symptoms on the left to get an AI-powered analysis</p>
                     </div>
                   </div>

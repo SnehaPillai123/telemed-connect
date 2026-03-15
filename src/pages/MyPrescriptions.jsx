@@ -39,8 +39,8 @@ export default function MyPrescriptions() {
         .rx-card:hover { border-color: #0d9488; box-shadow: 0 4px 16px rgba(13,148,136,0.08); }
         .rx-header { padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.15s; }
         .rx-header:hover { background: #f9fafb; }
-        .order-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 7px; font-size: 12px; font-weight: 600; text-decoration: none; transition: all 0.2s; }
-        .order-btn:hover { transform: translateY(-1px); }
+        .order-link { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 7px; font-size: 12px; font-weight: 600; text-decoration: none; transition: all 0.15s; }
+        .order-link:hover { transform: translateY(-1px); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in { animation: fadeIn 0.3s ease forwards; }
         @keyframes spin { to { transform: rotate(360deg); } }
@@ -54,7 +54,7 @@ export default function MyPrescriptions() {
             <div style={{ maxWidth: 1000, margin: '0 auto' }}>
               <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 4 }}>Patient Portal</p>
               <h1 style={{ fontSize: 24, fontWeight: 700, color: '#111827', letterSpacing: '-0.01em' }}>My Prescriptions</h1>
-              <p style={{ fontSize: 14, color: '#6b7280', marginTop: 4 }}>View your prescriptions and order medicines online.</p>
+              <p style={{ fontSize: 13, color: '#6b7280', marginTop: 4 }}>View your prescriptions and order medicines online.</p>
             </div>
           </header>
 
@@ -62,7 +62,7 @@ export default function MyPrescriptions() {
 
             {loading && (
               <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
-                <div style={{ width: 32, height: 32, border: '3px solid #e5e7eb', borderTopColor: '#0d9488', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} role="status" aria-label="Loading prescriptions"/>
+                <div style={{ width: 32, height: 32, border: '3px solid #e5e7eb', borderTopColor: '#0d9488', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} role="status" aria-label="Loading"/>
               </div>
             )}
 
@@ -76,9 +76,9 @@ export default function MyPrescriptions() {
               </div>
             )}
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }} role="list">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }} role="list">
               {prescriptions.map((rx, idx) => (
-                <article key={rx.id} className={`rx-card fade-in`} style={{ animationDelay: `${idx * 0.06}s`, opacity: 0 }} role="listitem">
+                <article key={rx.id} className="rx-card fade-in" style={{ animationDelay: `${idx * 0.06}s`, opacity: 0 }} role="listitem">
 
                   {/* Header */}
                   <div className="rx-header" onClick={() => setExpanded(expanded === rx.id ? null : rx.id)}
@@ -104,51 +104,52 @@ export default function MyPrescriptions() {
                     </div>
                   </div>
 
-                  {/* Expanded content */}
+                  {/* Body */}
                   {expanded === rx.id && (
-                    <div id={`rx-body-${rx.id}`} style={{ padding: '0 20px 20px' }}>
-                      <div style={{ height: 1, background: '#f3f4f6', marginBottom: 18 }}/>
+                    <div id={`rx-body-${rx.id}`} style={{ padding: '0 20px 20px', borderTop: '1px solid #f3f4f6' }}>
 
                       {rx.notes && (
-                        <div style={{ background: '#f9fafb', borderRadius: 8, padding: '12px 16px', marginBottom: 18, borderLeft: '3px solid #0d9488' }}>
+                        <div style={{ background: '#f9fafb', borderRadius: 8, padding: '12px 16px', margin: '16px 0', borderLeft: '3px solid #0d9488' }}>
                           <p style={{ fontSize: 12, fontWeight: 600, color: '#0d9488', marginBottom: 4 }}>Doctor's Notes</p>
                           <p style={{ fontSize: 13, color: '#374151', lineHeight: 1.6 }}>{rx.notes}</p>
                         </div>
                       )}
 
-                      <p style={{ fontSize: 12, fontWeight: 600, color: '#111827', marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Prescribed Medicines</p>
+                      <p style={{ fontSize: 12, fontWeight: 600, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '16px 0 12px' }}>Prescribed Medicines</p>
 
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                         {rx.medicines?.map((med, i) => (
-                          <div key={i} style={{ border: '1px solid #f3f4f6', borderRadius: 8, padding: '16px' }}>
-                            <div style={{ marginBottom: 10 }}>
-                              <p style={{ fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 8 }}>{med.name}</p>
-                              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                                {med.dosage && <span style={{ fontSize: 12, color: '#374151', background: '#f3f4f6', padding: '3px 10px', borderRadius: 20 }}>{med.dosage}</span>}
-                                {med.frequency && <span style={{ fontSize: 12, color: '#374151', background: '#f3f4f6', padding: '3px 10px', borderRadius: 20 }}>{med.frequency}</span>}
-                                {med.duration && <span style={{ fontSize: 12, color: '#374151', background: '#f3f4f6', padding: '3px 10px', borderRadius: 20 }}>{med.duration}</span>}
+                          <div key={i} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: 16 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                              <div>
+                                <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 6 }}>{med.name}</p>
+                                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                                  {med.dosage && <span style={{ fontSize: 12, color: '#374151', background: '#f3f4f6', padding: '3px 10px', borderRadius: 20 }}>{med.dosage}</span>}
+                                  {med.frequency && <span style={{ fontSize: 12, color: '#374151', background: '#f3f4f6', padding: '3px 10px', borderRadius: 20 }}>{med.frequency}</span>}
+                                  {med.duration && <span style={{ fontSize: 12, color: '#374151', background: '#f3f4f6', padding: '3px 10px', borderRadius: 20 }}>{med.duration}</span>}
+                                </div>
                               </div>
                             </div>
 
                             {med.instructions && (
                               <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 12, lineHeight: 1.5 }}>
-                                Instructions: {med.instructions}
+                                Note: {med.instructions}
                               </p>
                             )}
 
                             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                               <a href={getMedicineLink(med.name).onemg} target="_blank" rel="noreferrer"
-                                className="order-btn" style={{ background: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa' }}
+                                className="order-link" style={{ background: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa' }}
                                 aria-label={`Order ${med.name} on 1mg`}>
                                 Order on 1mg
                               </a>
                               <a href={getMedicineLink(med.name).pharmEasy} target="_blank" rel="noreferrer"
-                                className="order-btn" style={{ background: '#f0fdfa', color: '#0d9488', border: '1px solid #ccfbf1' }}
+                                className="order-link" style={{ background: '#f0fdfa', color: '#0d9488', border: '1px solid #ccfbf1' }}
                                 aria-label={`Order ${med.name} on PharmEasy`}>
                                 Order on PharmEasy
                               </a>
                               <a href={getMedicineLink(med.name).whatsapp} target="_blank" rel="noreferrer"
-                                className="order-btn" style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}
+                                className="order-link" style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }}
                                 aria-label={`Share ${med.name} on WhatsApp`}>
                                 Share on WhatsApp
                               </a>
