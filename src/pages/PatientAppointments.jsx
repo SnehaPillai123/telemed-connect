@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
-import Navbar from "../components/Navbar";
+import PatientSidebar from "../components/PatientSidebar";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -73,7 +73,9 @@ export default function DoctorAppointments() {
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
 
-      <div style={{ minHeight: '100vh', background: '#f9fafb' }}>
+<div style={{ display: 'flex', minHeight: '100vh', background: '#f9fafb' }}>
+        <PatientSidebar />
+        <div style={{ marginLeft: 250, flex: 1 }}>
         <Navbar />
 
         <main>
@@ -211,6 +213,7 @@ export default function DoctorAppointments() {
             </div>
           </div>
         </main>
+       </div>
       </div>
     </>
   );
