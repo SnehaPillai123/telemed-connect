@@ -1,12 +1,138 @@
 import { useState, useEffect } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase/config";
-import PatientSidebar from "../components/PatientSidebar";
+import Layout from "../components/Layout";
 import { useNavigate } from "react-router-dom";
 
-const SPECIALIZATIONS = ["All", "General Physician", "Cardiologist", "Dermatologist", "Neurologist", "Orthopedic", "Pediatrician", "Psychiatrist", "Gynecologist", "Ophthalmologist", "ENT Specialist", "Pulmonologist"];
-const EXPERIENCE_OPTIONS = ["Any", "1-3 years", "3-5 years", "5-10 years", "10+ years"];
-const FEE_OPTIONS = ["Any", "Under ₹300", "₹300-₹500", "₹500-₹1000", "Above ₹1000"];
+const SPECIALIZATIONS = ["All","General Physician","Cardiologist","Dermatologist",
+  "Neurologist","Orthopedic","Pediatrician","Psychiatrist","Gynecologist",
+  "Ophthalmologist","ENT Specialist","Pulmonologist"];
+const EXPERIENCE_OPTIONS = ["Any","1-3 years","3-5 years","5-10 years","10+ years"];
+const FEE_OPTIONS = ["Any","Under ₹300","₹300-₹500","₹500-₹1000","Above ₹1000"];
+
+function DoctorModal({ doctor, onClose, onBook }) {
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, []);
+
+  return (
+    <>
+      <style>{`
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeInBg { from { opacity: 0; } to { opacity: 1; } }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; display: flex; justify-content: flex-end; animation: fadeInBg 0.2s ease; backdrop-filter: blur(3px); }
+        .modal-panel { width: 420px; max-width: 100vw; background: white; height: 100vh; overflow-y: auto; animation: slideInRight 0.3s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; }
+        .modal-close { position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.2); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; transition: background 0.15s; }
+        .modal-close:hover { background: rgba(255,255,255,0.35); }
+        .info-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; background: #f0fdfa; border: 1px solid #ccfbf1; font-size: 13px; color: #0d9488; font-weight: 500; }
+        .star { color: #f59e0b; font-size: 16px; }
+        @media screen and (max-width: 480px) { .modal-panel { width: 100vw; } }
+      `}</style>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-panel" onClick={e => e.stopPropagation()}>
+
+          {/* Header */}
+          <div style={{ background: 'linear-gradient(135deg, #0d9488, #0284c7)', padding: '28px 24px 24px', position: 'relative', flexShrink: 0 }}>
+            <button className="modal-close" onClick={onClose} aria-label="Close">✕</button>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+              <div style={{ width: 64, height: 64, borderRadius: 16, background: 'rgba(255,255,255,0.2)', border: '2px solid rgba(255,255,255,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span style={{ fontSize: 22, fontWeight: 800, color: 'white' }}>
+                  {doctor.fullName?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+                </span>
+              </div>
+              <div>
+                <p style={{ fontSize: 20, fontWeight: 800, color: 'white', marginBottom: 4 }}>Dr. {doctor.fullName}</p>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.9)', background: 'rgba(255,255,255,0.2)', padding: '3px 12px', borderRadius: 20 }}>
+                  {doctor.specialization}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Body */}
+          <div style={{ padding: '20px 24px', flex: 1 }}>
+
+            {/* Stats */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 20 }}>
+              {[
+                { label: 'Experience', value: `${doctor.experience || '—'} yrs` },
+                { label: 'Rating', value: `${doctor.rating || '4.5'} ★` },
+                { label: 'Fee', value: `₹${doctor.consultationFee || '—'}` },
+              ].map((s, i) => (
+                <div key={i} style={{ textAlign: 'center', padding: '12px 8px', background: '#f9fafb', borderRadius: 10, border: '1px solid #e5e7eb' }}>
+                  <p style={{ fontSize: 18, fontWeight: 800, color: '#0d9488', lineHeight: 1, marginBottom: 4 }}>{s.value}</p>
+                  <p style={{ fontSize: 11, color: '#6b7280' }}>{s.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Status */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 14px', background: '#f0fdf4', borderRadius: 20, border: '1px solid #bbf7d0' }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981' }}/>
+                <span style={{ fontSize: 12, color: '#16a34a', fontWeight: 600 }}>Available Now</span>
+              </div>
+              <div className="info-chip">
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="#0d9488" strokeWidth="1.5"/></svg>
+                Verified Doctor
+              </div>
+            </div>
+
+            {/* Bio */}
+            {doctor.bio && (
+              <div style={{ marginBottom: 20 }}>
+                <p style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginBottom: 8 }}>About</p>
+                <p style={{ fontSize: 13, color: '#6b7280', lineHeight: 1.7 }}>{doctor.bio}</p>
+              </div>
+            )}
+
+            {/* Info grid */}
+            <div style={{ marginBottom: 20 }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginBottom: 10 }}>Details</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {[
+                  { label: 'Specialization', value: doctor.specialization || '—' },
+                  { label: 'License No.', value: doctor.licenseNumber || 'Verified' },
+                  { label: 'Consultation Fee', value: `₹${doctor.consultationFee || '—'} per session` },
+                  { label: 'Experience', value: `${doctor.experience || '—'} years` },
+                  { label: 'Availability', value: doctor.availability || 'Mon-Sat, 9AM-6PM' },
+                  { label: 'Language', value: doctor.preferredLanguage || 'English, Hindi' },
+                ].map((item, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 12px', background: '#f9fafb', borderRadius: 8, gap: 12 }}>
+                    <p style={{ fontSize: 12, color: '#6b7280' }}>{item.label}</p>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: '#111827', textAlign: 'right' }}>{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* What to expect */}
+            <div style={{ background: '#f0fdfa', borderRadius: 10, padding: 16, border: '1px solid #ccfbf1', marginBottom: 20 }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: '#0d9488', marginBottom: 8 }}>What to Expect</p>
+              {['Online consultation via our platform', 'Digital prescription after consultation', 'Follow-up support available', 'Medicine order links provided'].map((s, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke="#0d9488" strokeWidth="2" strokeLinecap="round"/></svg>
+                  <p style={{ fontSize: 12, color: '#374151' }}>{s}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Footer CTA */}
+          <div style={{ padding: '16px 24px', borderTop: '1px solid #e5e7eb', flexShrink: 0, display: 'flex', gap: 10 }}>
+            <button onClick={onClose} style={{ flex: 1, padding: '11px', background: 'white', color: '#374151', border: '1.5px solid #e5e7eb', borderRadius: 9, fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+              Back
+            </button>
+            <button onClick={() => onBook(doctor.id)} style={{ flex: 2, padding: '11px', background: '#0d9488', color: 'white', border: 'none', borderRadius: 9, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+              Book Consultation — ₹{doctor.consultationFee || '—'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
 
 export default function SearchDoctors() {
   const [doctors, setDoctors] = useState([]);
@@ -16,6 +142,7 @@ export default function SearchDoctors() {
   const [experience, setExperience] = useState("Any");
   const [fee, setFee] = useState("Any");
   const [loading, setLoading] = useState(true);
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -30,7 +157,9 @@ export default function SearchDoctors() {
   useEffect(() => {
     let result = [...doctors];
     if (activeSpec !== "All") result = result.filter(d => d.specialization === activeSpec);
-    if (search.trim()) result = result.filter(d => d.fullName?.toLowerCase().includes(search.toLowerCase()) || d.specialization?.toLowerCase().includes(search.toLowerCase()));
+    if (search.trim()) result = result.filter(d =>
+      d.fullName?.toLowerCase().includes(search.toLowerCase()) ||
+      d.specialization?.toLowerCase().includes(search.toLowerCase()));
     if (experience !== "Any") {
       result = result.filter(d => {
         const exp = parseInt(d.experience) || 0;
@@ -57,127 +186,154 @@ export default function SearchDoctors() {
   const clearFilters = () => { setActiveSpec("All"); setExperience("Any"); setFee("Any"); setSearch(""); };
 
   return (
-    <>
+    <Layout title="Find a Doctor" subtitle="Search Doctors">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        * { font-family: 'Inter', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
-        .filter-btn { width: 100%; text-align: left; padding: 8px 12px; border-radius: 7px; border: 1px solid transparent; background: none; font-size: 13px; font-weight: 500; color: #6b7280; cursor: pointer; transition: all 0.15s; font-family: Inter, sans-serif; }
-        .filter-btn:hover { background: #f0fdfa; color: #0d9488; }
-        .filter-btn.active { background: #f0fdfa; color: #0d9488; font-weight: 600; border-color: #ccfbf1; }
-        .doctor-card { background: white; border-radius: 12px; border: 1px solid #e5e7eb; overflow: hidden; transition: all 0.2s; }
-        .doctor-card:hover { border-color: #0d9488; box-shadow: 0 8px 24px rgba(13,148,136,0.1); transform: translateY(-2px); }
-        .book-btn { width: 100%; padding: 10px; background: #0d9488; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; font-family: Inter, sans-serif; }
-        .book-btn:hover { background: #0f766e; }
-        .search-input { width: 100%; padding: 10px 14px 10px 38px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 13px; color: #111827; background: white; outline: none; transition: all 0.2s; font-family: Inter, sans-serif; }
-        .search-input:focus { border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,0.1); }
-        .filter-label { font-size: 10px; font-weight: 700; color: '#374151'; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; display: block; color: #9ca3af; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-        .fade-in { animation: fadeIn 0.3s ease forwards; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .filter-btn { width:100%; text-align:left; padding:8px 12px; border-radius:7px; border:1px solid transparent; background:none; font-size:13px; font-weight:500; color:#6b7280; cursor:pointer; transition:all 0.15s; font-family:Inter,sans-serif; }
+        .filter-btn:hover { background:#f0fdfa; color:#0d9488; }
+        .filter-btn.active { background:#f0fdfa; color:#0d9488; font-weight:600; border-color:#ccfbf1; }
+        .doctor-card { background:white; border-radius:14px; border:1px solid #e5e7eb; overflow:hidden; transition:all 0.25s; cursor:pointer; }
+        .doctor-card:hover { border-color:#0d9488; box-shadow:0 12px 32px rgba(13,148,136,0.12); transform:translateY(-4px); }
+        .book-btn { width:100%; padding:10px; background:#0d9488; color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.15s; font-family:Inter,sans-serif; }
+        .book-btn:hover { background:#0f766e; }
+        .preview-btn { width:100%; padding:9px; background:white; color:#0d9488; border:1.5px solid #ccfbf1; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.15s; font-family:Inter,sans-serif; }
+        .preview-btn:hover { background:#f0fdfa; }
+        .search-input { width:100%; padding:10px 14px 10px 38px; border:1.5px solid #e5e7eb; border-radius:8px; font-size:13px; color:#111827; background:white; outline:none; transition:all 0.2s; font-family:Inter,sans-serif; }
+        .search-input:focus { border-color:#0d9488; box-shadow:0 0 0 3px rgba(13,148,136,0.1); }
+        .filter-label { font-size:10px; font-weight:700; color:#9ca3af; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px; display:block; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+        .fade-in { animation:fadeIn 0.3s ease forwards; }
+        @keyframes spin { to{transform:rotate(360deg)} }
       `}</style>
 
-      <div style={{ display: 'flex', minHeight: '100vh', background: '#f9fafb' }}>
-        <PatientSidebar />
+      {selectedDoctor && (
+        <DoctorModal
+          doctor={selectedDoctor}
+          onClose={() => setSelectedDoctor(null)}
+          onBook={(id) => { setSelectedDoctor(null); navigate(`/book/${id}`); }}
+        />
+      )}
 
-        {/* Filters panel */}
-        <aside style={{ width: 220, background: 'white', borderRight: '1px solid #e5e7eb', position: 'fixed', left: 250, top: 0, height: '100vh', overflowY: 'auto', padding: '20px 12px', zIndex: 40 }}>
+      <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+
+        {/* Filter panel */}
+        <aside style={{ width: 210, flexShrink: 0, background: 'white', borderRadius: 12, border: '1px solid #e5e7eb', padding: '18px 12px', position: 'sticky', top: 80 }}>
           <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 16, padding: '0 4px' }}>Filters</p>
 
-          <div style={{ position: 'relative', marginBottom: 20 }}>
+          <div style={{ position: 'relative', marginBottom: 18 }}>
             <svg style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="14" height="14" fill="none" viewBox="0 0 24 24">
               <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round"/>
             </svg>
-            <input className="search-input" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)}/>
+            <input className="search-input" placeholder="Search doctors..." value={search} onChange={e => setSearch(e.target.value)}/>
           </div>
 
           <div style={{ marginBottom: 16 }}>
             <span className="filter-label">Specialization</span>
             {SPECIALIZATIONS.map(s => (
-              <button key={s} className={`filter-btn ${activeSpec === s ? 'active' : ''}`} onClick={() => setActiveSpec(s)}>{s}</button>
+              <button key={s} className={`filter-btn ${activeSpec===s?'active':''}`} onClick={() => setActiveSpec(s)}>{s}</button>
             ))}
           </div>
-
           <div style={{ marginBottom: 16 }}>
             <span className="filter-label">Experience</span>
             {EXPERIENCE_OPTIONS.map(e => (
-              <button key={e} className={`filter-btn ${experience === e ? 'active' : ''}`} onClick={() => setExperience(e)}>{e}</button>
+              <button key={e} className={`filter-btn ${experience===e?'active':''}`} onClick={() => setExperience(e)}>{e}</button>
             ))}
           </div>
-
           <div style={{ marginBottom: 16 }}>
             <span className="filter-label">Fee Range</span>
             {FEE_OPTIONS.map(f => (
-              <button key={f} className={`filter-btn ${fee === f ? 'active' : ''}`} onClick={() => setFee(f)}>{f}</button>
+              <button key={f} className={`filter-btn ${fee===f?'active':''}`} onClick={() => setFee(f)}>{f}</button>
             ))}
           </div>
-
-          {(activeSpec !== 'All' || experience !== 'Any' || fee !== 'Any' || search) && (
-            <button onClick={clearFilters} style={{ width: '100%', padding: '8px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
-              Clear Filters
+          {(activeSpec!=='All'||experience!=='Any'||fee!=='Any'||search) && (
+            <button onClick={clearFilters} style={{ width:'100%', padding:'8px', background:'#fef2f2', color:'#dc2626', border:'1px solid #fecaca', borderRadius:8, fontSize:12, fontWeight:600, cursor:'pointer', fontFamily:'Inter,sans-serif' }}>
+              Clear All Filters
             </button>
           )}
         </aside>
 
         {/* Results */}
-        <main style={{ marginLeft: 470, flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <header style={{ background: 'white', borderBottom: '1px solid #e5e7eb', padding: '24px 32px', flexShrink: 0 }}>
-            <h1 style={{ fontSize: 22, fontWeight: 800, color: '#111827', letterSpacing: '-0.01em', marginBottom: 4 }}>Find a Doctor</h1>
-            <p style={{ fontSize: 13, color: '#6b7280' }}>
-              {loading ? 'Loading...' : `${filtered.length} doctor${filtered.length !== 1 ? 's' : ''} found`}
-              {activeSpec !== 'All' && ` · ${activeSpec}`}
-            </p>
-          </header>
-
-          <div style={{ padding: '28px 32px', flex: 1 }}>
-            {loading && <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}><div style={{ width: 36, height: 36, border: '3px solid #e5e7eb', borderTopColor: '#0d9488', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}/></div>}
-
-            {!loading && filtered.length === 0 && (
-              <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e5e7eb', padding: '60px', textAlign: 'center' }}>
-                <svg width="48" height="48" fill="none" viewBox="0 0 24 24" style={{ margin: '0 auto 16px', display: 'block' }}>
-                  <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke="#d1d5db" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-                <p style={{ fontSize: 15, fontWeight: 600, color: '#374151', marginBottom: 6 }}>No doctors found</p>
-                <button onClick={clearFilters} style={{ padding: '9px 20px', background: '#0d9488', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>Clear Filters</button>
-              </div>
-            )}
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
-              {filtered.map((doc, i) => (
-                <article key={doc.id} className="doctor-card fade-in" style={{ animationDelay: `${i*0.04}s`, opacity: 0 }}>
-                  <div style={{ padding: '18px 18px 14px', borderBottom: '1px solid #f9fafb' }}>
-                    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 12 }}>
-                      <div style={{ width: 46, height: 46, borderRadius: 10, background: '#f0fdfa', border: '1px solid #ccfbf1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <span style={{ fontSize: 14, fontWeight: 800, color: '#0d9488' }}>
-                          {doc.fullName?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
-                        </span>
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 4 }}>Dr. {doc.fullName}</p>
-                        <span style={{ fontSize: 11, fontWeight: 600, color: '#0d9488', background: '#f0fdfa', padding: '2px 9px', borderRadius: 20, border: '1px solid #ccfbf1' }}>{doc.specialization}</span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0 }}>
-                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#10b981' }}/>
-                        <span style={{ fontSize: 10, color: '#059669', fontWeight: 600 }}>Online</span>
-                      </div>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
-                      {[{ l: 'Exp', v: `${doc.experience || '—'}yr` }, { l: 'Rating', v: doc.rating || '4.5' }, { l: 'Fee', v: `₹${doc.consultationFee || '—'}` }].map((s, i) => (
-                        <div key={i} style={{ textAlign: 'center', padding: '8px 4px', background: '#f9fafb', borderRadius: 6 }}>
-                          <p style={{ fontSize: 12, fontWeight: 700, color: i === 2 ? '#0d9488' : '#111827', marginBottom: 1 }}>{s.v}</p>
-                          <p style={{ fontSize: 9, color: '#9ca3af', fontWeight: 500 }}>{s.l}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div style={{ padding: '12px 18px' }}>
-                    <button className="book-btn" onClick={() => navigate(`/book/${doc.id}`)}>Book Consultation</button>
-                  </div>
-                </article>
-              ))}
+        <main style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 2 }}>
+                {loading ? 'Loading...' : `${filtered.length} doctor${filtered.length!==1?'s':''} found`}
+                {activeSpec!=='All' && <span style={{ color: '#0d9488' }}> · {activeSpec}</span>}
+              </p>
+              <p style={{ fontSize: 12, color: '#9ca3af' }}>Click any card to preview full profile</p>
             </div>
+          </div>
+
+          {loading && (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
+              <div style={{ width: 32, height: 32, border: '3px solid #e5e7eb', borderTopColor: '#0d9488', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}/>
+            </div>
+          )}
+
+          {!loading && filtered.length === 0 && (
+            <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e5e7eb', padding: '60px', textAlign: 'center' }}>
+              <p style={{ fontSize: 15, fontWeight: 600, color: '#374151', marginBottom: 6 }}>No doctors found</p>
+              <button onClick={clearFilters} style={{ padding: '9px 20px', background: '#0d9488', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}>
+                Clear Filters
+              </button>
+            </div>
+          )}
+
+          <div className="grid-3col" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 14 }}>
+            {filtered.map((doc, i) => (
+              <article key={doc.id} className="doctor-card fade-in" style={{ animationDelay: `${i*0.04}s`, opacity: 0 }}
+                onClick={() => setSelectedDoctor(doc)}>
+
+                {/* Card top */}
+                <div style={{ padding: '18px 18px 14px', borderBottom: '1px solid #f9fafb' }}>
+                  <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 12 }}>
+                    <div style={{ width: 48, height: 48, borderRadius: 12, background: 'linear-gradient(135deg, #f0fdfa, #e0f2fe)', border: '1px solid #ccfbf1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ fontSize: 15, fontWeight: 800, color: '#0d9488' }}>
+                        {doc.fullName?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+                      </span>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 4 }}>Dr. {doc.fullName}</p>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#0d9488', background: '#f0fdfa', padding: '2px 9px', borderRadius: 20, border: '1px solid #ccfbf1' }}>{doc.specialization}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                      <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#10b981' }}/>
+                    </div>
+                  </div>
+
+                  {doc.bio && (
+                    <p style={{ fontSize: 11, color: '#9ca3af', lineHeight: 1.5, marginBottom: 10, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {doc.bio}
+                    </p>
+                  )}
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
+                    {[
+                      { l: 'Exp', v: `${doc.experience||'—'}yr` },
+                      { l: 'Rating', v: doc.rating||'4.5' },
+                      { l: 'Fee', v: `₹${doc.consultationFee||'—'}` }
+                    ].map((s, i) => (
+                      <div key={i} style={{ textAlign: 'center', padding: '8px 4px', background: '#f9fafb', borderRadius: 7 }}>
+                        <p style={{ fontSize: 12, fontWeight: 700, color: i===2?'#0d9488':'#111827', marginBottom: 1 }}>{s.v}</p>
+                        <p style={{ fontSize: 9, color: '#9ca3af' }}>{s.l}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Card footer */}
+                <div style={{ padding: '12px 18px', display: 'flex', gap: 8 }}>
+                  <button className="preview-btn" onClick={e => { e.stopPropagation(); setSelectedDoctor(doc); }}>
+                    View Profile
+                  </button>
+                  <button className="book-btn" onClick={e => { e.stopPropagation(); navigate(`/book/${doc.id}`); }}>
+                    Book
+                  </button>
+                </div>
+              </article>
+            ))}
           </div>
         </main>
       </div>
-    </>
+    </Layout>
   );
 }

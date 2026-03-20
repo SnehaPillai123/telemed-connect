@@ -26,6 +26,7 @@ export default function BookAppointment() {
   const [dateError, setDateError] = useState("");
   const [timeError, setTimeError] = useState("");
   const [reasonError, setReasonError] = useState("");
+const [showPreview, setShowPreview] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
   const maxDate = new Date(); maxDate.setMonth(maxDate.getMonth() + 2);
@@ -44,8 +45,9 @@ export default function BookAppointment() {
   const validateTime = (val) => { if (!val) { setTimeError("Please select a time slot"); return false; } setTimeError(""); return true; };
   const validateReason = (val) => { if (!val.trim()) { setReasonError("Please describe your reason for visit"); return false; } if (val.trim().length < 10) { setReasonError("Please provide more details (min 10 characters)"); return false; } setReasonError(""); return true; };
 
-  const handleBook = async (e) => {
-    e.preventDefault();
+const handleBook = async (e) => {
+  if (e) e.preventDefault();
+  setShowPreview(false);
     const d = validateDate(selectedDate);
     const t = validateTime(selectedTime);
     const r = validateReason(reason);
@@ -176,9 +178,16 @@ export default function BookAppointment() {
                   {reasonError && <p className="error-msg">{reasonError}</p>}
                 </div>
 
-                <button className="book-btn" type="submit" disabled={booking}>
-                  {booking ? "Booking appointment..." : "Confirm Appointment"}
-                </button>
+              <button className="book-btn" type="button" disabled={booking}
+  onClick={(e) => {
+    e.preventDefault();
+    const d = validateDate(selectedDate);
+    const t = validateTime(selectedTime);
+    const r = validateReason(reason);
+    if (d && t && r) setShowPreview(true);
+  }}>
+  Preview & Confirm
+</button>
               </form>
 
               {/* Summary */}
@@ -225,6 +234,61 @@ export default function BookAppointment() {
           </div>
         </main>
       </div>
+{showPreview && (
+  <>
+    <style>{`
+      @keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+      .preview-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px); }
+      .preview-modal { background:white;border-radius:16px;width:100%;max-width:440px;overflow:hidden;animation:fadeInUp 0.3s ease; }
+    `}</style>
+    <div className="preview-overlay" onClick={() => setShowPreview(false)}>
+      <div className="preview-modal" onClick={e => e.stopPropagation()}>
+        <div style={{ background:'linear-gradient(135deg,#0d9488,#0284c7)', padding:'20px 24px' }}>
+          <p style={{ fontSize:11, fontWeight:700, color:'rgba(255,255,255,0.8)', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:6 }}>Booking Preview</p>
+          <p style={{ fontSize:18, fontWeight:800, color:'white' }}>Confirm Your Appointment</p>
+        </div>
+        <div style={{ padding:'20px 24px' }}>
+          <div style={{ display:'flex', gap:14, alignItems:'center', marginBottom:18, padding:'14px', background:'#f0fdfa', borderRadius:10, border:'1px solid #ccfbf1' }}>
+            <div style={{ width:44,height:44,borderRadius:10,background:'#0d9488',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0 }}>
+              <span style={{ fontSize:14,fontWeight:700,color:'white' }}>{doctor.fullName?.split(" ").map(n=>n[0]).join("").toUpperCase().slice(0,2)}</span>
+            </div>
+            <div>
+              <p style={{ fontSize:15,fontWeight:700,color:'#111827',marginBottom:2 }}>Dr. {doctor.fullName}</p>
+              <p style={{ fontSize:12,color:'#0d9488' }}>{doctor.specialization}</p>
+            </div>
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:18 }}>
+            {[
+              { icon:'📅', label:'Date', value:new Date(selectedDate+'T00:00:00').toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) },
+              { icon:'🕐', label:'Time', value:selectedTime },
+              { icon:'💰', label:'Consultation Fee', value:`₹${doctor.consultationFee}` },
+              { icon:'📝', label:'Reason', value:reason },
+            ].map((item, i) => (
+              <div key={i} style={{ display:'flex',gap:12,padding:'10px 14px',background:'#f9fafb',borderRadius:8 }}>
+                <span style={{ fontSize:16 }}>{item.icon}</span>
+                <div style={{ flex:1 }}>
+                  <p style={{ fontSize:11,color:'#9ca3af',marginBottom:2 }}>{item.label}</p>
+                  <p style={{ fontSize:13,fontWeight:600,color:'#111827' }}>{item.value}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ background:'#fffbeb',borderRadius:8,padding:'10px 14px',marginBottom:18,border:'1px solid #fde68a' }}>
+            <p style={{ fontSize:12,color:'#92400e' }}>⚠️ Appointment will be confirmed once the doctor accepts your request.</p>
+          </div>
+          <div style={{ display:'flex',gap:10 }}>
+            <button onClick={() => setShowPreview(false)} style={{ flex:1,padding:'11px',background:'white',color:'#374151',border:'1.5px solid #e5e7eb',borderRadius:9,fontSize:14,fontWeight:500,cursor:'pointer',fontFamily:'Inter,sans-serif' }}>
+              Edit
+            </button>
+            <button onClick={handleBook} disabled={booking} style={{ flex:2,padding:'11px',background:'#0d9488',color:'white',border:'none',borderRadius:9,fontSize:14,fontWeight:700,cursor:'pointer',fontFamily:'Inter,sans-serif' }}>
+              {booking ? 'Booking...' : 'Confirm Booking'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </>
+)}
     </>
   );
 }
