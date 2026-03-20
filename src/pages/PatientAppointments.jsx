@@ -172,7 +172,7 @@ export default function PatientAppointments() {
             <div>
               <p style={{ fontSize:14, fontWeight:700, color:'#111827', marginBottom:16 }}>Medical Timeline</p>
               {[...appointments.map(a=>({...a,_type:'appointment'})), ...prescriptions.map(r=>({...r,_type:'prescription'}))].sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)).map((item, i) => (
-                <div key={i} style={{ display:'flex', gap:14, paddingBottom:20, position:'relative' }} className="fade-in" style={{ animationDelay:`${i*0.05}s`, opacity:0 }}>
+                <div className="fade-in" style={{ paddingBottom:20, position:'relative', animationDelay:`${i*0.05}s`, opacity:0 }}>
                   <div style={{ display:'flex', flexDirection:'column', alignItems:'center', flexShrink:0 }}>
                     <div style={{ width:36, height:36, borderRadius:9, background:item._type==='prescription'?'#eff6ff':'#f0fdfa', border:`1px solid ${item._type==='prescription'?'#bfdbfe':'#ccfbf1'}`, display:'flex', alignItems:'center', justifyContent:'center' }}>
                       <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
