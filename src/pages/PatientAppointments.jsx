@@ -1,38 +1,51 @@
 import { useState, useEffect } from "react";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
-import Navbar from "../components/Navbar";
-import { useNavigate } from "react-router-dom";
+import Layout from "../components/Layout";
+import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 
-const STATUS_COLORS = {
-  pending: { bg: '#fff7ed', color: '#c2410c', border: '#fed7aa' },
-  confirmed: { bg: '#f0fdfa', color: '#0d9488', border: '#99f6e4' },
-  completed: { bg: '#f0f9ff', color: '#0284c7', border: '#bae6fd' },
-  cancelled: { bg: '#fef2f2', color: '#ef4444', border: '#fecaca' },
+const STATUS_STYLE = {
+  pending:   { bg: '#fffbeb', color: '#d97706', label: 'Pending' },
+  confirmed: { bg: '#f0fdfa', color: '#0d9488', label: 'Confirmed' },
+  completed: { bg: '#f0fdf4', color: '#16a34a', label: 'Completed' },
+  cancelled: { bg: '#fef2f2', color: '#dc2626', label: 'Cancelled' },
 };
 
 export default function PatientAppointments() {
   const { user } = useAuth();
   const [appointments, setAppointments] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [prescriptions, setPrescriptions] = useState([]);
   const [filter, setFilter] = useState("all");
-  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("appointments");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
-      const q = query(collection(db, "appointments"), where("patientId", "==", user.uid));
-      const snap = await getDocs(q);
-      const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      data.sort((a, b) => new Date(a.appointmentDate) - new Date(b.appointmentDate));
-      setAppointments(data);
+    const fetchAll = async () => {
+      const [aptSnap, rxSnap] = await Promise.all([
+        getDocs(query(collection(db, "appointments"), where("patientId", "==", user.uid))),
+        getDocs(query(collection(db, "prescriptions"), where("patientId", "==", user.uid))),
+      ]);
+      const apts = aptSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      apts.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+      setAppointments(apts);
+      setPrescriptions(rxSnap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)));
       setLoading(false);
     };
-    fetch();
+    fetchAll();
   }, [user]);
 
-  const filtered = filter === "all" ? appointments : appointments.filter(a => a.status === filter);
+  const handleCancel = async (id) => {
+    if (!window.confirm("Cancel this appointment?")) return;
+    try {
+      await updateDoc(doc(db, "appointments", id), { status: "cancelled" });
+      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: "cancelled" } : a));
+      toast.success("Appointment cancelled");
+    } catch { toast.error("Failed to cancel"); }
+  };
 
+  const filtered = filter === "all" ? appointments : appointments.filter(a => a.status === filter);
   const counts = {
     all: appointments.length,
     pending: appointments.filter(a => a.status === "pending").length,
@@ -42,124 +55,178 @@ export default function PatientAppointments() {
   };
 
   return (
-    <>
+    <Layout title="Appointments & Records" subtitle="Patient Portal">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
-        * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
-        .card { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); transition: all 0.2s; }
-        .card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
-        .filter-btn { padding: 8px 18px; border-radius: 20px; border: 1.5px solid #e2e8f0; background: white; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; color: #64748b; }
-        .filter-btn.active { background: #0f172a; border-color: #0f172a; color: white; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+        .fade-in { animation: fadeIn 0.3s ease forwards; }
+        .filter-chip { padding:6px 14px; border-radius:20px; border:1.5px solid #e5e7eb; background:white; font-size:12px; font-weight:500; color:#374151; cursor:pointer; transition:all 0.15s; font-family:Inter,sans-serif; display:inline-flex; align-items:center; gap:5px; }
+        .filter-chip:hover { border-color:#0d9488; color:#0d9488; }
+        .filter-chip.active { background:#0d9488; border-color:#0d9488; color:white; }
+        .apt-card { background:white; border-radius:12px; border:1px solid #e5e7eb; padding:16px 18px; transition:all 0.2s; margin-bottom:10px; }
+        .apt-card:hover { border-color:#0d9488; box-shadow:0 4px 14px rgba(13,148,136,0.07); }
+        .rx-card { background:white; border-radius:12px; border:1px solid #e5e7eb; overflow:hidden; transition:all 0.2s; margin-bottom:10px; }
+        .rx-card:hover { border-color:#0d9488; box-shadow:0 4px 14px rgba(13,148,136,0.07); }
+        .rx-header { padding:16px 18px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+        .rx-header:hover { background:#f9fafb; }
+        .order-link { display:inline-flex; align-items:center; gap:5px; padding:5px 12px; border-radius:7px; font-size:12px; font-weight:600; text-decoration:none; }
       `}</style>
 
-      <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
-        <Navbar />
+      {/* Summary stats */}
+      <div className="grid-4col" style={{ marginBottom: 20 }}>
+        {[
+          { l: 'Total', v: counts.all, c: '#374151', bg: '#f9fafb' },
+          { l: 'Upcoming', v: counts.pending + counts.confirmed, c: '#0d9488', bg: '#f0fdfa' },
+          { l: 'Completed', v: counts.completed, c: '#16a34a', bg: '#f0fdf4' },
+          { l: 'Prescriptions', v: prescriptions.length, c: '#2563eb', bg: '#eff6ff' },
+        ].map((s, i) => (
+          <div key={i} style={{ background: s.bg, borderRadius: 10, padding: '16px', border: '1px solid #e5e7eb', textAlign: 'center' }}>
+            <p style={{ fontSize: 26, fontWeight: 800, color: s.c, lineHeight: 1, marginBottom: 4 }}>{loading ? '—' : s.v}</p>
+            <p style={{ fontSize: 12, color: '#6b7280' }}>{s.l}</p>
+          </div>
+        ))}
+      </div>
 
-        {/* Header */}
-        <div style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #0d9488 100%)', padding: '40px 48px' }}>
-          <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <p style={{ color: '#64748b', fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
-              My Health
-            </p>
-            <h1 style={{ fontFamily: 'DM Serif Display', color: 'white', fontSize: 34, fontWeight: 400, marginBottom: 24 }}>
-              My Appointments
-            </h1>
-            <div style={{ display: 'flex', gap: 16 }}>
-              {[
-                { label: 'Total', value: counts.all, color: '#94a3b8' },
-                { label: 'Pending', value: counts.pending, color: '#fb923c' },
-                { label: 'Confirmed', value: counts.confirmed, color: '#0d9488' },
-                { label: 'Completed', value: counts.completed, color: '#0284c7' },
-              ].map((s, i) => (
-                <div key={i} style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 12, padding: '12px 20px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                  <p style={{ color: s.color, fontSize: 22, fontWeight: 600 }}>{s.value}</p>
-                  <p style={{ color: '#64748b', fontSize: 12, marginTop: 2 }}>{s.label}</p>
+      {/* Tabs */}
+      <div className="tab-bar">
+        <button className={`tab-btn ${activeTab === 'appointments' ? 'active' : ''}`} onClick={() => setActiveTab('appointments')}>
+          📅 Appointments ({counts.all})
+        </button>
+        <button className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`} onClick={() => setActiveTab('history')}>
+          📋 Health Records
+        </button>
+      </div>
+
+      {/* APPOINTMENTS TAB */}
+      {activeTab === 'appointments' && (
+        <div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {[{ k:'all',l:'All' },{ k:'pending',l:'Pending' },{ k:'confirmed',l:'Confirmed' },{ k:'completed',l:'Completed' },{ k:'cancelled',l:'Cancelled' }].map(f => (
+                <button key={f.k} className={`filter-chip ${filter===f.k?'active':''}`} onClick={() => setFilter(f.k)}>
+                  {f.l}
+                  <span style={{ fontSize:10, background: filter===f.k?'rgba(255,255,255,0.25)':'#f3f4f6', color: filter===f.k?'white':'#6b7280', padding:'1px 6px', borderRadius:20, fontWeight:600 }}>{counts[f.k]}</span>
+                </button>
+              ))}
+            </div>
+            <Link to="/search-doctors" style={{ padding:'8px 16px', background:'#0d9488', color:'white', borderRadius:8, fontSize:12, fontWeight:600, textDecoration:'none' }}>
+              + Book New
+            </Link>
+          </div>
+
+          {loading && <div style={{ display:'flex', justifyContent:'center', padding:'60px 0' }}><div style={{ width:30, height:30, border:'3px solid #e5e7eb', borderTopColor:'#0d9488', borderRadius:'50%', animation:'spin 0.8s linear infinite' }}/></div>}
+
+          {!loading && filtered.length === 0 && (
+            <div style={{ background:'white', borderRadius:12, border:'1px solid #e5e7eb', padding:'48px', textAlign:'center' }}>
+              <p style={{ fontSize:14, fontWeight:600, color:'#374151', marginBottom:6 }}>No appointments found</p>
+              <p style={{ fontSize:13, color:'#9ca3af' }}>{filter==='all'?'Book your first consultation to get started.':`No ${filter} appointments.`}</p>
+            </div>
+          )}
+
+          {filtered.map((apt, i) => {
+            const st = STATUS_STYLE[apt.status] || STATUS_STYLE.pending;
+            return (
+              <article key={apt.id} className="apt-card fade-in" style={{ animationDelay:`${i*0.04}s`, opacity:0 }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:12 }}>
+                  <div style={{ display:'flex', gap:12, flex:1, minWidth:0 }}>
+                    <div style={{ width:44, height:44, borderRadius:10, background:'#f0fdfa', border:'1px solid #ccfbf1', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                      <span style={{ fontSize:12, fontWeight:700, color:'#0d9488' }}>{apt.doctorName?.split(" ").map(n=>n[0]).join("").toUpperCase().slice(0,2)}</span>
+                    </div>
+                    <div style={{ flex:1 }}>
+                      <p style={{ fontSize:14, fontWeight:700, color:'#111827', marginBottom:2 }}>Dr. {apt.doctorName}</p>
+                      <p style={{ fontSize:12, color:'#0d9488', fontWeight:500, marginBottom:6 }}>{apt.doctorSpecialization}</p>
+                      <div style={{ display:'flex', gap:16, flexWrap:'wrap' }}>
+                        <span style={{ fontSize:12, color:'#374151' }}>📅 {new Date(apt.appointmentDate+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}</span>
+                        <span style={{ fontSize:12, color:'#374151' }}>🕐 {apt.appointmentTime}</span>
+                      </div>
+                      {apt.reason && <p style={{ fontSize:12, color:'#6b7280', marginTop:6 }}>{apt.reason}</p>}
+                    </div>
+                  </div>
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:8, flexShrink:0 }}>
+                    <span style={{ fontSize:11, fontWeight:600, color:st.color, background:st.bg, padding:'4px 10px', borderRadius:20 }}>{st.label}</span>
+                    {(apt.status==='pending'||apt.status==='confirmed') && (
+                      <button onClick={() => handleCancel(apt.id)} style={{ padding:'6px 12px', background:'white', color:'#dc2626', border:'1.5px solid #fecaca', borderRadius:7, fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'Inter,sans-serif' }}>Cancel</button>
+                    )}
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
+
+      {/* HEALTH RECORDS TAB */}
+      {activeTab === 'history' && (
+        <div>
+          {loading && <div style={{ display:'flex', justifyContent:'center', padding:'60px 0' }}><div style={{ width:30, height:30, border:'3px solid #e5e7eb', borderTopColor:'#0d9488', borderRadius:'50%', animation:'spin 0.8s linear infinite' }}/></div>}
+
+          {!loading && appointments.length === 0 && (
+            <div style={{ background:'white', borderRadius:12, border:'1px solid #e5e7eb', padding:'48px', textAlign:'center' }}>
+              <p style={{ fontSize:14, fontWeight:600, color:'#374151', marginBottom:6 }}>No health records yet</p>
+              <p style={{ fontSize:13, color:'#9ca3af' }}>Your medical history will appear here after your first consultation.</p>
+            </div>
+          )}
+
+          {/* Timeline */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 280px', gap:20 }}>
+            <div>
+              <p style={{ fontSize:14, fontWeight:700, color:'#111827', marginBottom:16 }}>Medical Timeline</p>
+              {[...appointments.map(a=>({...a,_type:'appointment'})), ...prescriptions.map(r=>({...r,_type:'prescription'}))].sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)).map((item, i) => (
+                <div className="fade-in" style={{ paddingBottom:20, position:'relative', animationDelay:`${i*0.05}s`, opacity:0 }}>
+                  <div style={{ display:'flex', flexDirection:'column', alignItems:'center', flexShrink:0 }}>
+                    <div style={{ width:36, height:36, borderRadius:9, background:item._type==='prescription'?'#eff6ff':'#f0fdfa', border:`1px solid ${item._type==='prescription'?'#bfdbfe':'#ccfbf1'}`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+                        <path d={item._type==='prescription'?'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2':'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'} stroke={item._type==='prescription'?'#2563eb':'#0d9488'} strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    </div>
+                    {i < 10 && <div style={{ width:2, flex:1, background:'#f3f4f6', minHeight:20 }}/>}
+                  </div>
+                  <div style={{ flex:1, background:'white', borderRadius:10, border:'1px solid #e5e7eb', padding:'14px 16px', marginBottom:4 }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:6 }}>
+                      <div>
+                        <span style={{ fontSize:10, fontWeight:700, color:item._type==='prescription'?'#2563eb':'#0d9488', textTransform:'uppercase', letterSpacing:'0.06em' }}>{item._type==='prescription'?'Prescription':'Appointment'}</span>
+                        <p style={{ fontSize:14, fontWeight:700, color:'#111827', marginTop:2 }}>
+                          {item._type==='prescription'?item.diagnosis:`Dr. ${item.doctorName}`}
+                        </p>
+                      </div>
+                      <span style={{ fontSize:11, color:'#9ca3af', flexShrink:0 }}>
+                        {item.createdAt?.toDate?.()?.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})||'Recent'}
+                      </span>
+                    </div>
+                    <p style={{ fontSize:12, color:'#6b7280' }}>
+                      {item._type==='prescription'?`Dr. ${item.doctorName} · ${item.medicines?.length||0} medicine(s)`:
+                      `${item.doctorSpecialization||''} · ${item.appointmentDate||''} · `}
+                      {item._type==='appointment' && <span style={{ color:STATUS_STYLE[item.status]?.color||'#6b7280', fontWeight:600 }}>{STATUS_STYLE[item.status]?.label}</span>}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
-        </div>
 
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 48px' }}>
-
-          {/* Filter Tabs */}
-          <div style={{ display: 'flex', gap: 10, marginBottom: 28 }}>
-            {['all','pending','confirmed','completed','cancelled'].map(f => (
-              <button key={f} className={`filter-btn ${filter === f ? 'active' : ''}`}
-                onClick={() => setFilter(f)}>
-                {f.charAt(0).toUpperCase() + f.slice(1)}
-                {counts[f] > 0 && <span style={{ marginLeft: 6, background: filter === f ? 'rgba(255,255,255,0.2)' : '#f1f5f9', padding: '1px 7px', borderRadius: 10, fontSize: 11 }}>{counts[f]}</span>}
-              </button>
-            ))}
-          </div>
-
-          {loading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
-              <div style={{ width: 40, height: 40, border: '3px solid #e2e8f0', borderTopColor: '#0d9488', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}/>
-              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-            </div>
-          ) : filtered.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '80px 0' }}>
-              <div style={{ width: 64, height: 64, borderRadius: 16, background: '#f0fdfa', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
-                <svg width="32" height="32" fill="none" viewBox="0 0 24 24">
-                  <rect x="3" y="4" width="18" height="18" rx="2" stroke="#0d9488" strokeWidth="1.5"/>
-                  <path d="M16 2v4M8 2v4M3 10h18" stroke="#0d9488" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <p style={{ fontSize: 16, fontWeight: 600, color: '#0f172a', marginBottom: 8 }}>No appointments yet</p>
-              <p style={{ fontSize: 14, color: '#94a3b8', marginBottom: 24 }}>Book your first consultation with a doctor</p>
-              <button onClick={() => navigate('/search-doctors')}
-                style={{ padding: '12px 28px', background: 'linear-gradient(135deg, #0d9488, #0284c7)', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
-                Find a Doctor
-              </button>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {filtered.map(apt => {
-                const sc = STATUS_COLORS[apt.status] || STATUS_COLORS.pending;
-                return (
-                  <div key={apt.id} className="card" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 24, alignItems: 'center' }}>
-
-                    {/* Doctor Info */}
-                    <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-                      <div style={{ width: 44, height: 44, borderRadius: 12, background: 'linear-gradient(135deg, #0d9488, #0284c7)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: 18, flexShrink: 0 }}>
-                        {apt.doctorName?.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <p style={{ fontWeight: 600, color: '#0f172a', fontSize: 14 }}>Dr. {apt.doctorName}</p>
-                        <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{apt.doctorSpecialization}</p>
-                      </div>
-                    </div>
-
-                    {/* Date & Time */}
-                    <div>
-                      <p style={{ fontSize: 14, fontWeight: 500, color: '#0f172a' }}>
-                        {new Date(apt.appointmentDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
-                      </p>
-                      <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{apt.appointmentTime}</p>
-                    </div>
-
-                    {/* Reason */}
-                    <div>
-                      {apt.reason
-                        ? <p style={{ fontSize: 13, color: '#64748b', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{apt.reason}</p>
-                        : <p style={{ fontSize: 13, color: '#cbd5e1' }}>No reason provided</p>
-                      }
-                    </div>
-
-                    {/* Status */}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                      <span style={{ display: 'inline-block', padding: '5px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }}>
-                        {apt.status.charAt(0).toUpperCase() + apt.status.slice(1)}
-                      </span>
-                    </div>
+            {/* Summary */}
+            <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+              <div style={{ background:'white', borderRadius:12, border:'1px solid #e5e7eb', padding:'18px' }}>
+                <p style={{ fontSize:13, fontWeight:700, color:'#111827', marginBottom:14 }}>Health Summary</p>
+                {[
+                  { l:'Total Visits', v:appointments.length },
+                  { l:'Completed', v:appointments.filter(a=>a.status==='completed').length },
+                  { l:'Prescriptions', v:prescriptions.length },
+                  { l:'Last Visit', v:appointments[0]?.appointmentDate||'—' },
+                ].map((s,i) => (
+                  <div key={i} style={{ display:'flex', justifyContent:'space-between', padding:'9px 0', borderBottom:i<3?'1px solid #f3f4f6':'none' }}>
+                    <p style={{ fontSize:13, color:'#6b7280' }}>{s.l}</p>
+                    <p style={{ fontSize:13, fontWeight:600, color:'#111827' }}>{s.v}</p>
                   </div>
-                );
-              })}
+                ))}
+              </div>
+              <div style={{ background:'#f0fdfa', borderRadius:12, padding:'16px', border:'1px solid #ccfbf1', borderLeft:'4px solid #0d9488' }}>
+                <p style={{ fontSize:12, fontWeight:600, color:'#134e4a', marginBottom:5 }}>Tip</p>
+                <p style={{ fontSize:12, color:'#374151', lineHeight:1.7 }}>Keep your health profile updated for better doctor recommendations.</p>
+              </div>
             </div>
-          )}
+          </div>
         </div>
-      </div>
-    </>
+      )}
+    </Layout>
   );
 }

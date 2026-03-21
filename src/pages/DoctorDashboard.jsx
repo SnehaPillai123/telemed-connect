@@ -1,146 +1,162 @@
+import { useState, useEffect } from "react";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
-import Navbar from "../components/Navbar";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import Layout from "../components/Layout";
 
 export default function DoctorDashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [stats, setStats] = useState({ today: 0, pending: 0, total: 0, completed: 0 });
+  const [recentApts, setRecentApts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const firstName = user?.displayName?.split(" ")[0] || "Doctor";
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user) return;
+      const q = query(collection(db, "appointments"), where("doctorId", "==", user.uid));
+      const snap = await getDocs(q);
+      const apts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const today = new Date().toISOString().split("T")[0];
+      setStats({
+        today: apts.filter(a => a.appointmentDate === today).length,
+        pending: apts.filter(a => a.status === "pending").length,
+        total: apts.length,
+        completed: apts.filter(a => a.status === "completed").length,
+      });
+      setRecentApts([...apts].sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).slice(0, 5));
+      setLoading(false);
+    };
+    fetchData();
+  }, [user]);
+
+  const STATUS_STYLE = {
+    pending:   { color: '#d97706', bg: '#fffbeb', label: 'Pending' },
+    confirmed: { color: '#0d9488', bg: '#f0fdfa', label: 'Confirmed' },
+    completed: { color: '#16a34a', bg: '#f0fdf4', label: 'Completed' },
+    cancelled: { color: '#dc2626', bg: '#fef2f2', label: 'Cancelled' },
+  };
 
   return (
-    <>
+    <Layout title={`${greeting}, Dr. ${firstName} 👨‍⚕️`} subtitle="Doctor Dashboard">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
-        * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; }
-        .dash-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .dash-card:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,0,0,0.1); }
-        .action-btn { transition: all 0.2s ease; }
-        .action-btn:hover { transform: translateX(4px); }
-        .stat-card { animation: fadeUp 0.5s ease forwards; opacity: 0; }
-        .stat-card:nth-child(1) { animation-delay: 0.1s; }
-        .stat-card:nth-child(2) { animation-delay: 0.2s; }
-        .stat-card:nth-child(3) { animation-delay: 0.3s; }
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(16px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-up { animation: fadeUp 0.4s ease forwards; }
+        .stat-card { background: white; border-radius: 10px; border: 1px solid #e5e7eb; padding: 18px 20px; transition: all 0.2s; }
+        .stat-card:hover { border-color: #0d9488; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(13,148,136,0.08); }
+        .apt-row { padding: 12px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #f9fafb; transition: background 0.15s; }
+        .apt-row:last-child { border-bottom: none; }
+        .apt-row:hover { background: #fafafa; }
+        .action-link { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; border-radius: 8px; text-decoration: none; transition: all 0.15s; }
+        .action-link:hover { transform: translateX(3px); }
+        @media screen and (max-width: 1024px) { .doc-grid { grid-template-columns: 1fr !important; } }
+        @media screen and (max-width: 640px) { .doc-stats { grid-template-columns: 1fr 1fr !important; } }
       `}</style>
 
-      <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
-        <Navbar />
-
-        {/* Hero Section */}
-        <div style={{
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #0284c7 100%)',
-          padding: '48px 32px', position: 'relative', overflow: 'hidden'
-        }}>
-          <div style={{
-            position: 'absolute', top: -60, right: -60, width: 300, height: 300,
-            borderRadius: '50%', background: 'rgba(2,132,199,0.15)'
-          }}/>
-          <div style={{
-            position: 'absolute', bottom: -80, left: '40%', width: 200, height: 200,
-            borderRadius: '50%', background: 'rgba(255,255,255,0.05)'
-          }}/>
-          <div className="max-w-7xl mx-auto" style={{ position: 'relative' }}>
-            <p style={{ color: '#94a3b8', fontSize: 14, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8 }}>
-              {greeting}, Doctor
-            </p>
-            <h1 style={{ fontFamily: 'DM Serif Display', color: 'white', fontSize: 36, fontWeight: 400, margin: '0 0 6px' }}>
-              Dr. {user?.displayName}
-            </h1>
-            <p style={{ color: '#94a3b8', fontSize: 15 }}>
-              Manage your patients, appointments, and prescriptions.
-            </p>
+      {/* Stats */}
+     <div className="grid-4col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 20 }}>
+        {[
+          { label: "Today's", value: stats.today, color: '#0d9488', bg: '#f0fdfa', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
+          { label: 'Pending', value: stats.pending, color: '#d97706', bg: '#fffbeb', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+          { label: 'Total', value: stats.total, color: '#2563eb', bg: '#eff6ff', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
+          { label: 'Completed', value: stats.completed, color: '#16a34a', bg: '#f0fdf4', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+        ].map((s, i) => (
+          <div key={i} className="stat-card fade-up" style={{ animationDelay: `${i*0.06}s`, opacity: 0 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 9, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+              <svg width="17" height="17" fill="none" viewBox="0 0 24 24"><path d={s.icon} stroke={s.color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            </div>
+            <p style={{ fontSize: 30, fontWeight: 800, color: s.color, lineHeight: 1, marginBottom: 4 }}>{loading ? '—' : s.value}</p>
+            <p style={{ fontSize: 12, color: '#6b7280', fontWeight: 500 }}>{s.label} Appointments</p>
           </div>
+        ))}
+      </div>
+
+      {/* Two column */}
+      <div className="grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16 }}>
+        {/* Appointments list */}
+        <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+          <div style={{ padding: '14px 16px', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>Recent Appointments</p>
+            <Link to="/doctor-appointments" style={{ fontSize: 11, color: '#0d9488', fontWeight: 600, textDecoration: 'none' }}>View all →</Link>
+          </div>
+          {recentApts.length === 0 && !loading && (
+            <div style={{ padding: '40px', textAlign: 'center' }}>
+              <p style={{ fontSize: 13, color: '#9ca3af' }}>No appointments yet</p>
+            </div>
+          )}
+          {recentApts.map((apt, i) => {
+            const st = STATUS_STYLE[apt.status] || STATUS_STYLE.pending;
+            return (
+              <div key={i} className="apt-row">
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#6b7280' }}>{apt.patientName?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}</span>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#111827', marginBottom: 1 }}>{apt.patientName}</p>
+                  <p style={{ fontSize: 11, color: '#9ca3af' }}>{apt.appointmentDate} · {apt.appointmentTime}</p>
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 600, color: st.color, background: st.bg, padding: '3px 9px', borderRadius: 20, flexShrink: 0 }}>{st.label}</span>
+                {apt.status === 'pending' && (
+                  <Link to="/doctor-appointments" style={{ fontSize: 11, color: '#0d9488', fontWeight: 600, textDecoration: 'none', flexShrink: 0 }}>Review</Link>
+                )}
+              </div>
+            );
+          })}
         </div>
 
-        <div className="max-w-7xl mx-auto" style={{ padding: '32px' }}>
+        {/* Right panel */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-          {/* Stats Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, marginBottom: 32 }}>
-            {[
-              { label: "Today's Appointments", value: '0', color: '#0284c7', bg: '#f0f9ff' },
-              { label: 'Total Patients', value: '0', color: '#0d9488', bg: '#f0fdfa' },
-              { label: 'Prescriptions Written', value: '0', color: '#7c3aed', bg: '#faf5ff' },
-            ].map((stat, i) => (
-              <div key={i} className="stat-card dash-card" style={{
-                background: 'white', borderRadius: 16, padding: '24px 28px',
-                boxShadow: '0 2px 12px rgba(0,0,0,0.06)', borderTop: `3px solid ${stat.color}`
-              }}>
-                <p style={{ fontSize: 13, color: '#64748b', marginBottom: 10 }}>{stat.label}</p>
-                <p style={{ fontSize: 40, fontWeight: 300, color: stat.color, lineHeight: 1 }}>{stat.value}</p>
+          {/* Profile card */}
+          <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '18px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+              <div style={{ width: 44, height: 44, borderRadius: '50%', background: '#0d9488', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 14, fontWeight: 700, flexShrink: 0 }}>
+                {user?.displayName?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
               </div>
-            ))}
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', marginBottom: 2 }}>Dr. {user?.displayName}</p>
+                <p style={{ fontSize: 11, color: '#6b7280' }}>Medical Professional</p>
+              </div>
+            </div>
+            <div style={{ height: 5, background: '#f3f4f6', borderRadius: 4, marginBottom: 8 }}>
+              <div style={{ width: '70%', height: '100%', background: 'linear-gradient(90deg, #0d9488, #0284c7)', borderRadius: 4 }}/>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <p style={{ fontSize: 11, color: '#6b7280' }}>Profile 70% complete</p>
+              <Link to="/edit-profile" style={{ fontSize: 11, color: '#0d9488', fontWeight: 600, textDecoration: 'none' }}>Complete →</Link>
+            </div>
           </div>
 
-          {/* Main Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-
-            {/* Quick Actions */}
-            <div className="dash-card" style={{
-              background: 'white', borderRadius: 16, padding: 28,
-              boxShadow: '0 2px 12px rgba(0,0,0,0.06)'
-            }}>
-              <h3 style={{ fontSize: 16, fontWeight: 600, color: '#0f172a', marginBottom: 20 }}>
-                Quick Actions
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {[
-                  { to: '/edit-profile', label: 'Complete Your Profile', desc: 'Add specialization and availability', color: '#0284c7' },
-                  { to: '/edit-profile', label: 'Set Availability', desc: 'Manage your consultation hours', color: '#0d9488' },
-                  { to: '/doctor-appointments', label: 'View Appointments', desc: 'Manage your bookings', color: '#7c3aed' },
-                ].map((item, i) => (
-                  <Link key={i} to={item.to} className="action-btn" style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '14px 18px', borderRadius: 12,
-                    background: '#f8fafc', textDecoration: 'none',
-                    border: '1px solid #f1f5f9'
-                  }}>
-                    <div>
-                      <p style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', marginBottom: 2 }}>{item.label}</p>
-                      <p style={{ fontSize: 12, color: '#94a3b8' }}>{item.desc}</p>
-                    </div>
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
-                      <path d="M9 18l6-6-6-6" stroke={item.color} strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
-                  </Link>
-                ))}
-              </div>
+          {/* Quick actions */}
+          <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '18px' }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginBottom: 12 }}>Quick Actions</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {[
+                { to: '/doctor-appointments', label: `${stats.pending} pending requests`, color: '#d97706', bg: '#fffbeb', border: '#fde68a' },
+                { to: '/doctor-appointments', label: 'View all appointments', color: '#0d9488', bg: '#f0fdfa', border: '#ccfbf1' },
+                { to: '/edit-profile', label: 'Update availability', color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe' },
+              ].map((a, i) => (
+                <Link key={i} to={a.to}
+                  className="action-link"
+                  style={{ background: a.bg, border: `1px solid ${a.border}` }}>
+                  <p style={{ fontSize: 12, fontWeight: 500, color: a.color }}>{a.label}</p>
+                  <svg width="13" height="13" fill="none" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke={a.color} strokeWidth="1.5" strokeLinecap="round"/></svg>
+                </Link>
+              ))}
             </div>
+          </div>
 
-            {/* Today's Schedule */}
-            <div className="dash-card" style={{
-              background: 'white', borderRadius: 16, padding: 28,
-              boxShadow: '0 2px 12px rgba(0,0,0,0.06)'
-            }}>
-              <h3 style={{ fontSize: 16, fontWeight: 600, color: '#0f172a', marginBottom: 20 }}>
-                Today's Schedule
-              </h3>
-              <div style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center',
-                justifyContent: 'center', height: 160, gap: 12
-              }}>
-                <div style={{
-                  width: 48, height: 48, borderRadius: 12,
-                  background: '#f0f9ff', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>
-                  <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="9" stroke="#0284c7" strokeWidth="1.5"/>
-                    <path d="M12 7v5l3 3" stroke="#0284c7" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
-                </div>
-                <p style={{ fontSize: 14, color: '#94a3b8', textAlign: 'center' }}>
-                  No appointments scheduled today.<br/>
-                  <Link to="/edit-profile" style={{ color: '#0284c7', fontWeight: 500 }}>
-                    Complete your profile to get started
-                  </Link>
-                </p>
-              </div>
-            </div>
+          {/* Reminder */}
+          <div style={{ background: '#f0fdfa', borderRadius: 10, padding: '16px', border: '1px solid #ccfbf1', borderLeft: '4px solid #0d9488' }}>
+            <p style={{ fontSize: 12, fontWeight: 600, color: '#134e4a', marginBottom: 5 }}>Reminder</p>
+            <p style={{ fontSize: 12, color: '#374151', lineHeight: 1.7 }}>Review and confirm pending appointment requests promptly to give patients timely care.</p>
           </div>
         </div>
       </div>
-    </>
+    </Layout>
   );
 }

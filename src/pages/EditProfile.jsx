@@ -3,361 +3,238 @@ import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { updateProfile } from "firebase/auth";
 import { db, auth } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
-import Navbar from "../components/Navbar";
+import PatientSidebar from "../components/PatientSidebar";
+import DoctorSidebar from "../components/DoctorSidebar";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
-const SPECIALIZATIONS = ["General Physician","Cardiologist","Dermatologist","Neurologist","Orthopedic","Pediatrician","Psychiatrist","Gynecologist","ENT Specialist","Ophthalmologist","Dentist","Oncologist"];
-const BLOOD_GROUPS = ["A+","A-","B+","B-","AB+","AB-","O+","O-"];
-const LANGUAGES = ["English","Hindi","Marathi","Tamil","Telugu","Kannada","Bengali","Gujarati"];
-const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const LANGUAGES = ["English", "Hindi", "Marathi", "Tamil", "Telugu", "Kannada", "Malayalam", "Bengali"];
+const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+const SPECIALIZATIONS = ["General Physician", "Cardiologist", "Dermatologist", "Neurologist", "Orthopedic", "Pediatrician", "Psychiatrist", "Gynecologist", "Ophthalmologist", "ENT Specialist", "Pulmonologist", "Endocrinologist"];
 
 export default function EditProfile() {
   const { user, role } = useAuth();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
-  const [form, setForm] = useState({});
+  const [form, setForm] = useState({
+    fullName: "", email: "", phone: "", preferredLanguage: "English",
+    bloodGroup: "", dateOfBirth: "", address: "", allergies: "", medications: "", medicalHistory: "",
+    specialization: "", licenseNumber: "", experience: "", consultationFee: "", bio: "", availability: ""
+  });
 
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) return;
       const col = role === "doctor" ? "doctors" : "patients";
       const snap = await getDoc(doc(db, col, user.uid));
-      if (snap.exists()) setForm(snap.data());
-      setLoading(false);
+      if (snap.exists()) {
+        const data = snap.data();
+        setForm(prev => ({
+          ...prev, ...data,
+          fullName: data.fullName || user.displayName || "",
+          email: data.email || user.email || "",
+        }));
+      } else {
+        setForm(prev => ({ ...prev, fullName: user.displayName || "", email: user.email || "" }));
+      }
     };
     fetchProfile();
   }, [user, role]);
 
-  const handle = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
-  const handleSave = async (e) => {
-    e.preventDefault();
+  const handleSave = async () => {
+    if (!form.fullName.trim()) return toast.error("Name is required");
     setSaving(true);
     try {
+      await updateProfile(auth.currentUser, { displayName: form.fullName });
       const col = role === "doctor" ? "doctors" : "patients";
       await updateDoc(doc(db, col, user.uid), { ...form, updatedAt: serverTimestamp() });
-      await updateDoc(doc(db, "users", user.uid), { displayName: form.fullName });
-      await updateProfile(auth.currentUser, { displayName: form.fullName });
-      toast.success("Profile updated successfully");
-      navigate(role === "doctor" ? "/doctor-dashboard" : "/patient-dashboard");
-    } catch (err) {
-      toast.error("Failed to save profile");
-    } finally {
-      setSaving(false);
-    }
+      toast.success("Profile updated successfully!");
+    } catch (err) { toast.error("Failed to save: " + err.message); }
+    finally { setSaving(false); }
   };
 
-  const tabs = role === "doctor"
-    ? [{ id: "personal", label: "Personal" }, { id: "professional", label: "Professional" }, { id: "availability", label: "Availability" }]
-    : [{ id: "personal", label: "Personal" }, { id: "medical", label: "Medical Info" }];
+  const Sidebar = role === "doctor" ? DoctorSidebar : PatientSidebar;
 
-  if (loading) return (
-    <div style={{ minHeight: '100vh', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ width: 40, height: 40, border: '3px solid #e2e8f0', borderTopColor: '#0d9488', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}/>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
-  );
+  const tabs = role === "doctor"
+    ? [{ id: "personal", label: "Personal Info" }, { id: "professional", label: "Professional" }, { id: "availability", label: "Availability" }]
+    : [{ id: "personal", label: "Personal Info" }, { id: "medical", label: "Medical History" }];
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
-        * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
-        .input-field { width: 100%; padding: 13px 16px; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; color: #0f172a; background: #f8fafc; outline: none; transition: all 0.2s; appearance: none; }
-        .input-field:focus { border-color: #0d9488; background: white; box-shadow: 0 0 0 3px rgba(13,148,136,0.08); }
-        .input-field:disabled { opacity: 0.5; cursor: not-allowed; }
-        .primary-btn { padding: 13px 36px; background: linear-gradient(135deg, #0d9488, #0284c7); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .primary-btn:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(13,148,136,0.3); }
-        .primary-btn:disabled { opacity: 0.6; transform: none; }
-        .secondary-btn { padding: 13px 24px; background: white; color: #64748b; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
-        .secondary-btn:hover { border-color: #94a3b8; }
-        .tab-btn { padding: 10px 20px; border: none; background: transparent; font-size: 14px; font-weight: 500; cursor: pointer; border-radius: 8px; transition: all 0.2s; color: #64748b; }
-        .tab-btn.active { background: white; color: #0d9488; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        label { font-size: 13px; font-weight: 500; color: #374151; display: block; margin-bottom: 6px; }
-        .field-group { display: flex; flex-direction: column; gap: 6px; }
-        .info-card { background: white; border-radius: 16px; padding: 32px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
-        textarea.input-field { resize: vertical; min-height: 100px; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        * { font-family: 'Inter', sans-serif; box-sizing: border-box; margin: 0; padding: 0; }
+        .form-input { width: 100%; padding: 11px 14px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; color: #111827; background: white; outline: none; transition: all 0.2s; font-family: Inter, sans-serif; appearance: none; }
+        .form-input:focus { border-color: #0d9488; box-shadow: 0 0 0 3px rgba(13,148,136,0.1); }
+        .tab-btn { padding: 9px 20px; border-radius: 8px; border: 1.5px solid transparent; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; font-family: Inter, sans-serif; background: none; color: #6b7280; }
+        .tab-btn:hover { background: #f0fdfa; color: #0d9488; }
+        .tab-btn.active { background: #0d9488; color: white; border-color: #0d9488; }
+        label { font-size: 12px; font-weight: 600; color: #374151; display: block; margin-bottom: 5px; }
+        .save-btn { padding: 11px 28px; background: #0d9488; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: Inter, sans-serif; transition: all 0.2s; }
+        .save-btn:hover { background: #0f766e; }
+        .save-btn:disabled { background: #5eead4; cursor: not-allowed; }
+        .cancel-btn { padding: 11px 24px; background: white; color: #374151; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: Inter, sans-serif; transition: all 0.2s; }
+        .cancel-btn:hover { border-color: #0d9488; color: #0d9488; }
       `}</style>
 
-      <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
-        <Navbar />
+      <div style={{ display: 'flex', minHeight: '100vh', background: '#f9fafb' }}>
+        <Sidebar />
+        <main style={{ marginLeft: 250, flex: 1, display: 'flex', flexDirection: 'column' }}>
 
-        {/* Header */}
-        <div style={{
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #0d9488 100%)',
-          padding: '40px 48px 0'
-        }}>
-          <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-            <p style={{ color: '#64748b', fontSize: 12, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
-              Account Settings
-            </p>
-            <h1 style={{ fontFamily: 'DM Serif Display', color: 'white', fontSize: 34, fontWeight: 400, marginBottom: 32 }}>
-              Edit Profile
-            </h1>
+          <header style={{ background: 'white', borderBottom: '1px solid #e5e7eb', padding: '24px 32px', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 4 }}>Account</p>
+              <h1 style={{ fontSize: 22, fontWeight: 800, color: '#111827', letterSpacing: '-0.01em' }}>
+                {role === "doctor" ? "Doctor Profile" : "Health Profile"}
+              </h1>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="cancel-btn" onClick={() => navigate(-1)}>Cancel</button>
+              <button className="save-btn" onClick={handleSave} disabled={saving}>
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </header>
+
+          <div style={{ padding: '28px 32px', flex: 1 }}>
+
+            {/* Profile card */}
+            <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '20px 24px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#0d9488', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 18, fontWeight: 700, flexShrink: 0 }}>
+                {form.fullName?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "U"}
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 16, fontWeight: 700, color: '#111827', marginBottom: 3 }}>{form.fullName || "Your Name"}</p>
+                <p style={{ fontSize: 13, color: '#6b7280' }}>{form.email} · <span style={{ color: '#0d9488', fontWeight: 600, textTransform: 'capitalize' }}>{role}</span></p>
+              </div>
+            </div>
 
             {/* Tabs */}
-            <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.08)', padding: 4, borderRadius: 10, width: 'fit-content' }}>
-              {tabs.map(tab => (
-                <button key={tab.id} className={`tab-btn ${activeTab === tab.id ? 'active' : ''}`}
-                  onClick={() => setActiveTab(tab.id)} type="button"
-                  style={{ color: activeTab === tab.id ? '#0d9488' : '#94a3b8' }}>
-                  {tab.label}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+              {tabs.map(t => (
+                <button key={t.id} className={`tab-btn ${activeTab === t.id ? 'active' : ''}`} onClick={() => setActiveTab(t.id)}>
+                  {t.label}
                 </button>
               ))}
             </div>
-          </div>
-        </div>
 
-        {/* Content */}
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 48px' }}>
-          <form onSubmit={handleSave}>
-
-            {/* PERSONAL TAB */}
+            {/* Personal Info tab */}
             {activeTab === "personal" && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 24 }}>
-
-                {/* Left — Avatar Card */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                  <div className="info-card" style={{ textAlign: 'center' }}>
-                    <div style={{
-                      width: 80, height: 80, borderRadius: '50%',
-                      background: 'linear-gradient(135deg, #0d9488, #0284c7)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      margin: '0 auto 16px', fontSize: 32, color: 'white', fontWeight: 600
-                    }}>
-                      {(form.fullName || user?.displayName || "U").charAt(0).toUpperCase()}
+              <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+                <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', paddingBottom: 14, borderBottom: '1px solid #f3f4f6' }}>Personal Information</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div>
+                    <label>Full Name *</label>
+                    <input className="form-input" value={form.fullName} onChange={e => handleChange("fullName", e.target.value)} placeholder="Your full name"/>
+                  </div>
+                  <div>
+                    <label>Email Address</label>
+                    <input className="form-input" value={form.email} disabled style={{ background: '#f9fafb', color: '#9ca3af' }}/>
+                  </div>
+                  <div>
+                    <label>Phone Number</label>
+                    <input className="form-input" value={form.phone} onChange={e => handleChange("phone", e.target.value)} placeholder="+91 9876543210"/>
+                  </div>
+                  <div>
+                    <label>Preferred Language</label>
+                    <select className="form-input" value={form.preferredLanguage} onChange={e => handleChange("preferredLanguage", e.target.value)}>
+                      {LANGUAGES.map(l => <option key={l}>{l}</option>)}
+                    </select>
+                  </div>
+                  {role === "patient" && <>
+                    <div>
+                      <label>Date of Birth</label>
+                      <input className="form-input" type="date" value={form.dateOfBirth} onChange={e => handleChange("dateOfBirth", e.target.value)}/>
                     </div>
-                    <p style={{ fontWeight: 600, color: '#0f172a', fontSize: 16 }}>{form.fullName || user?.displayName}</p>
-                    <p style={{ color: '#94a3b8', fontSize: 13, marginTop: 4, textTransform: 'capitalize' }}>{role}</p>
-                    <div style={{ marginTop: 16, padding: '10px 0', borderTop: '1px solid #f1f5f9' }}>
-                      <p style={{ fontSize: 12, color: '#94a3b8' }}>{user?.email}</p>
-                    </div>
-                  </div>
-
-                  <div className="info-card">
-                    <p style={{ fontSize: 13, fontWeight: 600, color: '#0f172a', marginBottom: 12 }}>Profile Completion</p>
-                    {[
-                      { label: 'Name', done: !!form.fullName },
-                      { label: 'Phone', done: !!form.phone },
-                      { label: role === 'doctor' ? 'Specialization' : 'Blood Group', done: role === 'doctor' ? !!form.specialization : !!form.bloodGroup },
-                      { label: role === 'doctor' ? 'Bio' : 'Address', done: role === 'doctor' ? !!form.bio : !!form.address },
-                    ].map((item, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0', borderBottom: i < 3 ? '1px solid #f8fafc' : 'none' }}>
-                        <p style={{ fontSize: 13, color: '#64748b' }}>{item.label}</p>
-                        <div style={{ width: 20, height: 20, borderRadius: '50%', background: item.done ? '#f0fdfa' : '#f8fafc', border: `1.5px solid ${item.done ? '#0d9488' : '#e2e8f0'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {item.done && <svg width="10" height="10" fill="none" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" stroke="#0d9488" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Right — Form */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                  <div className="info-card">
-                    <p style={{ fontSize: 15, fontWeight: 600, color: '#0f172a', marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #f1f5f9' }}>Personal Information</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                      <div className="field-group">
-                        <label>Full name</label>
-                        <input className="input-field" name="fullName" value={form.fullName || ""} onChange={handle} placeholder="Your full name" required/>
-                      </div>
-                      <div className="field-group">
-                        <label>Phone number</label>
-                        <input className="input-field" name="phone" value={form.phone || ""} onChange={handle} placeholder="+91 98765 43210"/>
-                      </div>
-                      <div className="field-group">
-                        <label>Email address</label>
-                        <input className="input-field" value={user?.email || ""} disabled/>
-                      </div>
-                      <div className="field-group">
-                        <label>Preferred language</label>
-                        <select className="input-field" name="preferredLanguage" value={form.preferredLanguage || "English"} onChange={handle}>
-                          {LANGUAGES.map(l => <option key={l}>{l}</option>)}
-                        </select>
-                      </div>
-                      {role === "patient" && (
-                        <>
-                          <div className="field-group">
-                            <label>Date of birth</label>
-                            <input className="input-field" name="dateOfBirth" type="date" value={form.dateOfBirth || ""} onChange={handle}/>
-                          </div>
-                          <div className="field-group">
-                            <label>Blood group</label>
-                            <select className="input-field" name="bloodGroup" value={form.bloodGroup || ""} onChange={handle}>
-                              <option value="">Select blood group</option>
-                              {BLOOD_GROUPS.map(b => <option key={b}>{b}</option>)}
-                            </select>
-                          </div>
-                        </>
-                      )}
-                      <div className="field-group" style={{ gridColumn: '1 / -1' }}>
-                        <label>Address</label>
-                        <input className="input-field" name="address" value={form.address || ""} onChange={handle} placeholder="Your full address"/>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* PROFESSIONAL TAB (Doctor only) */}
-            {activeTab === "professional" && role === "doctor" && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 24 }}>
-                <div className="info-card" style={{ height: 'fit-content' }}>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', marginBottom: 12 }}>Why this matters</p>
-                  <p style={{ fontSize: 13, color: '#64748b', lineHeight: 1.7 }}>
-                    A complete professional profile helps patients find and trust you. Doctors with complete profiles get up to 3x more bookings.
-                  </p>
-                  <div style={{ marginTop: 20, padding: 16, background: '#f0fdfa', borderRadius: 10, border: '1px solid #ccfbf1' }}>
-                    <p style={{ fontSize: 12, color: '#0d9488', fontWeight: 600 }}>Pro tip</p>
-                    <p style={{ fontSize: 12, color: '#0f766e', marginTop: 4, lineHeight: 1.6 }}>
-                      Write a warm, personal bio. Patients respond better to doctors who sound human.
-                    </p>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-                  <div className="info-card">
-                    <p style={{ fontSize: 15, fontWeight: 600, color: '#0f172a', marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #f1f5f9' }}>Professional Details</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                      <div className="field-group">
-                        <label>Specialization</label>
-                        <select className="input-field" name="specialization" value={form.specialization || ""} onChange={handle}>
-                          <option value="">Select specialization</option>
-                          {SPECIALIZATIONS.map(s => <option key={s}>{s}</option>)}
-                        </select>
-                      </div>
-                      <div className="field-group">
-                        <label>License number</label>
-                        <input className="input-field" name="licenseNumber" value={form.licenseNumber || ""} onChange={handle} placeholder="MCI-12345"/>
-                      </div>
-                      <div className="field-group">
-                        <label>Consultation fee (INR)</label>
-                        <input className="input-field" name="consultationFee" type="number" value={form.consultationFee || ""} onChange={handle} placeholder="500"/>
-                      </div>
-                      <div className="field-group">
-                        <label>Years of experience</label>
-                        <input className="input-field" name="experience" type="number" value={form.experience || ""} onChange={handle} placeholder="5"/>
-                      </div>
-                      <div className="field-group" style={{ gridColumn: '1 / -1' }}>
-                        <label>Professional bio</label>
-                        <textarea className="input-field" name="bio" value={form.bio || ""} onChange={handle}
-                          placeholder="Tell patients about your expertise, approach to care, and what makes your practice unique..." rows={5}/>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* AVAILABILITY TAB (Doctor only) */}
-            {activeTab === "availability" && role === "doctor" && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 24 }}>
-                <div className="info-card" style={{ height: 'fit-content' }}>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', marginBottom: 12 }}>Consultation Hours</p>
-                  <p style={{ fontSize: 13, color: '#64748b', lineHeight: 1.7 }}>
-                    Set which days you are available for consultations. Patients can only book appointments on your available days.
-                  </p>
-                </div>
-
-                <div className="info-card">
-                  <p style={{ fontSize: 15, fontWeight: 600, color: '#0f172a', marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #f1f5f9' }}>Weekly Availability</p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {DAYS.map(day => (
-                      <div key={day} style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '14px 20px', borderRadius: 10,
-                        background: form.availability?.[day] ? '#f0fdfa' : '#f8fafc',
-                        border: `1.5px solid ${form.availability?.[day] ? '#99f6e4' : '#f1f5f9'}`,
-                        transition: 'all 0.2s'
-                      }}>
-                        <p style={{ fontSize: 14, fontWeight: 500, color: form.availability?.[day] ? '#0f172a' : '#64748b' }}>{day}</p>
-                        <div style={{
-                          width: 44, height: 24, borderRadius: 12, cursor: 'pointer',
-                          background: form.availability?.[day] ? '#0d9488' : '#e2e8f0',
-                          position: 'relative', transition: 'all 0.2s'
-                        }} onClick={() => setForm({ ...form, availability: { ...form.availability, [day]: !form.availability?.[day] }})}>
-                          <div style={{
-                            width: 18, height: 18, borderRadius: '50%', background: 'white',
-                            position: 'absolute', top: 3, transition: 'all 0.2s',
-                            left: form.availability?.[day] ? 23 : 3,
-                            boxShadow: '0 1px 4px rgba(0,0,0,0.2)'
-                          }}/>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* MEDICAL TAB (Patient only) */}
-            {activeTab === "medical" && role === "patient" && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 24 }}>
-                <div className="info-card" style={{ height: 'fit-content' }}>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', marginBottom: 12 }}>Why this matters</p>
-                  <p style={{ fontSize: 13, color: '#64748b', lineHeight: 1.7 }}>
-                    Your medical information helps doctors provide better, safer care during consultations.
-                  </p>
-                  <div style={{ marginTop: 20, padding: 16, background: '#fff7ed', borderRadius: 10, border: '1px solid #fed7aa' }}>
-                    <p style={{ fontSize: 12, color: '#c2410c', fontWeight: 600 }}>Privacy note</p>
-                    <p style={{ fontSize: 12, color: '#9a3412', marginTop: 4, lineHeight: 1.6 }}>
-                      This information is only shared with doctors you book consultations with.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="info-card">
-                  <p style={{ fontSize: 15, fontWeight: 600, color: '#0f172a', marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid #f1f5f9' }}>Medical Information</p>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                    <div className="field-group">
-                      <label>Date of birth</label>
-                      <input className="input-field" name="dateOfBirth" type="date" value={form.dateOfBirth || ""} onChange={handle}/>
-                    </div>
-                    <div className="field-group">
-                      <label>Blood group</label>
-                      <select className="input-field" name="bloodGroup" value={form.bloodGroup || ""} onChange={handle}>
+                    <div>
+                      <label>Blood Group</label>
+                      <select className="form-input" value={form.bloodGroup} onChange={e => handleChange("bloodGroup", e.target.value)}>
                         <option value="">Select blood group</option>
                         {BLOOD_GROUPS.map(b => <option key={b}>{b}</option>)}
                       </select>
                     </div>
-                    <div className="field-group" style={{ gridColumn: '1 / -1' }}>
-                      <label>Known allergies</label>
-                      <input className="input-field" name="allergies" value={form.allergies || ""} onChange={handle} placeholder="e.g. Penicillin, Peanuts (comma separated)"/>
-                    </div>
-                    <div className="field-group" style={{ gridColumn: '1 / -1' }}>
-                      <label>Current medications</label>
-                      <textarea className="input-field" name="medications" value={form.medications || ""} onChange={handle}
-                        placeholder="List any medications you are currently taking..." rows={3}/>
-                    </div>
-                    <div className="field-group" style={{ gridColumn: '1 / -1' }}>
-                      <label>Medical history</label>
-                      <textarea className="input-field" name="medicalHistory" value={form.medicalHistory || ""} onChange={handle}
-                        placeholder="Any past surgeries, chronic conditions, or relevant medical history..." rows={4}/>
-                    </div>
-                  </div>
+                  </>}
+                </div>
+                <div>
+                  <label>Address</label>
+                  <textarea className="form-input" value={form.address} onChange={e => handleChange("address", e.target.value)} placeholder="Your address..." rows={3} style={{ resize: 'vertical' }}/>
                 </div>
               </div>
             )}
 
-            {/* Save Bar */}
-            <div style={{
-              display: 'flex', gap: 12, justifyContent: 'flex-end',
-              marginTop: 32, paddingTop: 24, borderTop: '1px solid #e2e8f0'
-            }}>
-              <button type="button" className="secondary-btn"
-                onClick={() => navigate(role === "doctor" ? "/doctor-dashboard" : "/patient-dashboard")}>
-                Cancel
-              </button>
-              <button type="submit" className="primary-btn" disabled={saving}>
-                {saving ? "Saving..." : "Save changes"}
+            {/* Medical History tab (patient) */}
+            {activeTab === "medical" && role === "patient" && (
+              <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+                <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', paddingBottom: 14, borderBottom: '1px solid #f3f4f6' }}>Medical History</p>
+                <div>
+                  <label>Known Allergies</label>
+                  <textarea className="form-input" value={form.allergies} onChange={e => handleChange("allergies", e.target.value)} placeholder="e.g. Penicillin, Dust, Pollen..." rows={3} style={{ resize: 'vertical' }}/>
+                </div>
+                <div>
+                  <label>Current Medications</label>
+                  <textarea className="form-input" value={form.medications} onChange={e => handleChange("medications", e.target.value)} placeholder="e.g. Metformin 500mg twice daily..." rows={3} style={{ resize: 'vertical' }}/>
+                </div>
+                <div>
+                  <label>Medical History</label>
+                  <textarea className="form-input" value={form.medicalHistory} onChange={e => handleChange("medicalHistory", e.target.value)} placeholder="e.g. Diabetes Type 2 (diagnosed 2018), Hypertension..." rows={4} style={{ resize: 'vertical' }}/>
+                </div>
+              </div>
+            )}
+
+            {/* Professional tab (doctor) */}
+            {activeTab === "professional" && role === "doctor" && (
+              <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+                <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', paddingBottom: 14, borderBottom: '1px solid #f3f4f6' }}>Professional Information</p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div>
+                    <label>Specialization</label>
+                    <select className="form-input" value={form.specialization} onChange={e => handleChange("specialization", e.target.value)}>
+                      <option value="">Select specialization</option>
+                      {SPECIALIZATIONS.map(s => <option key={s}>{s}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label>License Number</label>
+                    <input className="form-input" value={form.licenseNumber} onChange={e => handleChange("licenseNumber", e.target.value)} placeholder="e.g. MH-12345"/>
+                  </div>
+                  <div>
+                    <label>Years of Experience</label>
+                    <input className="form-input" type="number" value={form.experience} onChange={e => handleChange("experience", e.target.value)} placeholder="e.g. 5" min="0"/>
+                  </div>
+                  <div>
+                    <label>Consultation Fee (₹)</label>
+                    <input className="form-input" type="number" value={form.consultationFee} onChange={e => handleChange("consultationFee", e.target.value)} placeholder="e.g. 500" min="0"/>
+                  </div>
+                </div>
+                <div>
+                  <label>Professional Bio</label>
+                  <textarea className="form-input" value={form.bio} onChange={e => handleChange("bio", e.target.value)} placeholder="Brief description of your expertise and experience..." rows={4} style={{ resize: 'vertical' }}/>
+                </div>
+              </div>
+            )}
+
+            {/* Availability tab (doctor) */}
+            {activeTab === "availability" && role === "doctor" && (
+              <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '24px' }}>
+                <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', paddingBottom: 14, borderBottom: '1px solid #f3f4f6', marginBottom: 18 }}>Availability</p>
+                <div>
+                  <label>Working Hours & Days</label>
+                  <textarea className="form-input" value={form.availability} onChange={e => handleChange("availability", e.target.value)} placeholder="e.g. Mon-Fri: 9AM-5PM, Sat: 9AM-1PM" rows={4} style={{ resize: 'vertical' }}/>
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+              <button className="cancel-btn" onClick={() => navigate(-1)}>Cancel</button>
+              <button className="save-btn" onClick={handleSave} disabled={saving}>
+                {saving ? "Saving..." : "Save Changes"}
               </button>
             </div>
-          </form>
-        </div>
+          </div>
+        </main>
       </div>
     </>
   );
