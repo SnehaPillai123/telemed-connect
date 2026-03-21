@@ -20,6 +20,7 @@ export default function Login() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast.success("Welcome back");
+      navigate("/patient-dashboard")
     } catch (err) {
       toast.error("Invalid email or password");
     } finally {
