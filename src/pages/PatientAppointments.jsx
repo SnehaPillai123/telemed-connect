@@ -4,7 +4,7 @@ import { collection, query, where, getDocs, doc, updateDoc } from "firebase/fire
 import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
 import Layout from "../components/Layout";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 const STATUS_STYLE = {
@@ -16,6 +16,7 @@ const STATUS_STYLE = {
 
 export default function PatientAppointments() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [prescriptions, setPrescriptions] = useState([]);
   const [filter, setFilter] = useState("all");
@@ -55,6 +56,9 @@ export default function PatientAppointments() {
     cancelled: appointments.filter(a => a.status === "cancelled").length,
   };
 
+  // Find prescription for a completed appointment
+  const getPrescription = (aptId) => prescriptions.find(p => p.appointmentId === aptId);
+
   return (
     <Layout title="Appointments & Records" subtitle="Patient Portal">
       <style>{`
@@ -66,10 +70,13 @@ export default function PatientAppointments() {
         .filter-chip.active { background:#0d9488; border-color:#0d9488; color:white; }
         .apt-card { background:white; border-radius:12px; border:1px solid #e5e7eb; padding:16px 18px; transition:all 0.2s; margin-bottom:10px; }
         .apt-card:hover { border-color:#0d9488; box-shadow:0 4px 14px rgba(13,148,136,0.07); }
-        .rx-card { background:white; border-radius:12px; border:1px solid #e5e7eb; overflow:hidden; transition:all 0.2s; margin-bottom:10px; }
-        .rx-card:hover { border-color:#0d9488; box-shadow:0 4px 14px rgba(13,148,136,0.07); }
         .meet-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:#1a73e8; color:white; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none; transition:all 0.15s; }
         .meet-btn:hover { background:#1557b0; transform:translateY(-1px); box-shadow:0 4px 12px rgba(26,115,232,0.3); }
+        .chat-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; background:#7c3aed; color:white; border-radius:8px; font-size:12px; font-weight:600; text-decoration:none; transition:all 0.15s; border:none; cursor:pointer; font-family:Inter,sans-serif; }
+        .chat-btn:hover { background:#6d28d9; transform:translateY(-1px); }
+        .rx-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; background:#0d9488; color:white; border-radius:8px; font-size:12px; font-weight:600; text-decoration:none; transition:all 0.15s; border:none; cursor:pointer; font-family:Inter,sans-serif; }
+        .rx-btn:hover { background:#0f766e; transform:translateY(-1px); }
+        .action-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px solid #f3f4f6; align-items:center; }
       `}</style>
 
       {/* Summary stats */}
@@ -129,8 +136,10 @@ export default function PatientAppointments() {
 
           {filtered.map((apt, i) => {
             const st = STATUS_STYLE[apt.status] || STATUS_STYLE.pending;
+            const rx = getPrescription(apt.id);
             return (
               <article key={apt.id} className="apt-card fade-in" style={{ animationDelay:`${i*0.04}s`, opacity:0 }}>
+                {/* Top row — doctor info + status */}
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:12 }}>
                   <div style={{ display:'flex', gap:12, flex:1, minWidth:0 }}>
                     <div style={{ width:44, height:44, borderRadius:10, background:'#f0fdfa', border:'1px solid #ccfbf1', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
@@ -146,28 +155,8 @@ export default function PatientAppointments() {
                         <span style={{ fontSize:12, color:'#374151' }}>🕐 {apt.appointmentTime}</span>
                       </div>
                       {apt.reason && <p style={{ fontSize:12, color:'#6b7280', marginTop:6 }}>{apt.reason}</p>}
-
-                      {/* Google Meet join button — only for confirmed appointments */}
-                      {apt.status === 'confirmed' && apt.meetLink && (
-                        <div style={{ marginTop:12, padding:'12px 16px', background:'#e8f0fe', borderRadius:10, border:'1px solid #c5d4f5' }}>
-                          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:10 }}>
-                            <div>
-                              <p style={{ fontSize:12, fontWeight:700, color:'#1a73e8', marginBottom:3 }}>📹 Video Call Ready</p>
-                              <p style={{ fontSize:11, color:'#5f6368' }}>Your doctor has confirmed this appointment</p>
-                              {apt.roomCode && <p style={{ fontSize:10, color:'#9ca3af', marginTop:2 }}>Room: {apt.roomCode}</p>}
-                            </div>
-                            <a href={apt.meetLink} target="_blank" rel="noreferrer" className="meet-btn">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
-                                <path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z"/>
-                              </svg>
-                              Join Google Meet
-                            </a>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </div>
-
                   <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:8, flexShrink:0 }}>
                     <span style={{ fontSize:11, fontWeight:600, color:st.color, background:st.bg, padding:'4px 10px', borderRadius:20 }}>{st.label}</span>
                     {(apt.status==='pending'||apt.status==='confirmed') && (
@@ -177,6 +166,56 @@ export default function PatientAppointments() {
                     )}
                   </div>
                 </div>
+
+                {/* Action row — Chat, Meet, Prescription buttons */}
+                {apt.status !== 'cancelled' && (
+                  <div className="action-row">
+
+                    {/* Chat with Doctor — available for confirmed and completed */}
+                    {(apt.status === 'confirmed' || apt.status === 'completed') && (
+                      <button className="chat-btn" onClick={() => navigate(`/chat/${apt.doctorId}`)}>
+                        <svg width="13" height="13" fill="none" viewBox="0 0 24 24">
+                          <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+                        </svg>
+                        Chat with Doctor
+                      </button>
+                    )}
+
+                    {/* Join Google Meet — only for confirmed with meetLink */}
+                    {apt.status === 'confirmed' && apt.meetLink && (
+                      <a href={apt.meetLink} target="_blank" rel="noreferrer" className="meet-btn">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="white">
+                          <path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z"/>
+                        </svg>
+                        Join Google Meet
+                      </a>
+                    )}
+
+                    {/* View Prescription — only for completed appointments that have a prescription */}
+                    {apt.status === 'completed' && rx && (
+                      <button className="rx-btn" onClick={() => navigate('/my-prescriptions')}>
+                        <svg width="13" height="13" fill="none" viewBox="0 0 24 24">
+                          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+                        </svg>
+                        View Prescription
+                      </button>
+                    )}
+
+                    {/* Pending info message */}
+                    {apt.status === 'pending' && (
+                      <p style={{ fontSize:12, color:'#9ca3af', fontStyle:'italic' }}>
+                        ⏳ Waiting for doctor to confirm...
+                      </p>
+                    )}
+
+                    {/* Confirmed but no meet link yet */}
+                    {apt.status === 'confirmed' && !apt.meetLink && (
+                      <p style={{ fontSize:12, color:'#9ca3af', fontStyle:'italic' }}>
+                        📹 Video call link will appear here
+                      </p>
+                    )}
+                  </div>
+                )}
               </article>
             );
           })}
