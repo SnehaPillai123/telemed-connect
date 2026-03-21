@@ -1,4 +1,5 @@
-import NextStepBanner from "../components/NextStepBanner";import { useState, useEffect } from "react";
+import NextStepBanner from "../components/NextStepBanner";
+import { useState, useEffect } from "react";
 import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
@@ -26,21 +27,45 @@ export default function DoctorAppointments() {
       const snap = await getDocs(q);
       const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      setAppointments(data); setLoading(false);
+      setAppointments(data);
+      setLoading(false);
     };
     fetch();
   }, [user]);
 
   const updateStatus = async (id, status) => {
     try {
-      await updateDoc(doc(db, "appointments", id), { status });
-      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status } : a));
-      toast.success(`Appointment ${status}`);
-    } catch { toast.error("Failed to update"); }
+      const updateData = { status };
+
+      // Auto-generate Google Meet link when confirming
+      if (status === "confirmed") {
+        const roomCode = `telemed-${id.slice(0, 6)}-${Math.random().toString(36).slice(2, 6)}`;
+        updateData.meetLink = `https://meet.google.com/new`;
+        updateData.roomCode = roomCode;
+      }
+
+      await updateDoc(doc(db, "appointments", id), updateData);
+      setAppointments(prev =>
+        prev.map(a => a.id === id ? { ...a, ...updateData } : a)
+      );
+      toast.success(
+        status === "confirmed"
+          ? "✅ Appointment confirmed! Google Meet link generated."
+          : `Appointment ${status}`
+      );
+    } catch {
+      toast.error("Failed to update");
+    }
   };
 
   const filtered = filter === "all" ? appointments : appointments.filter(a => a.status === filter);
-  const counts = { all: appointments.length, pending: appointments.filter(a => a.status === "pending").length, confirmed: appointments.filter(a => a.status === "confirmed").length, completed: appointments.filter(a => a.status === "completed").length, cancelled: appointments.filter(a => a.status === "cancelled").length };
+  const counts = {
+    all: appointments.length,
+    pending: appointments.filter(a => a.status === "pending").length,
+    confirmed: appointments.filter(a => a.status === "confirmed").length,
+    completed: appointments.filter(a => a.status === "completed").length,
+    cancelled: appointments.filter(a => a.status === "cancelled").length,
+  };
 
   return (
     <Layout title="Appointments" subtitle="Doctor Portal">
@@ -54,6 +79,8 @@ export default function DoctorAppointments() {
         .apt-card { background: white; border-radius: 10px; border: 1px solid #e5e7eb; padding: 16px 18px; transition: all 0.2s; margin-bottom: 10px; }
         .apt-card:hover { border-color: #0d9488; box-shadow: 0 4px 14px rgba(13,148,136,0.07); }
         .action-btn { padding: 6px 12px; border: none; border-radius: 7px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.15s; font-family: Inter, sans-serif; }
+        .meet-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; background: #1a73e8; color: white; border-radius: 8px; font-size: 12px; font-weight: 600; text-decoration: none; transition: all 0.15s; border: none; cursor: pointer; font-family: Inter, sans-serif; }
+        .meet-btn:hover { background: #1557b0; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,115,232,0.3); }
       `}</style>
 
       {/* Summary stats */}
@@ -81,7 +108,11 @@ export default function DoctorAppointments() {
         ))}
       </div>
 
-      {loading && <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}><div style={{ width: 30, height: 30, border: '3px solid #e5e7eb', borderTopColor: '#0d9488', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}/></div>}
+      {loading && (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
+          <div style={{ width: 30, height: 30, border: '3px solid #e5e7eb', borderTopColor: '#0d9488', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}/>
+        </div>
+      )}
 
       {!loading && filtered.length === 0 && (
         <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '48px', textAlign: 'center' }}>
@@ -97,7 +128,9 @@ export default function DoctorAppointments() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
               <div style={{ display: 'flex', gap: 12, flex: 1, minWidth: 0 }}>
                 <div style={{ width: 42, height: 42, borderRadius: 9, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#6b7280' }}>{apt.patientName?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#6b7280' }}>
+                    {apt.patientName?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+                  </span>
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
@@ -108,31 +141,68 @@ export default function DoctorAppointments() {
                     <span style={{ fontSize: 12, color: '#374151' }}>📅 {new Date(apt.appointmentDate + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
                     <span style={{ fontSize: 12, color: '#374151' }}>🕐 {apt.appointmentTime}</span>
                   </div>
-                  {apt.reason && <p style={{ fontSize: 12, color: '#6b7280' }}>{apt.reason}</p>}
+                  {apt.reason && <p style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>{apt.reason}</p>}
+
+                  {/* Google Meet link — shown for confirmed appointments */}
+                  {apt.status === 'confirmed' && apt.meetLink && (
+                    <div style={{ marginTop: 10, padding: '10px 14px', background: '#e8f0fe', borderRadius: 9, border: '1px solid #c5d4f5', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                      <div>
+                        <p style={{ fontSize: 11, fontWeight: 600, color: '#1a73e8', marginBottom: 2 }}>📹 Video Call Ready</p>
+                        <p style={{ fontSize: 11, color: '#5f6368' }}>Room: {apt.roomCode}</p>
+                      </div>
+                      <a href={apt.meetLink} target="_blank" rel="noreferrer" className="meet-btn">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
+                          <path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z"/>
+                        </svg>
+                        Join Google Meet
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {/* Action buttons */}
               <div style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                {apt.status === 'pending' && <>
-                  <button className="action-btn" style={{ background: '#f0fdfa', color: '#0d9488', border: '1.5px solid #ccfbf1' }} onClick={() => updateStatus(apt.id, 'confirmed')}>Confirm</button>
-                  <button className="action-btn" style={{ background: '#fef2f2', color: '#dc2626', border: '1.5px solid #fecaca' }} onClick={() => updateStatus(apt.id, 'cancelled')}>Decline</button>
-                </>}
-                {apt.status === 'confirmed' && <button className="action-btn" style={{ background: '#f0fdf4', color: '#16a34a', border: '1.5px solid #bbf7d0' }} onClick={() => updateStatus(apt.id, 'completed')}>Complete</button>}
-                {apt.status === 'completed' && <button className="action-btn" style={{ background: '#eff6ff', color: '#2563eb', border: '1.5px solid #bfdbfe' }} onClick={() => navigate(`/prescription/${apt.id}`)}>Prescribe</button>}
+                {apt.status === 'pending' && (
+                  <>
+                    <button className="action-btn" style={{ background: '#f0fdfa', color: '#0d9488', border: '1.5px solid #ccfbf1' }}
+                      onClick={() => updateStatus(apt.id, 'confirmed')}>
+                      ✓ Confirm
+                    </button>
+                    <button className="action-btn" style={{ background: '#fef2f2', color: '#dc2626', border: '1.5px solid #fecaca' }}
+                      onClick={() => updateStatus(apt.id, 'cancelled')}>
+                      Decline
+                    </button>
+                  </>
+                )}
+                {apt.status === 'confirmed' && (
+                  <button className="action-btn" style={{ background: '#f0fdf4', color: '#16a34a', border: '1.5px solid #bbf7d0' }}
+                    onClick={() => updateStatus(apt.id, 'completed')}>
+                    Complete
+                  </button>
+                )}
+                {apt.status === 'completed' && (
+                  <button className="action-btn" style={{ background: '#eff6ff', color: '#2563eb', border: '1.5px solid #bfdbfe' }}
+                    onClick={() => navigate(`/prescription/${apt.id}`)}>
+                    Prescribe
+                  </button>
+                )}
               </div>
             </div>
           </article>
         );
       })}
-<NextStepBanner
-  icon="🏠"
-  title="All done for today?"
-  desc="Head back to your dashboard to see your overall stats and upcoming schedule."
-  btnLabel="Go to Dashboard"
-  btnPath="/doctor-dashboard"
-  btnSecondaryLabel="Update Profile"
-  btnSecondaryPath="/edit-profile"
-  color="teal"
-/>
+
+      <NextStepBanner
+        icon="🏠"
+        title="All done for today?"
+        desc="Head back to your dashboard to see your overall stats and upcoming schedule."
+        btnLabel="Go to Dashboard"
+        btnPath="/doctor-dashboard"
+        btnSecondaryLabel="Update Profile"
+        btnSecondaryPath="/edit-profile"
+        color="teal"
+      />
     </Layout>
   );
 }

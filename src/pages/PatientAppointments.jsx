@@ -1,4 +1,5 @@
-import NextStepBanner from "../components/NextStepBanner";import { useState, useEffect } from "react";
+import NextStepBanner from "../components/NextStepBanner";
+import { useState, useEffect } from "react";
 import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
@@ -67,9 +68,8 @@ export default function PatientAppointments() {
         .apt-card:hover { border-color:#0d9488; box-shadow:0 4px 14px rgba(13,148,136,0.07); }
         .rx-card { background:white; border-radius:12px; border:1px solid #e5e7eb; overflow:hidden; transition:all 0.2s; margin-bottom:10px; }
         .rx-card:hover { border-color:#0d9488; box-shadow:0 4px 14px rgba(13,148,136,0.07); }
-        .rx-header { padding:16px 18px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
-        .rx-header:hover { background:#f9fafb; }
-        .order-link { display:inline-flex; align-items:center; gap:5px; padding:5px 12px; border-radius:7px; font-size:12px; font-weight:600; text-decoration:none; }
+        .meet-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:#1a73e8; color:white; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none; transition:all 0.15s; }
+        .meet-btn:hover { background:#1557b0; transform:translateY(-1px); box-shadow:0 4px 12px rgba(26,115,232,0.3); }
       `}</style>
 
       {/* Summary stats */}
@@ -114,7 +114,11 @@ export default function PatientAppointments() {
             </Link>
           </div>
 
-          {loading && <div style={{ display:'flex', justifyContent:'center', padding:'60px 0' }}><div style={{ width:30, height:30, border:'3px solid #e5e7eb', borderTopColor:'#0d9488', borderRadius:'50%', animation:'spin 0.8s linear infinite' }}/></div>}
+          {loading && (
+            <div style={{ display:'flex', justifyContent:'center', padding:'60px 0' }}>
+              <div style={{ width:30, height:30, border:'3px solid #e5e7eb', borderTopColor:'#0d9488', borderRadius:'50%', animation:'spin 0.8s linear infinite' }}/>
+            </div>
+          )}
 
           {!loading && filtered.length === 0 && (
             <div style={{ background:'white', borderRadius:12, border:'1px solid #e5e7eb', padding:'48px', textAlign:'center' }}>
@@ -130,7 +134,9 @@ export default function PatientAppointments() {
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:12 }}>
                   <div style={{ display:'flex', gap:12, flex:1, minWidth:0 }}>
                     <div style={{ width:44, height:44, borderRadius:10, background:'#f0fdfa', border:'1px solid #ccfbf1', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                      <span style={{ fontSize:12, fontWeight:700, color:'#0d9488' }}>{apt.doctorName?.split(" ").map(n=>n[0]).join("").toUpperCase().slice(0,2)}</span>
+                      <span style={{ fontSize:12, fontWeight:700, color:'#0d9488' }}>
+                        {apt.doctorName?.split(" ").map(n=>n[0]).join("").toUpperCase().slice(0,2)}
+                      </span>
                     </div>
                     <div style={{ flex:1 }}>
                       <p style={{ fontSize:14, fontWeight:700, color:'#111827', marginBottom:2 }}>Dr. {apt.doctorName}</p>
@@ -140,12 +146,34 @@ export default function PatientAppointments() {
                         <span style={{ fontSize:12, color:'#374151' }}>🕐 {apt.appointmentTime}</span>
                       </div>
                       {apt.reason && <p style={{ fontSize:12, color:'#6b7280', marginTop:6 }}>{apt.reason}</p>}
+
+                      {/* Google Meet join button — only for confirmed appointments */}
+                      {apt.status === 'confirmed' && apt.meetLink && (
+                        <div style={{ marginTop:12, padding:'12px 16px', background:'#e8f0fe', borderRadius:10, border:'1px solid #c5d4f5' }}>
+                          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:10 }}>
+                            <div>
+                              <p style={{ fontSize:12, fontWeight:700, color:'#1a73e8', marginBottom:3 }}>📹 Video Call Ready</p>
+                              <p style={{ fontSize:11, color:'#5f6368' }}>Your doctor has confirmed this appointment</p>
+                              {apt.roomCode && <p style={{ fontSize:10, color:'#9ca3af', marginTop:2 }}>Room: {apt.roomCode}</p>}
+                            </div>
+                            <a href={apt.meetLink} target="_blank" rel="noreferrer" className="meet-btn">
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
+                                <path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z"/>
+                              </svg>
+                              Join Google Meet
+                            </a>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
+
                   <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:8, flexShrink:0 }}>
                     <span style={{ fontSize:11, fontWeight:600, color:st.color, background:st.bg, padding:'4px 10px', borderRadius:20 }}>{st.label}</span>
                     {(apt.status==='pending'||apt.status==='confirmed') && (
-                      <button onClick={() => handleCancel(apt.id)} style={{ padding:'6px 12px', background:'white', color:'#dc2626', border:'1.5px solid #fecaca', borderRadius:7, fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'Inter,sans-serif' }}>Cancel</button>
+                      <button onClick={() => handleCancel(apt.id)} style={{ padding:'6px 12px', background:'white', color:'#dc2626', border:'1.5px solid #fecaca', borderRadius:7, fontSize:11, fontWeight:600, cursor:'pointer', fontFamily:'Inter,sans-serif' }}>
+                        Cancel
+                      </button>
                     )}
                   </div>
                 </div>
@@ -158,7 +186,11 @@ export default function PatientAppointments() {
       {/* HEALTH RECORDS TAB */}
       {activeTab === 'history' && (
         <div>
-          {loading && <div style={{ display:'flex', justifyContent:'center', padding:'60px 0' }}><div style={{ width:30, height:30, border:'3px solid #e5e7eb', borderTopColor:'#0d9488', borderRadius:'50%', animation:'spin 0.8s linear infinite' }}/></div>}
+          {loading && (
+            <div style={{ display:'flex', justifyContent:'center', padding:'60px 0' }}>
+              <div style={{ width:30, height:30, border:'3px solid #e5e7eb', borderTopColor:'#0d9488', borderRadius:'50%', animation:'spin 0.8s linear infinite' }}/>
+            </div>
+          )}
 
           {!loading && appointments.length === 0 && (
             <div style={{ background:'white', borderRadius:12, border:'1px solid #e5e7eb', padding:'48px', textAlign:'center' }}>
@@ -167,12 +199,11 @@ export default function PatientAppointments() {
             </div>
           )}
 
-          {/* Timeline */}
           <div style={{ display:'grid', gridTemplateColumns:'1fr 280px', gap:20 }}>
             <div>
               <p style={{ fontSize:14, fontWeight:700, color:'#111827', marginBottom:16 }}>Medical Timeline</p>
               {[...appointments.map(a=>({...a,_type:'appointment'})), ...prescriptions.map(r=>({...r,_type:'prescription'}))].sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)).map((item, i) => (
-                <div className="fade-in" style={{ paddingBottom:20, position:'relative', animationDelay:`${i*0.05}s`, opacity:0 }}>
+                <div key={i} className="fade-in" style={{ display:'flex', gap:14, paddingBottom:20, position:'relative', animationDelay:`${i*0.05}s`, opacity:0 }}>
                   <div style={{ display:'flex', flexDirection:'column', alignItems:'center', flexShrink:0 }}>
                     <div style={{ width:36, height:36, borderRadius:9, background:item._type==='prescription'?'#eff6ff':'#f0fdfa', border:`1px solid ${item._type==='prescription'?'#bfdbfe':'#ccfbf1'}`, display:'flex', alignItems:'center', justifyContent:'center' }}>
                       <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
@@ -194,16 +225,20 @@ export default function PatientAppointments() {
                       </span>
                     </div>
                     <p style={{ fontSize:12, color:'#6b7280' }}>
-                      {item._type==='prescription'?`Dr. ${item.doctorName} · ${item.medicines?.length||0} medicine(s)`:
-                      `${item.doctorSpecialization||''} · ${item.appointmentDate||''} · `}
-                      {item._type==='appointment' && <span style={{ color:STATUS_STYLE[item.status]?.color||'#6b7280', fontWeight:600 }}>{STATUS_STYLE[item.status]?.label}</span>}
+                      {item._type==='prescription'
+                        ? `Dr. ${item.doctorName} · ${item.medicines?.length||0} medicine(s)`
+                        : `${item.doctorSpecialization||''} · ${item.appointmentDate||''} · `}
+                      {item._type==='appointment' && (
+                        <span style={{ color:STATUS_STYLE[item.status]?.color||'#6b7280', fontWeight:600 }}>
+                          {STATUS_STYLE[item.status]?.label}
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Summary */}
             <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
               <div style={{ background:'white', borderRadius:12, border:'1px solid #e5e7eb', padding:'18px' }}>
                 <p style={{ fontSize:13, fontWeight:700, color:'#111827', marginBottom:14 }}>Health Summary</p>
@@ -227,16 +262,17 @@ export default function PatientAppointments() {
           </div>
         </div>
       )}
-<NextStepBanner
-  icon="📋"
-  title="Check your prescriptions"
-  desc="View all your digital prescriptions and track your weekly medication schedule."
-  btnLabel="View Prescriptions"
-  btnPath="/my-prescriptions"
-  btnSecondaryLabel="Find a Doctor"
-  btnSecondaryPath="/search-doctors"
-  color="blue"
-/>
+
+      <NextStepBanner
+        icon="📋"
+        title="Check your prescriptions"
+        desc="View all your digital prescriptions and track your weekly medication schedule."
+        btnLabel="View Prescriptions"
+        btnPath="/my-prescriptions"
+        btnSecondaryLabel="Find a Doctor"
+        btnSecondaryPath="/search-doctors"
+        color="blue"
+      />
     </Layout>
   );
 }

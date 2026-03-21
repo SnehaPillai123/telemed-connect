@@ -1,4 +1,5 @@
-import NextStepBanner from "../components/NextStepBanner";import { useState, useEffect } from "react";
+import NextStepBanner from "../components/NextStepBanner";
+import { useState, useEffect } from "react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
@@ -52,43 +53,22 @@ export default function PatientDashboard() {
     <Layout title={`${greeting}, ${firstName} 👋`} subtitle="Patient Dashboard">
       <style>{`
         @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin   { to { transform: rotate(360deg); } }
         .fade-up { animation: fadeUp 0.4s ease forwards; }
-
-        .stat-card {
-          background: white; border-radius: 12px; border: 1px solid #e5e7eb;
-          padding: 20px; text-decoration: none; display: block;
-          transition: all 0.2s;
-        }
-        .stat-card:hover {
-          border-color: #0d9488; transform: translateY(-3px);
-          box-shadow: 0 8px 24px rgba(13,148,136,0.1);
-        }
-
-        .apt-row {
-          padding: 12px 16px; display: flex; align-items: center; gap: 12px;
-          border-bottom: 1px solid #f3f4f6; transition: background 0.15s;
-        }
+        .stat-card { background: white; border-radius: 12px; border: 1px solid #e5e7eb; padding: 20px; text-decoration: none; display: block; transition: all 0.2s; }
+        .stat-card:hover { border-color: #0d9488; transform: translateY(-3px); box-shadow: 0 8px 24px rgba(13,148,136,0.1); }
+        .apt-row { padding: 12px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #f3f4f6; transition: background 0.15s; flex-wrap: wrap; }
         .apt-row:last-child { border-bottom: none; }
         .apt-row:hover { background: #f9fafb; }
-
-        .widget-card {
-          background: white; border-radius: 12px; border: 1px solid #e5e7eb;
-          padding: 16px; transition: all 0.2s;
-        }
+        .widget-card { background: white; border-radius: 12px; border: 1px solid #e5e7eb; padding: 16px; transition: all 0.2s; }
         .widget-card:hover { border-color: #0d9488; box-shadow: 0 4px 16px rgba(13,148,136,0.07); }
-
-        /* Responsive overrides */
-        @media screen and (max-width: 991px) {
-          .dash-stats  { grid-template-columns: repeat(3,1fr) !important; }
-          .dash-main   { grid-template-columns: 1fr !important; }
-        }
-        @media screen and (max-width: 599px) {
-          .dash-stats  { grid-template-columns: 1fr !important; }
-          .dash-main   { grid-template-columns: 1fr !important; }
-        }
+        .meet-badge { display:inline-flex; align-items:center; gap:5px; padding:4px 12px; background:#1a73e8; color:white; border-radius:7px; font-size:11px; font-weight:600; text-decoration:none; transition:all 0.15s; }
+        .meet-badge:hover { background:#1557b0; }
+        @media screen and (max-width: 991px) { .dash-stats { grid-template-columns: repeat(3,1fr) !important; } .dash-main { grid-template-columns: 1fr !important; } }
+        @media screen and (max-width: 599px)  { .dash-stats { grid-template-columns: 1fr !important; } .dash-main { grid-template-columns: 1fr !important; } }
       `}</style>
 
-      {/* ── STATS ROW ── */}
+      {/* STATS ROW */}
       <div className="dash-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: 24 }}>
         {[
           { label: 'Upcoming Appointments', value: stats.upcoming, color: '#0d9488', bg: '#f0fdfa', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', to: '/my-appointments' },
@@ -109,7 +89,7 @@ export default function PatientDashboard() {
         ))}
       </div>
 
-      {/* ── MAIN GRID: appointments + widgets ── */}
+      {/* MAIN GRID */}
       <div className="dash-main" style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20 }}>
 
         {/* Recent Appointments */}
@@ -128,7 +108,6 @@ export default function PatientDashboard() {
           {loading && (
             <div style={{ padding: '40px', textAlign: 'center' }}>
               <div style={{ width: 28, height: 28, border: '3px solid #e5e7eb', borderTopColor: '#0d9488', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }}/>
-              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             </div>
           )}
 
@@ -164,9 +143,20 @@ export default function PatientDashboard() {
                     {apt.doctorSpecialization} · {apt.appointmentDate}
                   </p>
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 600, color: st.color, background: st.bg, padding: '3px 10px', borderRadius: 20, flexShrink: 0, whiteSpace: 'nowrap' }}>
-                  {st.label}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: st.color, background: st.bg, padding: '3px 10px', borderRadius: 20, whiteSpace: 'nowrap' }}>
+                    {st.label}
+                  </span>
+                  {/* Show Join Meet button right on dashboard for confirmed appointments */}
+                  {apt.status === 'confirmed' && apt.meetLink && (
+                    <a href={apt.meetLink} target="_blank" rel="noreferrer" className="meet-badge">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="white">
+                        <path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z"/>
+                      </svg>
+                      Join
+                    </a>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -180,7 +170,7 @@ export default function PatientDashboard() {
           )}
         </div>
 
-        {/* Right column — widgets */}
+        {/* Right column widgets */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
           {/* Health tip */}
@@ -203,7 +193,7 @@ export default function PatientDashboard() {
               <span style={{ fontSize: 13, fontWeight: 700, color: '#0d9488' }}>60%</span>
             </div>
             <div style={{ height: 6, background: '#f3f4f6', borderRadius: 4, marginBottom: 10 }}>
-              <div style={{ width: '60%', height: '100%', background: 'linear-gradient(90deg, #0d9488, #0284c7)', borderRadius: 4, transition: 'width 1s ease' }}/>
+              <div style={{ width: '60%', height: '100%', background: 'linear-gradient(90deg, #0d9488, #0284c7)', borderRadius: 4 }}/>
             </div>
             <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 10 }}>Complete your profile for better doctor recommendations.</p>
             <Link to="/edit-profile" style={{ fontSize: 12, fontWeight: 600, color: '#0d9488', textDecoration: 'none' }}>
@@ -246,7 +236,7 @@ export default function PatientDashboard() {
             <p style={{ fontSize: 12, color: '#991b1b', lineHeight: 1.6, marginBottom: 10 }}>
               Instantly shares your location with nearby hospitals and emergency contacts.
             </p>
-            <Link to="/emergency" style={{ display: 'block', padding: '9px', background: '#ef4444', color: 'white', borderRadius: 8, fontSize: 13, fontWeight: 700, textAlign: 'center', textDecoration: 'none', transition: 'all 0.15s' }}
+            <Link to="/emergency" style={{ display: 'block', padding: '9px', background: '#ef4444', color: 'white', borderRadius: 8, fontSize: 13, fontWeight: 700, textAlign: 'center', textDecoration: 'none' }}
               onMouseEnter={e => e.target.style.background='#dc2626'}
               onMouseLeave={e => e.target.style.background='#ef4444'}>
               🚨 Activate Emergency SOS
@@ -254,16 +244,17 @@ export default function PatientDashboard() {
           </div>
         </div>
       </div>
-<NextStepBanner
-  icon="🔍"
-  title="Ready to see a doctor?"
-  desc="Browse verified doctors by specialization, experience and fee."
-  btnLabel="Find a Doctor"
-  btnPath="/search-doctors"
-  btnSecondaryLabel="My Appointments"
-  btnSecondaryPath="/my-appointments"
-  color="teal"
-/>
+
+      <NextStepBanner
+        icon="🔍"
+        title="Ready to see a doctor?"
+        desc="Browse verified doctors by specialization, experience and fee."
+        btnLabel="Find a Doctor"
+        btnPath="/search-doctors"
+        btnSecondaryLabel="My Appointments"
+        btnSecondaryPath="/my-appointments"
+        color="teal"
+      />
     </Layout>
   );
 }
