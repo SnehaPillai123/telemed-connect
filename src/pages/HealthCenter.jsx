@@ -1,4 +1,4 @@
-import { useState } from "react";
+import NextStepBanner from "../components/NextStepBanner";import { useState } from "react";
 import Layout from "../components/Layout";
 import { useNavigate } from "react-router-dom";
 
@@ -302,6 +302,16 @@ export default function HealthCenter() {
           )}
         </div>
       )}
+<NextStepBanner
+  icon="🩺"
+  title="Time to see a specialist?"
+  desc="Our verified doctors are available for online consultations. Book in under 2 minutes."
+  btnLabel="Find a Doctor"
+  btnPath="/search-doctors"
+  btnSecondaryLabel="My Appointments"
+  btnSecondaryPath="/my-appointments"
+  color="purple"
+/>
     </Layout>
   );
 }

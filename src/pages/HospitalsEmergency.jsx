@@ -257,6 +257,16 @@ export default function HospitalsEmergency() {
           </section>
         </div>
       )}
+<NextStepBanner
+  icon="📅"
+  title="Need an online consultation instead?"
+  desc="Skip the hospital wait — book a doctor from home right now."
+  btnLabel="Book a Consultation"
+  btnPath="/search-doctors"
+  btnSecondaryLabel="Go to Dashboard"
+  btnSecondaryPath="/patient-dashboard"
+  color="orange"
+/>
     </Layout>
   );
 }

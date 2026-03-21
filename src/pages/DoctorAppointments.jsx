@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import NextStepBanner from "../components/NextStepBanner";import { useState, useEffect } from "react";
 import { collection, query, where, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
@@ -123,6 +123,16 @@ export default function DoctorAppointments() {
           </article>
         );
       })}
+<NextStepBanner
+  icon="🏠"
+  title="All done for today?"
+  desc="Head back to your dashboard to see your overall stats and upcoming schedule."
+  btnLabel="Go to Dashboard"
+  btnPath="/doctor-dashboard"
+  btnSecondaryLabel="Update Profile"
+  btnSecondaryPath="/edit-profile"
+  color="teal"
+/>
     </Layout>
   );
 }

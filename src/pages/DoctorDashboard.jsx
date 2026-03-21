@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import NextStepBanner from "../components/NextStepBanner";import { useState, useEffect } from "react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
@@ -157,6 +157,16 @@ export default function DoctorDashboard() {
           </div>
         </div>
       </div>
+<NextStepBanner
+  icon="📅"
+  title="Review today's appointments"
+  desc="Confirm pending requests, mark consultations complete and write prescriptions."
+  btnLabel="View Appointments"
+  btnPath="/doctor-appointments"
+  btnSecondaryLabel="Update Profile"
+  btnSecondaryPath="/edit-profile"
+  color="blue"
+/>
     </Layout>
   );
 }

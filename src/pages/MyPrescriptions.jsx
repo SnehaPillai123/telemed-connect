@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import NextStepBanner from "../components/NextStepBanner";import { useState, useEffect } from "react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
@@ -260,6 +260,16 @@ export default function MyPrescriptions() {
           </div>
         </div>
       )}
+<NextStepBanner
+  icon="💊"
+  title="Need to order your medicines?"
+  desc="Order your prescribed medicines directly from 1mg or PharmEasy with one click."
+  btnLabel="Order on 1mg"
+  btnPath="https://www.1mg.com"
+  btnSecondaryLabel="Order on PharmEasy"
+  btnSecondaryPath="https://pharmeasy.in"
+  color="green"
+/>
     </Layout>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import NextStepBanner from "../components/NextStepBanner";import { useState, useEffect } from "react";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { updateProfile } from "firebase/auth";
 import { db, auth } from "../firebase/config";
@@ -236,6 +236,16 @@ export default function EditProfile() {
           </div>
         </main>
       </div>
+<NextStepBanner
+  icon="🔍"
+  title="Profile saved! Now find a doctor"
+  desc="Your updated health profile helps doctors give you better, more personalised advice."
+  btnLabel="Find a Doctor"
+  btnPath="/search-doctors"
+  btnSecondaryLabel="My Appointments"
+  btnSecondaryPath="/my-appointments"
+  color="teal"
+/>
     </>
   );
 }
