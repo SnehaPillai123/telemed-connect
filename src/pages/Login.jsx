@@ -37,56 +37,41 @@ export default function Login() {
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         *, *::before, *::after { font-family:'Inter',sans-serif; box-sizing:border-box; margin:0; padding:0; }
 
-        .login-wrap { min-height:100svh; display:flex; background:#f9fafb; }
+        .login-wrap  { min-height:100svh; display:flex; background:#f9fafb; }
+        .login-left  { width:420px; flex-shrink:0; background:linear-gradient(160deg,#0d9488,#0f766e); display:flex; flex-direction:column; justify-content:center; padding:48px 40px; }
+        .login-right { flex:1; display:flex; align-items:center; justify-content:center; padding:40px 24px; overflow-y:auto; }
+        .login-card  { width:100%; max-width:420px; }
 
-        /* Left panel */
-        .login-left {
-          width:420px; flex-shrink:0;
-          background:linear-gradient(160deg,#0d9488,#0f766e);
-          display:flex; flex-direction:column; justify-content:center;
-          padding:48px 40px;
-        }
-
-        /* Right panel */
-        .login-right {
-          flex:1; display:flex; align-items:center; justify-content:center;
-          padding:32px 20px; overflow-y:auto;
-        }
-        .login-card { width:100%; max-width:420px; }
-
-        /* Form */
-        .l-input {
-          width:100%; padding:13px 14px; border:1.5px solid #e5e7eb; border-radius:9px;
-          font-size:16px; color:#111827; background:white; outline:none; transition:all 0.2s;
-          font-family:Inter,sans-serif; -webkit-appearance:none;
-        }
+        .l-input { width:100%; padding:13px 14px; border:1.5px solid #e5e7eb; border-radius:9px; font-size:16px; color:#111827; background:white; outline:none; transition:all 0.2s; font-family:Inter,sans-serif; -webkit-appearance:none; }
         .l-input:focus { border-color:#0d9488; box-shadow:0 0 0 3px rgba(13,148,136,0.1); }
         .l-label { font-size:13px; font-weight:600; color:#374151; display:block; margin-bottom:6px; }
-        .l-btn {
-          width:100%; padding:14px; background:#0d9488; color:white; border:none; border-radius:9px;
-          font-size:15px; font-weight:700; cursor:pointer; transition:all 0.2s;
-          font-family:Inter,sans-serif; -webkit-tap-highlight-color:transparent; min-height:48px;
-        }
-        .l-btn:hover { background:#0f766e; transform:translateY(-1px); box-shadow:0 6px 20px rgba(13,148,136,0.3); }
+        .l-btn { width:100%; padding:14px; background:#0d9488; color:white; border:none; border-radius:9px; font-size:15px; font-weight:700; cursor:pointer; transition:all 0.2s; font-family:Inter,sans-serif; min-height:48px; -webkit-tap-highlight-color:transparent; }
+        .l-btn:hover    { background:#0f766e; transform:translateY(-1px); box-shadow:0 6px 20px rgba(13,148,136,0.3); }
         .l-btn:disabled { background:#5eead4; cursor:not-allowed; transform:none; box-shadow:none; }
 
         @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
         .fade-up { animation:fadeUp 0.5s ease forwards; }
 
-        /* RESPONSIVE */
-        @media screen and (max-width:768px) {
-          .login-left { display:none; }
-          .login-right { padding:24px 16px; align-items:flex-start; padding-top:40px; }
-          .login-card { max-width:100%; }
+        /* ── TABLET ── */
+        @media screen and (max-width:900px) {
+          .login-left { width:340px; padding:40px 28px; }
         }
-        @media screen and (max-width:390px) {
-          .login-right { padding:20px 14px; }
+
+        /* ── MOBILE ── */
+        @media screen and (max-width:700px) {
+          .login-left  { display:none !important; }
+          .login-right { padding:32px 20px; align-items:flex-start; min-height:100svh; }
+          .login-card  { max-width:100%; }
+          .l-mobile-header { display:flex !important; }
         }
+
+        /* Mobile header (logo) — hidden on desktop */
+        .l-mobile-header { display:none; align-items:center; gap:10px; margin-bottom:32px; }
       `}</style>
 
       <div className="login-wrap">
 
-        {/* Left panel — hidden on mobile */}
+        {/* ── LEFT PANEL (hidden on mobile) ── */}
         <div className="login-left">
           <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:44 }}>
             <div style={{ width:40, height:40, borderRadius:10, background:'rgba(255,255,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center' }}>
@@ -105,7 +90,7 @@ export default function Login() {
             Connect with 500+ verified doctors, get AI-powered diagnosis, emergency SOS, and multilingual consultations.
           </p>
 
-          <div style={{ display:'flex', flexDirection:'column', gap:13 }}>
+          <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
             {[
               { icon:'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', text:'500+ Verified Doctors' },
               { icon:'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z', text:'AI Symptom Checker' },
@@ -132,12 +117,12 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Right panel */}
+        {/* ── RIGHT PANEL ── */}
         <div className="login-right">
           <div className="login-card fade-up">
 
-            {/* Mobile logo */}
-            <div style={{ display:'none', alignItems:'center', gap:10, marginBottom:28 }} className="mobile-logo">
+            {/* Logo shown only on mobile */}
+            <div className="l-mobile-header">
               <div style={{ width:36, height:36, borderRadius:8, background:'#0d9488', display:'flex', alignItems:'center', justifyContent:'center' }}>
                 <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M12 7v10M7 12h10" stroke="white" strokeWidth="2.5" strokeLinecap="round"/></svg>
               </div>
@@ -161,9 +146,12 @@ export default function Login() {
               <div>
                 <label className="l-label" htmlFor="password">Password</label>
                 <div style={{ position:'relative' }}>
-                  <input id="password" className="l-input" type={showPass?"text":"password"}
-                    placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)}
-                    autoComplete="current-password" style={{ paddingRight:48 }}/>
+                  <input id="password" className="l-input"
+                    type={showPass ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={password} onChange={e => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                    style={{ paddingRight:48 }}/>
                   <button type="button" onClick={() => setShowPass(!showPass)}
                     style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'#9ca3af', padding:6, minWidth:36, minHeight:36, display:'flex', alignItems:'center', justifyContent:'center' }}>
                     <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
@@ -193,12 +181,6 @@ export default function Login() {
           </div>
         </div>
       </div>
-
-      <style>{`
-        @media screen and (max-width:768px) {
-          .mobile-logo { display:flex !important; }
-        }
-      `}</style>
     </>
   );
 }
