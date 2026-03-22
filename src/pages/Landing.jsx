@@ -157,7 +157,9 @@ export default function Landing() {
           .l-hero-title { font-size:28px; }
           .l-stats-grid { grid-template-columns:repeat(2,1fr); }
         }
-      `}</style>
+      `}@media screen and (min-width: 769px) { .l-hamburger { display:none !important; } }
+@media screen and (max-width: 768px) { .hide-mobile { display:none !important; } }
+</style>
 
       {/* NAVBAR */}
       <nav className="l-nav">
@@ -178,9 +180,9 @@ export default function Landing() {
         </div>
 
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-          <Link to="/login" className="btn-ghost">Sign in</Link>
-          <Link to="/register" className="btn-solid hide-on-mobile" style={{ display:'block' }}>Get started</Link>
-          <button className="l-hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
+  <Link to="/login" className="btn-ghost hide-mobile">Sign in</Link>
+  <Link to="/register" className="btn-solid hide-mobile">Get started</Link>
+  <button className="l-hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
             <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
               {menuOpen
                 ? <path d="M6 18L18 6M6 6l12 12" stroke="#374151" strokeWidth="2" strokeLinecap="round"/>
