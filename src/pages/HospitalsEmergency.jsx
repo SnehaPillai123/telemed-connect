@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import NextStepBanner from "../components/NextStepBanner";
 import Layout from "../components/Layout";
 
 const HOSPITALS = [
@@ -257,16 +258,17 @@ export default function HospitalsEmergency() {
           </section>
         </div>
       )}
-<NextStepBanner
-  icon="📅"
-  title="Need an online consultation instead?"
-  desc="Skip the hospital wait — book a doctor from home right now."
-  btnLabel="Book a Consultation"
-  btnPath="/search-doctors"
-  btnSecondaryLabel="Go to Dashboard"
-  btnSecondaryPath="/patient-dashboard"
-  color="orange"
-/>
+
+      <NextStepBanner
+        icon="📅"
+        title="Need an online consultation instead?"
+        desc="Skip the hospital wait — book a doctor from home right now."
+        btnLabel="Book a Consultation"
+        btnPath="/search-doctors"
+        btnSecondaryLabel="Go to Dashboard"
+        btnSecondaryPath="/patient-dashboard"
+        color="orange"
+      />
     </Layout>
   );
 }
