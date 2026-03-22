@@ -117,16 +117,22 @@ function DoctorModal({ doctor, onClose, onBook }) {
   );
 }
 
-// ── DROPDOWN FILTER CHIP ────────────────────────────────
-function FilterChip({ label, icon, options, value, onChange, color = "#0d9488" }) {
+// ── DROPDOWN FILTER CHIP ─────────────────────────────────
+function FilterChip({ label, icon, options, value, onChange, color="#0d9488" }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const isActive = value !== options[0];
 
   useEffect(() => {
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
     document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("touchstart", handler);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("touchstart", handler);
+    };
   }, []);
 
   return (
@@ -135,45 +141,58 @@ function FilterChip({ label, icon, options, value, onChange, color = "#0d9488" }
         onClick={() => setOpen(!open)}
         style={{
           display:'inline-flex', alignItems:'center', gap:6,
-          padding:'8px 14px', borderRadius:50,
+          padding:'9px 16px', borderRadius:50,
           border:`1.5px solid ${isActive ? color : '#e5e7eb'}`,
           background: isActive ? color : 'white',
           color: isActive ? 'white' : '#374151',
           fontSize:13, fontWeight:600, cursor:'pointer',
           fontFamily:'Inter,sans-serif', transition:'all 0.2s',
           whiteSpace:'nowrap',
-          boxShadow: isActive ? `0 2px 8px ${color}40` : 'none',
+          boxShadow: isActive ? `0 2px 8px ${color}40` : '0 1px 3px rgba(0,0,0,0.06)',
         }}>
-        <span>{icon}</span>
+        <span style={{ fontSize:15 }}>{icon}</span>
         <span>{isActive ? value : label}</span>
         <svg width="12" height="12" fill="none" viewBox="0 0 24 24"
-          style={{ transform: open ? 'rotate(180deg)' : 'none', transition:'transform 0.2s' }}>
-          <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          style={{ transform:open?'rotate(180deg)':'none', transition:'transform 0.2s', opacity:0.7 }}>
+          <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"/>
         </svg>
       </button>
 
       {open && (
         <div style={{
-          position:'absolute', top:'calc(100% + 8px)', left:0,
-          background:'white', borderRadius:12, border:'1px solid #e5e7eb',
-          boxShadow:'0 8px 32px rgba(0,0,0,0.12)', zIndex:100,
-          minWidth:180, overflow:'hidden', padding:'6px',
+          position:'fixed',
+          top: ref.current ? ref.current.getBoundingClientRect().bottom + 8 : 0,
+          left: ref.current ? Math.min(ref.current.getBoundingClientRect().left, window.innerWidth - 200) : 0,
+          background:'white', borderRadius:14,
+          border:'1px solid #e5e7eb',
+          boxShadow:'0 12px 40px rgba(0,0,0,0.15)',
+          zIndex:99999,
+          minWidth:190, overflow:'hidden',
+          padding:'6px',
         }}>
           {options.map((opt) => (
             <button key={opt}
               onClick={() => { onChange(opt); setOpen(false); }}
               style={{
-                display:'block', width:'100%', textAlign:'left',
-                padding:'9px 12px', border:'none', borderRadius:8,
+                display:'flex', alignItems:'center', gap:8,
+                width:'100%', textAlign:'left',
+                padding:'10px 14px', border:'none', borderRadius:9,
                 background: value===opt ? `${color}15` : 'transparent',
                 color: value===opt ? color : '#374151',
                 fontSize:13, fontWeight: value===opt ? 700 : 500,
                 cursor:'pointer', fontFamily:'Inter,sans-serif',
-                transition:'all 0.15s',
+                transition:'background 0.15s',
               }}
-              onMouseEnter={e => { if(value!==opt) e.target.style.background='#f9fafb'; }}
-              onMouseLeave={e => { if(value!==opt) e.target.style.background='transparent'; }}>
-              {value===opt && <span style={{ marginRight:6 }}>✓</span>}
+              onMouseEnter={e => { if(value!==opt) e.currentTarget.style.background='#f9fafb'; }}
+              onMouseLeave={e => { if(value!==opt) e.currentTarget.style.background='transparent'; }}>
+              <span style={{
+                width:18, height:18, borderRadius:'50%',
+                background: value===opt ? color : '#f3f4f6',
+                display:'flex', alignItems:'center', justifyContent:'center',
+                flexShrink:0, fontSize:10,
+              }}>
+                {value===opt && <svg width="10" height="10" fill="none" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke="white" strokeWidth="3" strokeLinecap="round"/></svg>}
+              </span>
               {opt}
             </button>
           ))}
@@ -242,7 +261,10 @@ export default function SearchDoctors() {
     setFiltered(result);
   }, [search, activeSpec, experience, fee, rating, doctors]);
 
-  const clearFilters = () => { setActiveSpec("All"); setExperience("Any"); setFee("Any"); setRating("Any"); setSearch(""); };
+  const clearFilters = () => {
+    setActiveSpec("All"); setExperience("Any");
+    setFee("Any"); setRating("Any"); setSearch("");
+  };
   const hasFilters = activeSpec!=="All" || experience!=="Any" || fee!=="Any" || rating!=="Any" || search;
 
   return (
@@ -257,9 +279,7 @@ export default function SearchDoctors() {
         @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
         .fade-in { animation:fadeIn 0.3s ease forwards; }
         @keyframes spin { to{transform:rotate(360deg)} }
-
-        /* Filter bar scrollable on mobile */
-        .filter-bar { display:flex; align-items:center; gap:8px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none; }
+        .filter-bar { display:flex; align-items:center; gap:8px; overflow-x:auto; padding-bottom:6px; scrollbar-width:none; -ms-overflow-style:none; }
         .filter-bar::-webkit-scrollbar { display:none; }
       `}</style>
 
@@ -271,7 +291,7 @@ export default function SearchDoctors() {
         />
       )}
 
-      {/* ── SEARCH BAR ── */}
+      {/* SEARCH BAR */}
       <div style={{ position:'relative', marginBottom:14 }}>
         <svg style={{ position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', pointerEvents:'none' }}
           width="16" height="16" fill="none" viewBox="0 0 24 24">
@@ -286,81 +306,51 @@ export default function SearchDoctors() {
         />
       </div>
 
-      {/* ── FILTER CHIPS BAR ── */}
-      <div className="filter-bar" style={{ marginBottom:20 }}>
-        <FilterChip
-          label="Specialization"
-          icon="🩺"
-          options={SPECIALIZATIONS}
-          value={activeSpec}
-          onChange={setActiveSpec}
-          color="#0d9488"
-        />
-        <FilterChip
-          label="Experience"
-          icon="⏱️"
-          options={EXPERIENCE_OPTIONS}
-          value={experience}
-          onChange={setExperience}
-          color="#2563eb"
-        />
-        <FilterChip
-          label="Fee Range"
-          icon="💰"
-          options={FEE_OPTIONS}
-          value={fee}
-          onChange={setFee}
-          color="#7c3aed"
-        />
-        <FilterChip
-          label="Rating"
-          icon="⭐"
-          options={RATING_OPTIONS}
-          value={rating}
-          onChange={setRating}
-          color="#d97706"
-        />
-
-        {/* Clear all */}
+      {/* FILTER CHIPS */}
+      <div className="filter-bar" style={{ marginBottom:16 }}>
+        <FilterChip label="Specialization" icon="🩺" options={SPECIALIZATIONS} value={activeSpec} onChange={setActiveSpec} color="#0d9488"/>
+        <FilterChip label="Experience"     icon="⏱️" options={EXPERIENCE_OPTIONS} value={experience} onChange={setExperience} color="#2563eb"/>
+        <FilterChip label="Fee Range"      icon="💰" options={FEE_OPTIONS} value={fee} onChange={setFee} color="#7c3aed"/>
+        <FilterChip label="Rating"         icon="⭐" options={RATING_OPTIONS} value={rating} onChange={setRating} color="#d97706"/>
         {hasFilters && (
           <button onClick={clearFilters}
-            style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'8px 14px', borderRadius:50, border:'1.5px solid #fecaca', background:'#fef2f2', color:'#dc2626', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'Inter,sans-serif', whiteSpace:'nowrap', flexShrink:0 }}>
-            ✕ Clear
+            style={{ display:'inline-flex', alignItems:'center', gap:5, padding:'9px 16px', borderRadius:50, border:'1.5px solid #fecaca', background:'#fef2f2', color:'#dc2626', fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'Inter,sans-serif', whiteSpace:'nowrap', flexShrink:0 }}>
+            ✕ Clear all
           </button>
         )}
       </div>
 
-      {/* ── ACTIVE FILTER TAGS ── */}
+      {/* ACTIVE FILTER TAGS */}
       {hasFilters && (
         <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:16 }}>
           {activeSpec!=="All" && (
-            <span style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'4px 10px', background:'#f0fdfa', border:'1px solid #ccfbf1', borderRadius:20, fontSize:12, color:'#0d9488', fontWeight:600 }}>
+            <span style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'4px 12px', background:'#f0fdfa', border:'1px solid #ccfbf1', borderRadius:20, fontSize:12, color:'#0d9488', fontWeight:600 }}>
               🩺 {activeSpec}
-              <button onClick={() => setActiveSpec("All")} style={{ background:'none', border:'none', cursor:'pointer', color:'#0d9488', padding:0, fontSize:12, lineHeight:1 }}>✕</button>
+              <button onClick={() => setActiveSpec("All")} style={{ background:'none', border:'none', cursor:'pointer', color:'#0d9488', padding:0, fontSize:13, lineHeight:1, fontWeight:700 }}>×</button>
             </span>
           )}
           {experience!=="Any" && (
-            <span style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'4px 10px', background:'#eff6ff', border:'1px solid #bfdbfe', borderRadius:20, fontSize:12, color:'#2563eb', fontWeight:600 }}>
+            <span style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'4px 12px', background:'#eff6ff', border:'1px solid #bfdbfe', borderRadius:20, fontSize:12, color:'#2563eb', fontWeight:600 }}>
               ⏱️ {experience}
-              <button onClick={() => setExperience("Any")} style={{ background:'none', border:'none', cursor:'pointer', color:'#2563eb', padding:0, fontSize:12, lineHeight:1 }}>✕</button>
+              <button onClick={() => setExperience("Any")} style={{ background:'none', border:'none', cursor:'pointer', color:'#2563eb', padding:0, fontSize:13, lineHeight:1, fontWeight:700 }}>×</button>
             </span>
           )}
           {fee!=="Any" && (
-            <span style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'4px 10px', background:'#f5f3ff', border:'1px solid #ddd6fe', borderRadius:20, fontSize:12, color:'#7c3aed', fontWeight:600 }}>
+            <span style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'4px 12px', background:'#f5f3ff', border:'1px solid #ddd6fe', borderRadius:20, fontSize:12, color:'#7c3aed', fontWeight:600 }}>
               💰 {fee}
-              <button onClick={() => setFee("Any")} style={{ background:'none', border:'none', cursor:'pointer', color:'#7c3aed', padding:0, fontSize:12, lineHeight:1 }}>✕</button>
+              <button onClick={() => setFee("Any")} style={{ background:'none', border:'none', cursor:'pointer', color:'#7c3aed', padding:0, fontSize:13, lineHeight:1, fontWeight:700 }}>×</button>
             </span>
           )}
           {rating!=="Any" && (
-            <span style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'4px 10px', background:'#fffbeb', border:'1px solid #fde68a', borderRadius:20, fontSize:12, color:'#d97706', fontWeight:600 }}>
+            <span style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'4px 12px', background:'#fffbeb', border:'1px solid #fde68a', borderRadius:20, fontSize:12, color:'#d97706', fontWeight:600 }}>
               ⭐ {rating}
-              <button onClick={() => setRating("Any")} style={{ background:'none', border:'none', cursor:'pointer', color:'#d97706', padding:0, fontSize:12, lineHeight:1 }}>✕</button>
+              <button onClick={() => setRating("Any")} style={{ background:'none', border:'none', cursor:'pointer', color:'#d97706', padding:0, fontSize:13, lineHeight:1, fontWeight:700 }}>×</button>
             </span>
           )}
         </div>
       )}
 
-      {/* ── RESULTS COUNT ── */}
+      {/* RESULTS COUNT */}
       <div style={{ marginBottom:16 }}>
         <p style={{ fontSize:14, fontWeight:700, color:'#111827' }}>
           {loading ? 'Loading...' : `${filtered.length} doctor${filtered.length!==1?'s':''} found`}
@@ -368,14 +358,14 @@ export default function SearchDoctors() {
         <p style={{ fontSize:12, color:'#9ca3af' }}>Click any card to preview full profile</p>
       </div>
 
-      {/* ── LOADING ── */}
+      {/* LOADING */}
       {loading && (
         <div style={{ display:'flex', justifyContent:'center', padding:'60px 0' }}>
           <div style={{ width:32, height:32, border:'3px solid #e5e7eb', borderTopColor:'#0d9488', borderRadius:'50%', animation:'spin 0.8s linear infinite' }}/>
         </div>
       )}
 
-      {/* ── EMPTY STATE ── */}
+      {/* EMPTY */}
       {!loading && filtered.length === 0 && (
         <div style={{ background:'white', borderRadius:12, border:'1px solid #e5e7eb', padding:'60px', textAlign:'center' }}>
           <p style={{ fontSize:15, fontWeight:600, color:'#374151', marginBottom:6 }}>No doctors found</p>
@@ -386,7 +376,7 @@ export default function SearchDoctors() {
         </div>
       )}
 
-      {/* ── DOCTOR CARDS ── */}
+      {/* DOCTOR CARDS */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(240px, 1fr))', gap:14 }}>
         {filtered.map((doc, i) => (
           <article key={doc.id} className="doctor-card fade-in"

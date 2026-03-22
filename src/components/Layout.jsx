@@ -101,7 +101,8 @@ export default function Layout({ children, title, subtitle }) {
           flex:1; display:flex; flex-direction:column;
           min-height:100vh; min-width:0;
           transition:margin-left 0.3s cubic-bezier(0.4,0,0.2,1);
-          max-width:100vw; overflow-x:hidden;
+          max-width:100vw;
+          /* NO overflow-x:hidden here — it was clipping dropdowns */
         }
         .lyt-main.push { margin-left:${SIDEBAR_WIDTH}px; }
         .lyt-main.full { margin-left:0; }
@@ -112,6 +113,7 @@ export default function Layout({ children, title, subtitle }) {
           padding:0 20px; height:56px;
           display:flex; align-items:center; justify-content:space-between;
           position:sticky; top:0; z-index:40; gap:12px;
+          overflow:hidden;
         }
 
         /* ── HAMBURGER ── */
@@ -156,8 +158,8 @@ export default function Layout({ children, title, subtitle }) {
         }
         .lyt-signout:hover { border-color:#0d9488; color:#0d9488; }
 
-        /* ── CONTENT ── */
-        .lyt-content { padding:16px; flex:1; }
+        /* ── CONTENT — allow dropdowns to overflow ── */
+        .lyt-content { padding:16px; flex:1; overflow:visible; }
 
         /* ── GRID HELPERS ── */
         .grid-1col { display:grid; grid-template-columns:1fr; gap:12px; }
@@ -209,23 +211,12 @@ export default function Layout({ children, title, subtitle }) {
           .tab-btn      { font-size:11px; padding:8px 6px; }
           .dash-main    { grid-template-columns:1fr !important; }
           .dash-stats   { grid-template-columns:repeat(2,1fr) !important; }
-
-          /* Make all cards full width on phone */
-          [style*="grid-template-columns"] { grid-template-columns:1fr !important; }
-
-          /* Fix hardcoded widths in child pages */
           .nsb-wrap { flex-direction:column !important; }
           .nsb-btns { width:100% !important; }
           .nsb-btn-primary,.nsb-btn-secondary { flex:1; text-align:center; }
-
-          /* Action rows wrap nicely */
           .action-row { gap:6px !important; }
           .meet-btn,.chat-btn,.rx-btn { font-size:11px !important; padding:6px 10px !important; }
-
-          /* Appointment cards */
           .apt-card { padding:12px !important; }
-
-          /* Filter chips */
           .filter-chip,.filter-btn { padding:5px 10px !important; font-size:11px !important; }
         }
 
@@ -242,10 +233,7 @@ export default function Layout({ children, title, subtitle }) {
 
         /* TOUCH IMPROVEMENTS */
         button, a { -webkit-tap-highlight-color:transparent; }
-        input, select, textarea { font-size:16px !important; } /* Prevent iOS zoom */
-        @media screen and (max-width:599px) {
-          input, select, textarea { font-size:16px !important; }
-        }
+        input, select, textarea { font-size:16px !important; }
       `}</style>
 
       {/* Overlay */}
