@@ -63,7 +63,11 @@ export default function Landing() {
         .l-nav-links { display:flex; align-items:center; gap:28px; }
         .l-nav-links a { font-size:14px; font-weight:500; color:#374151; text-decoration:none; transition:color 0.15s; }
         .l-nav-links a:hover { color:#0d9488; }
-        .l-hamburger { display:none; background:none; border:1.5px solid #e5e7eb; border-radius:8px; padding:6px 10px; cursor:pointer; }
+
+        /* Hamburger — shown only on mobile */
+        .l-hamburger { background:none; border:1.5px solid #e5e7eb; border-radius:8px; padding:6px 10px; cursor:pointer; display:none; }
+
+        /* Mobile menu */
         .l-mobile-menu { display:none; position:fixed; top:60px; left:0; right:0; background:white; border-bottom:1px solid #e5e7eb; padding:16px 24px; z-index:99; flex-direction:column; gap:12px; }
         .l-mobile-menu.open { display:flex; }
         .l-mobile-menu a { font-size:15px; font-weight:500; color:#374151; text-decoration:none; padding:8px 0; border-bottom:1px solid #f3f4f6; }
@@ -107,16 +111,16 @@ export default function Landing() {
         .l-spec-pill:hover { background:#0d9488; border-color:#0d9488; color:white; }
 
         /* SECTIONS */
-        .l-section    { padding:80px 24px; }
+        .l-section       { padding:80px 24px; }
         .l-section-inner { max-width:1200px; margin:0 auto; }
         .l-section-head  { text-align:center; margin-bottom:48px; }
 
         /* EMERGENCY */
-        .l-emergency  { background:linear-gradient(135deg,#7f1d1d,#991b1b); padding:72px 24px; text-align:center; }
+        .l-emergency { background:linear-gradient(135deg,#7f1d1d,#991b1b); padding:72px 24px; text-align:center; }
 
         /* FOOTER */
-        .l-footer      { background:#0f172a; padding:48px 24px 24px; }
-        .l-footer-grid { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:48px; margin-bottom:40px; }
+        .l-footer        { background:#0f172a; padding:48px 24px 24px; }
+        .l-footer-grid   { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:48px; margin-bottom:40px; }
         .l-footer-bottom { max-width:1200px; margin:0 auto; padding-top:24px; border-top:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
 
         @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
@@ -125,19 +129,16 @@ export default function Landing() {
 
         /* ═══ RESPONSIVE ═══ */
 
-        /* Tablet */
-        @media screen and (max-width:1024px) {
-          .l-hero-inner   { gap:32px; padding:32px 24px; }
-          .l-stats-grid   { grid-template-columns:repeat(2,1fr); }
-          .l-features-grid{ grid-template-columns:repeat(2,1fr); }
-          .l-steps-grid   { grid-template-columns:repeat(2,1fr); }
-          .l-footer-grid  { grid-template-columns:1fr 1fr; gap:32px; }
+        /* Desktop — hamburger hidden, nav links visible */
+        @media screen and (min-width:769px) {
+          .l-hamburger { display:none !important; }
         }
 
-        /* Mobile */
+        /* Mobile — nav links hidden, hamburger visible */
         @media screen and (max-width:768px) {
-          .l-nav-links { display:none; }
-          .l-hamburger { display:block; }
+          .l-nav-links  { display:none !important; }
+          .l-nav-btns   { display:none !important; }
+          .l-hamburger  { display:block !important; }
           .l-hero-inner { flex-direction:column; padding:24px 20px 40px; gap:28px; }
           .l-hero-right { display:none; }
           .l-hero-badge { font-size:10px; }
@@ -149,7 +150,15 @@ export default function Landing() {
           .l-section      { padding:48px 20px; }
           .l-section-head { margin-bottom:32px; }
           .l-emergency    { padding:48px 20px; }
-          .btn-ghost,.btn-solid { padding:8px 14px; font-size:13px; }
+        }
+
+        /* Tablet */
+        @media screen and (min-width:769px) and (max-width:1024px) {
+          .l-hero-inner    { gap:32px; padding:32px 24px; }
+          .l-stats-grid    { grid-template-columns:repeat(2,1fr); }
+          .l-features-grid { grid-template-columns:repeat(2,1fr); }
+          .l-steps-grid    { grid-template-columns:repeat(2,1fr); }
+          .l-footer-grid   { grid-template-columns:1fr 1fr; gap:32px; }
         }
 
         /* Small phone */
@@ -157,9 +166,7 @@ export default function Landing() {
           .l-hero-title { font-size:28px; }
           .l-stats-grid { grid-template-columns:repeat(2,1fr); }
         }
-      `}@media screen and (min-width: 769px) { .l-hamburger { display:none !important; } }
-@media screen and (max-width: 768px) { .hide-mobile { display:none !important; } }
-</style>
+      `}</style>
 
       {/* NAVBAR */}
       <nav className="l-nav">
@@ -173,31 +180,37 @@ export default function Landing() {
           </div>
         </Link>
 
+        {/* Desktop nav links */}
         <div className="l-nav-links">
           <a href="#features">Features</a>
           <a href="#how-it-works">How it works</a>
           <a href="#specializations">Specializations</a>
         </div>
 
-        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-  <Link to="/login" className="btn-ghost hide-mobile">Sign in</Link>
-  <Link to="/register" className="btn-solid hide-mobile">Get started</Link>
-  <button className="l-hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
-            <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
-              {menuOpen
-                ? <path d="M6 18L18 6M6 6l12 12" stroke="#374151" strokeWidth="2" strokeLinecap="round"/>
-                : <path d="M4 6h16M4 12h16M4 18h16" stroke="#374151" strokeWidth="2" strokeLinecap="round"/>
-              }
-            </svg>
-          </button>
+        {/* Desktop buttons — hidden on mobile */}
+        <div className="l-nav-btns" style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <Link to="/login" className="btn-ghost">Sign in</Link>
+          <Link to="/register" className="btn-solid">Get started</Link>
         </div>
+
+        {/* Mobile hamburger — hidden on desktop */}
+        <button className="l-hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+            {menuOpen
+              ? <path d="M6 18L18 6M6 6l12 12" stroke="#374151" strokeWidth="2" strokeLinecap="round"/>
+              : <path d="M4 6h16M4 12h16M4 18h16" stroke="#374151" strokeWidth="2" strokeLinecap="round"/>
+            }
+          </svg>
+        </button>
       </nav>
 
       {/* MOBILE MENU */}
       <div className={`l-mobile-menu ${menuOpen?'open':''}`}>
-        <a href="#features" onClick={() => setMenuOpen(false)}>Features</a>
-        <a href="#how-it-works" onClick={() => setMenuOpen(false)}>How it works</a>
+        <a href="#features"        onClick={() => setMenuOpen(false)}>Features</a>
+        <a href="#how-it-works"    onClick={() => setMenuOpen(false)}>How it works</a>
         <a href="#specializations" onClick={() => setMenuOpen(false)}>Specializations</a>
+        <Link to="/login" style={{ fontSize:15, fontWeight:500, color:'#374151', textDecoration:'none', padding:'8px 0', borderBottom:'1px solid #f3f4f6' }}
+          onClick={() => setMenuOpen(false)}>Sign in</Link>
         <Link to="/register" style={{ display:'block', padding:'12px', background:'#0d9488', color:'white', borderRadius:8, textAlign:'center', fontWeight:600, textDecoration:'none', marginTop:4 }}
           onClick={() => setMenuOpen(false)}>
           Get started free
@@ -243,42 +256,42 @@ export default function Landing() {
 
           {/* Hero cards — hidden on mobile */}
           <div className="l-hero-right">
-            {[
-              <div style={{ background:'white', borderRadius:14, border:'1px solid #e5e7eb', padding:'18px', boxShadow:'0 4px 20px rgba(0,0,0,0.07)' }}>
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-                  <p style={{ fontSize:13, fontWeight:600, color:'#111827' }}>Upcoming Appointment</p>
-                  <span style={{ fontSize:11, fontWeight:600, color:'#0d9488', background:'#f0fdfa', padding:'3px 10px', borderRadius:20, border:'1px solid #ccfbf1' }}>Confirmed</span>
+            <div style={{ background:'white', borderRadius:14, border:'1px solid #e5e7eb', padding:'18px', boxShadow:'0 4px 20px rgba(0,0,0,0.07)' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+                <p style={{ fontSize:13, fontWeight:600, color:'#111827' }}>Upcoming Appointment</p>
+                <span style={{ fontSize:11, fontWeight:600, color:'#0d9488', background:'#f0fdfa', padding:'3px 10px', borderRadius:20, border:'1px solid #ccfbf1' }}>Confirmed</span>
+              </div>
+              <div style={{ display:'flex', gap:10, alignItems:'center', marginBottom:10 }}>
+                <div style={{ width:38, height:38, borderRadius:9, background:'#f0fdfa', border:'1px solid #ccfbf1', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                  <span style={{ fontSize:12, fontWeight:700, color:'#0d9488' }}>RK</span>
                 </div>
-                <div style={{ display:'flex', gap:10, alignItems:'center', marginBottom:10 }}>
-                  <div style={{ width:38, height:38, borderRadius:9, background:'#f0fdfa', border:'1px solid #ccfbf1', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                    <span style={{ fontSize:12, fontWeight:700, color:'#0d9488' }}>RK</span>
-                  </div>
-                  <div>
-                    <p style={{ fontSize:13, fontWeight:700, color:'#111827' }}>Dr. Rajesh Kumar</p>
-                    <p style={{ fontSize:11, color:'#6b7280' }}>Cardiologist · 10 yrs</p>
-                  </div>
+                <div>
+                  <p style={{ fontSize:13, fontWeight:700, color:'#111827' }}>Dr. Rajesh Kumar</p>
+                  <p style={{ fontSize:11, color:'#6b7280' }}>Cardiologist · 10 yrs</p>
                 </div>
-                <div style={{ display:'flex', gap:14 }}>
-                  <span style={{ fontSize:11, color:'#374151' }}>📅 Mon, 17 Mar 2026</span>
-                  <span style={{ fontSize:11, color:'#374151' }}>🕐 10:30 AM</span>
+              </div>
+              <div style={{ display:'flex', gap:14 }}>
+                <span style={{ fontSize:11, color:'#374151' }}>📅 Mon, 17 Mar 2026</span>
+                <span style={{ fontSize:11, color:'#374151' }}>🕐 10:30 AM</span>
+              </div>
+            </div>
+
+            <div style={{ background:'#f0fdfa', borderRadius:14, border:'1px solid #ccfbf1', padding:'18px', boxShadow:'0 4px 20px rgba(0,0,0,0.07)' }}>
+              <p style={{ fontSize:11, fontWeight:700, color:'#0d9488', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:6 }}>AI Health Tip</p>
+              <p style={{ fontSize:13, color:'#374151', lineHeight:1.6 }}>A 10-minute walk after meals can reduce blood sugar levels by up to 22%.</p>
+            </div>
+
+            <div style={{ background:'#fef2f2', borderRadius:14, border:'1px solid #fecaca', padding:'18px', boxShadow:'0 4px 20px rgba(0,0,0,0.07)' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                <div>
+                  <p style={{ fontSize:13, fontWeight:700, color:'#dc2626', marginBottom:4 }}>Emergency SOS</p>
+                  <p style={{ fontSize:12, color:'#991b1b' }}>One tap — alerts hospitals & shares location</p>
                 </div>
-              </div>,
-              <div style={{ background:'#f0fdfa', borderRadius:14, border:'1px solid #ccfbf1', padding:'18px', boxShadow:'0 4px 20px rgba(0,0,0,0.07)' }}>
-                <p style={{ fontSize:11, fontWeight:700, color:'#0d9488', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:6 }}>AI Health Tip</p>
-                <p style={{ fontSize:13, color:'#374151', lineHeight:1.6 }}>A 10-minute walk after meals can reduce blood sugar levels by up to 22%.</p>
-              </div>,
-              <div style={{ background:'#fef2f2', borderRadius:14, border:'1px solid #fecaca', padding:'18px', boxShadow:'0 4px 20px rgba(0,0,0,0.07)' }}>
-                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-                  <div>
-                    <p style={{ fontSize:13, fontWeight:700, color:'#dc2626', marginBottom:4 }}>Emergency SOS</p>
-                    <p style={{ fontSize:12, color:'#991b1b' }}>One tap — alerts hospitals & shares location</p>
-                  </div>
-                  <div style={{ width:40, height:40, borderRadius:10, background:'#ef4444', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke="white" strokeWidth="1.8" strokeLinecap="round"/></svg>
-                  </div>
+                <div style={{ width:40, height:40, borderRadius:10, background:'#ef4444', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" stroke="white" strokeWidth="1.8" strokeLinecap="round"/></svg>
                 </div>
-              </div>,
-            ].map((card, i) => <div key={i}>{card}</div>)}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -415,8 +428,8 @@ export default function Landing() {
                 {col.links.map((link,j) => (
                   <li key={j}>
                     <Link to="/register" style={{ fontSize:13, color:'#6b7280', textDecoration:'none', transition:'color 0.15s' }}
-                      onMouseEnter={e=>e.target.style.color='#0d9488'}
-                      onMouseLeave={e=>e.target.style.color='#6b7280'}>
+                      onMouseEnter={e => e.target.style.color='#0d9488'}
+                      onMouseLeave={e => e.target.style.color='#6b7280'}>
                       {link}
                     </Link>
                   </li>
