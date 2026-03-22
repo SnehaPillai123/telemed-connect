@@ -55,21 +55,58 @@ export default function PatientDashboard() {
         @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spin   { to { transform: rotate(360deg); } }
         .fade-up { animation: fadeUp 0.4s ease forwards; }
-        .stat-card { background: white; border-radius: 12px; border: 1px solid #e5e7eb; padding: 20px; text-decoration: none; display: block; transition: all 0.2s; }
-        .stat-card:hover { border-color: #0d9488; transform: translateY(-3px); box-shadow: 0 8px 24px rgba(13,148,136,0.1); }
-        .apt-row { padding: 12px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #f3f4f6; transition: background 0.15s; flex-wrap: wrap; }
+
+        .stat-card {
+          background: white; border-radius: 12px; border: 1px solid #e5e7eb;
+          padding: 20px; text-decoration: none; display: block; transition: all 0.2s;
+        }
+        .stat-card:hover {
+          border-color: #0d9488; transform: translateY(-3px);
+          box-shadow: 0 8px 24px rgba(13,148,136,0.1);
+        }
+
+        .apt-row {
+          padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+          border-bottom: 1px solid #f3f4f6; transition: background 0.15s; flex-wrap: wrap;
+        }
         .apt-row:last-child { border-bottom: none; }
         .apt-row:hover { background: #f9fafb; }
-        .widget-card { background: white; border-radius: 12px; border: 1px solid #e5e7eb; padding: 16px; transition: all 0.2s; }
+
+        .widget-card {
+          background: white; border-radius: 12px; border: 1px solid #e5e7eb;
+          padding: 16px; transition: all 0.2s;
+        }
         .widget-card:hover { border-color: #0d9488; box-shadow: 0 4px 16px rgba(13,148,136,0.07); }
-        .meet-badge { display:inline-flex; align-items:center; gap:5px; padding:4px 12px; background:#1a73e8; color:white; border-radius:7px; font-size:11px; font-weight:600; text-decoration:none; transition:all 0.15s; }
-        .meet-badge:hover { background:#1557b0; }
-        @media screen and (max-width: 991px) { .dash-stats { grid-template-columns: repeat(3,1fr) !important; } .dash-main { grid-template-columns: 1fr !important; } }
-        @media screen and (max-width: 599px)  { .dash-stats { grid-template-columns: 1fr !important; } .dash-main { grid-template-columns: 1fr !important; } }
+
+        .meet-badge {
+          display: inline-flex; align-items: center; gap: 5px;
+          padding: 4px 12px; background: #1a73e8; color: white;
+          border-radius: 7px; font-size: 11px; font-weight: 600;
+          text-decoration: none; transition: all 0.15s;
+        }
+        .meet-badge:hover { background: #1557b0; }
+
+        /* ── LAPTOP / DESKTOP — unchanged ── */
+        .dash-stats { grid-template-columns: repeat(3,1fr); }
+        .dash-main  { grid-template-columns: 1fr 320px; }
+
+        /* ── TABLET 600–991px ── */
+        @media screen and (min-width: 600px) and (max-width: 991px) {
+          .dash-stats { grid-template-columns: repeat(3,1fr) !important; }
+          .dash-main  { grid-template-columns: 1fr !important; }
+        }
+
+        /* ── PHONE < 600px ── */
+        @media screen and (max-width: 599px) {
+          .dash-stats { grid-template-columns: repeat(2,1fr) !important; }
+          .dash-main  { grid-template-columns: 1fr !important; }
+          .stat-card  { padding: 14px !important; }
+          .stat-card p { font-size: 26px !important; }
+        }
       `}</style>
 
       {/* STATS ROW */}
-      <div className="dash-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: 24 }}>
+      <div className="dash-stats" style={{ display: 'grid', gap: 14, marginBottom: 24 }}>
         {[
           { label: 'Upcoming Appointments', value: stats.upcoming, color: '#0d9488', bg: '#f0fdfa', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', to: '/my-appointments' },
           { label: 'Confirmed', value: stats.confirmed, color: '#2563eb', bg: '#eff6ff', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', to: '/my-appointments' },
@@ -90,7 +127,7 @@ export default function PatientDashboard() {
       </div>
 
       {/* MAIN GRID */}
-      <div className="dash-main" style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20 }}>
+      <div className="dash-main" style={{ display: 'grid', gap: 20 }}>
 
         {/* Recent Appointments */}
         <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
@@ -147,7 +184,6 @@ export default function PatientDashboard() {
                   <span style={{ fontSize: 11, fontWeight: 600, color: st.color, background: st.bg, padding: '3px 10px', borderRadius: 20, whiteSpace: 'nowrap' }}>
                     {st.label}
                   </span>
-                  {/* Show Join Meet button right on dashboard for confirmed appointments */}
                   {apt.status === 'confirmed' && apt.meetLink && (
                     <a href={apt.meetLink} target="_blank" rel="noreferrer" className="meet-badge">
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="white">
