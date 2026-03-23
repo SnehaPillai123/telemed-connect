@@ -14,11 +14,6 @@ const STATUS_STYLE = {
   cancelled: { bg: '#fef2f2', color: '#dc2626', label: 'Cancelled' },
 };
 
-const getMeetLink = (apt) => {
-  if (apt.meetLink) return apt.meetLink;
-  return `https://meet.google.com/new`;
-};
-
 export default function DoctorAppointments() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -43,18 +38,12 @@ export default function DoctorAppointments() {
       const updateData = { status };
       if (status === "confirmed") {
         const roomCode = `telemed-${id.slice(0, 6)}-${Math.random().toString(36).slice(2, 6)}`;
-        updateData.meetLink = `https://meet.google.com/new`;
+        updateData.meetLink = "https://meet.google.com/new";
         updateData.roomCode = roomCode;
       }
       await updateDoc(doc(db, "appointments", id), updateData);
-      setAppointments(prev =>
-        prev.map(a => a.id === id ? { ...a, ...updateData } : a)
-      );
-      toast.success(
-        status === "confirmed"
-          ? "✅ Confirmed! Google Meet link generated."
-          : `Appointment ${status}`
-      );
+      setAppointments(prev => prev.map(a => a.id === id ? { ...a, ...updateData } : a));
+      toast.success(status === "confirmed" ? "Confirmed! Meet link generated." : `Appointment ${status}`);
     } catch {
       toast.error("Failed to update");
     }
@@ -63,11 +52,9 @@ export default function DoctorAppointments() {
   const ensureMeetLink = async (apt) => {
     if (apt.meetLink) return;
     const roomCode = `telemed-${apt.id.slice(0, 6)}-${Math.random().toString(36).slice(2, 6)}`;
-    const meetLink = `https://meet.google.com/new`;
+    const meetLink = "https://meet.google.com/new";
     await updateDoc(doc(db, "appointments", apt.id), { meetLink, roomCode });
-    setAppointments(prev =>
-      prev.map(a => a.id === apt.id ? { ...a, meetLink, roomCode } : a)
-    );
+    setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, meetLink, roomCode } : a));
   };
 
   const filtered = filter === "all" ? appointments : appointments.filter(a => a.status === filter);
@@ -92,20 +79,20 @@ export default function DoctorAppointments() {
         .apt-card:hover { border-color: #0d9488; box-shadow: 0 4px 14px rgba(13,148,136,0.07); }
         .action-btn { padding: 7px 14px; border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; font-family: Inter, sans-serif; display: inline-flex; align-items: center; gap: 5px; }
         .action-btn:hover { transform: translateY(-1px); }
-        .meet-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; background: #1a73e8; color: white; border-radius: 8px; font-size: 12px; font-weight: 600; text-decoration: none; transition: all 0.15s; border: none; cursor: pointer; font-family: Inter, sans-serif; }
+        .meet-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; background: #1a73e8; color: white; border-radius: 8px; font-size: 12px; font-weight: 600; text-decoration: none; transition: all 0.15s; }
         .meet-btn:hover { background: #1557b0; transform: translateY(-1px); }
-        .chat-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; background: #7c3aed; color: white; border-radius: 8px; font-size: 12px; font-weight: 600; text-decoration: none; transition: all 0.15s; border: none; cursor: pointer; font-family: Inter, sans-serif; }
+        .chat-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; background: #7c3aed; color: white; border-radius: 8px; font-size: 12px; font-weight: 600; border: none; cursor: pointer; font-family: Inter, sans-serif; transition: all 0.15s; }
         .chat-btn:hover { background: #6d28d9; transform: translateY(-1px); }
         .action-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f3f4f6; align-items: center; }
       `}</style>
 
-      {/* Summary stats */}
+      {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 18 }}>
         {[
           { l: "Today's", v: appointments.filter(a => a.appointmentDate === new Date().toISOString().split("T")[0]).length, c: '#0d9488', bg: '#f0fdfa' },
-          { l: 'Pending', v: counts.pending, c: '#d97706', bg: '#fffbeb' },
-          { l: 'Total', v: counts.all, c: '#2563eb', bg: '#eff6ff' },
-          { l: 'Completed', v: counts.completed, c: '#16a34a', bg: '#f0fdf4' },
+          { l: 'Pending',   v: counts.pending,   c: '#d97706', bg: '#fffbeb' },
+          { l: 'Total',     v: counts.all,        c: '#2563eb', bg: '#eff6ff' },
+          { l: 'Completed', v: counts.completed,  c: '#16a34a', bg: '#f0fdf4' },
         ].map((s, i) => (
           <div key={i} style={{ background: s.bg, borderRadius: 10, padding: '14px 16px', border: `1px solid ${s.bg}` }}>
             <p style={{ fontSize: 24, fontWeight: 800, color: s.c, lineHeight: 1, marginBottom: 3 }}>{s.v}</p>
@@ -121,11 +108,13 @@ export default function DoctorAppointments() {
           { k: 'pending', l: 'Pending' },
           { k: 'confirmed', l: 'Confirmed' },
           { k: 'completed', l: 'Completed' },
-          { k: 'cancelled', l: 'Cancelled' }
+          { k: 'cancelled', l: 'Cancelled' },
         ].map(f => (
           <button key={f.k} className={`filter-btn ${filter === f.k ? 'active' : ''}`} onClick={() => setFilter(f.k)}>
             {f.l}
-            <span style={{ fontSize: 10, background: filter === f.k ? 'rgba(255,255,255,0.25)' : '#f3f4f6', color: filter === f.k ? 'white' : '#6b7280', padding: '1px 6px', borderRadius: 20, fontWeight: 600 }}>{counts[f.k]}</span>
+            <span style={{ fontSize: 10, background: filter === f.k ? 'rgba(255,255,255,0.25)' : '#f3f4f6', color: filter === f.k ? 'white' : '#6b7280', padding: '1px 6px', borderRadius: 20, fontWeight: 600 }}>
+              {counts[f.k]}
+            </span>
           </button>
         ))}
       </div>
@@ -147,10 +136,11 @@ export default function DoctorAppointments() {
 
       {filtered.map((apt, i) => {
         const st = STATUS_STYLE[apt.status] || STATUS_STYLE.pending;
+        const meetLink = apt.meetLink || "https://meet.google.com/new";
         return (
-          <article key={apt.id} className="apt-card fade-in" style={{ animationDelay: `${i*0.04}s`, opacity: 0 }}>
+          <article key={apt.id} className="apt-card fade-in" style={{ animationDelay: `${i * 0.04}s`, opacity: 0 }}>
 
-            {/* Patient info row */}
+            {/* Top row */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
               <div style={{ display: 'flex', gap: 12, flex: 1, minWidth: 0 }}>
                 <div style={{ width: 42, height: 42, borderRadius: 9, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -161,17 +151,21 @@ export default function DoctorAppointments() {
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
                     <p style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{apt.patientName}</p>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: st.color, background: st.bg, padding: '2px 9px', borderRadius: 20 }}>{st.label}</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: st.color, background: st.bg, padding: '2px 9px', borderRadius: 20 }}>
+                      {st.label}
+                    </span>
                   </div>
                   <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 12, color: '#374151' }}>📅 {new Date(apt.appointmentDate + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                    <span style={{ fontSize: 12, color: '#374151' }}>
+                      📅 {new Date(apt.appointmentDate + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}
+                    </span>
                     <span style={{ fontSize: 12, color: '#374151' }}>🕐 {apt.appointmentTime}</span>
                   </div>
                   {apt.reason && <p style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>{apt.reason}</p>}
                 </div>
               </div>
 
-              {/* Status action buttons */}
+              {/* Top right buttons */}
               <div style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                 {apt.status === 'pending' && (
                   <>
@@ -197,11 +191,11 @@ export default function DoctorAppointments() {
               </div>
             </div>
 
-            {/* Action row — Chat, Meet, Prescribe */}
+            {/* Action row */}
             {(apt.status === 'confirmed' || apt.status === 'completed') && (
               <div className="action-row">
 
-                {/* Chat with Patient */}
+                {/* Chat */}
                 <button className="chat-btn" onClick={() => navigate(`/chat/${apt.patientId}`)}>
                   <svg width="13" height="13" fill="none" viewBox="0 0 24 24">
                     <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
@@ -209,15 +203,10 @@ export default function DoctorAppointments() {
                   Chat with Patient
                 </button>
 
-                {/* Join Google Meet — confirmed only */}
+                {/* Meet — confirmed only */}
                 {apt.status === 'confirmed' && (
-                  
-                    href={getMeetLink(apt)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="meet-btn"
-                    onClick={() => ensureMeetLink(apt)}
-                  >
+                  <a href={meetLink} target="_blank" rel="noreferrer" className="meet-btn"
+                    onClick={() => ensureMeetLink(apt)}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="white">
                       <path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z"/>
                     </svg>
@@ -225,7 +214,7 @@ export default function DoctorAppointments() {
                   </a>
                 )}
 
-                {/* Write Prescription — completed only */}
+                {/* Prescribe — completed only */}
                 {apt.status === 'completed' && (
                   <button className="action-btn"
                     style={{ background: '#eff6ff', color: '#2563eb', border: '1.5px solid #bfdbfe' }}
@@ -239,7 +228,7 @@ export default function DoctorAppointments() {
               </div>
             )}
 
-            {/* Pending info */}
+            {/* Pending note */}
             {apt.status === 'pending' && (
               <div style={{ marginTop: 10, padding: '8px 14px', background: '#fffbeb', borderRadius: 8, border: '1px solid #fde68a' }}>
                 <p style={{ fontSize: 12, color: '#92400e' }}>⏳ Confirm this appointment to enable chat and video call.</p>
