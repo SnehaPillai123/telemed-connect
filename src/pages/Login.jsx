@@ -17,12 +17,18 @@ export default function Login() {
     if (!email.trim() || !password.trim()) return toast.error("Please fill all fields");
     setLoading(true);
     try {
+<<<<<<< HEAD
+      await signInWithEmailAndPassword(auth, email, password);
+      toast.success("Welcome back");
+      navigate("/patient-dashboard")
+=======
       const result = await signInWithEmailAndPassword(auth, email.trim(), password);
       const userDoc = await getDoc(doc(db, "users", result.user.uid));
       const role = userDoc.data()?.role;
       toast.success("Welcome back!");
       if (role === "doctor") navigate("/doctor-dashboard");
       else navigate("/patient-dashboard");
+>>>>>>> upstream/main
     } catch (err) {
       const msg = err.code === "auth/invalid-credential" ? "Invalid email or password" :
                   err.code === "auth/user-not-found" ? "No account found with this email" :
