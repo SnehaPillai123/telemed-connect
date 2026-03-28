@@ -37,13 +37,13 @@ export default function DoctorAppointments() {
     try {
       const updateData = { status };
       if (status === "confirmed") {
-        const roomCode = `telemed-${id.slice(0, 6)}-${Math.random().toString(36).slice(2, 6)}`;
+        const roomCode = "telemed-" + id.slice(0, 6) + "-" + Math.random().toString(36).slice(2, 6);
         updateData.meetLink = "https://meet.google.com/new";
         updateData.roomCode = roomCode;
       }
       await updateDoc(doc(db, "appointments", id), updateData);
       setAppointments(prev => prev.map(a => a.id === id ? { ...a, ...updateData } : a));
-      toast.success(status === "confirmed" ? "Confirmed! Meet link generated." : `Appointment ${status}`);
+      toast.success(status === "confirmed" ? "Confirmed! Meet link generated." : "Appointment " + status);
     } catch {
       toast.error("Failed to update");
     }
@@ -51,7 +51,7 @@ export default function DoctorAppointments() {
 
   const ensureMeetLink = async (apt) => {
     if (apt.meetLink) return;
-    const roomCode = `telemed-${apt.id.slice(0, 6)}-${Math.random().toString(36).slice(2, 6)}`;
+    const roomCode = "telemed-" + apt.id.slice(0, 6) + "-" + Math.random().toString(36).slice(2, 6);
     const meetLink = "https://meet.google.com/new";
     await updateDoc(doc(db, "appointments", apt.id), { meetLink, roomCode });
     setAppointments(prev => prev.map(a => a.id === apt.id ? { ...a, meetLink, roomCode } : a));
@@ -86,22 +86,20 @@ export default function DoctorAppointments() {
         .action-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f3f4f6; align-items: center; }
       `}</style>
 
-      {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 18 }}>
         {[
           { l: "Today's", v: appointments.filter(a => a.appointmentDate === new Date().toISOString().split("T")[0]).length, c: '#0d9488', bg: '#f0fdfa' },
-          { l: 'Pending',   v: counts.pending,   c: '#d97706', bg: '#fffbeb' },
-          { l: 'Total',     v: counts.all,        c: '#2563eb', bg: '#eff6ff' },
-          { l: 'Completed', v: counts.completed,  c: '#16a34a', bg: '#f0fdf4' },
+          { l: 'Pending',   v: counts.pending,  c: '#d97706', bg: '#fffbeb' },
+          { l: 'Total',     v: counts.all,       c: '#2563eb', bg: '#eff6ff' },
+          { l: 'Completed', v: counts.completed, c: '#16a34a', bg: '#f0fdf4' },
         ].map((s, i) => (
-          <div key={i} style={{ background: s.bg, borderRadius: 10, padding: '14px 16px', border: `1px solid ${s.bg}` }}>
+          <div key={i} style={{ background: s.bg, borderRadius: 10, padding: '14px 16px', border: "1px solid " + s.bg }}>
             <p style={{ fontSize: 24, fontWeight: 800, color: s.c, lineHeight: 1, marginBottom: 3 }}>{s.v}</p>
             <p style={{ fontSize: 11, color: s.c, fontWeight: 500, opacity: 0.8 }}>{s.l}</p>
           </div>
         ))}
       </div>
 
-      {/* Filters */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         {[
           { k: 'all', l: 'All' },
@@ -110,7 +108,7 @@ export default function DoctorAppointments() {
           { k: 'completed', l: 'Completed' },
           { k: 'cancelled', l: 'Cancelled' },
         ].map(f => (
-          <button key={f.k} className={`filter-btn ${filter === f.k ? 'active' : ''}`} onClick={() => setFilter(f.k)}>
+          <button key={f.k} className={"filter-btn " + (filter === f.k ? 'active' : '')} onClick={() => setFilter(f.k)}>
             {f.l}
             <span style={{ fontSize: 10, background: filter === f.k ? 'rgba(255,255,255,0.25)' : '#f3f4f6', color: filter === f.k ? 'white' : '#6b7280', padding: '1px 6px', borderRadius: 20, fontWeight: 600 }}>
               {counts[f.k]}
@@ -129,84 +127,71 @@ export default function DoctorAppointments() {
         <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '48px', textAlign: 'center' }}>
           <p style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 6 }}>No appointments found</p>
           <p style={{ fontSize: 13, color: '#9ca3af' }}>
-            {filter === 'all' ? 'No appointments booked yet.' : `No ${filter} appointments.`}
+            {filter === 'all' ? 'No appointments booked yet.' : 'No ' + filter + ' appointments.'}
           </p>
         </div>
       )}
 
       {filtered.map((apt, i) => {
         const st = STATUS_STYLE[apt.status] || STATUS_STYLE.pending;
-        const meetLink = apt.meetLink || "https://meet.google.com/new";
+        const meetLink = apt.meetLink ? apt.meetLink : "https://meet.google.com/new";
         return (
-          <article key={apt.id} className="apt-card fade-in" style={{ animationDelay: `${i * 0.04}s`, opacity: 0 }}>
-
-            {/* Top row */}
+          <article key={apt.id} className="apt-card fade-in" style={{ animationDelay: (i * 0.04) + 's', opacity: 0 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
               <div style={{ display: 'flex', gap: 12, flex: 1, minWidth: 0 }}>
                 <div style={{ width: 42, height: 42, borderRadius: 9, background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <span style={{ fontSize: 12, fontWeight: 700, color: '#6b7280' }}>
-                    {apt.patientName?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+                    {apt.patientName ? apt.patientName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "?"}
                   </span>
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
                     <p style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>{apt.patientName}</p>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: st.color, background: st.bg, padding: '2px 9px', borderRadius: 20 }}>
-                      {st.label}
-                    </span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: st.color, background: st.bg, padding: '2px 9px', borderRadius: 20 }}>{st.label}</span>
                   </div>
                   <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 12, color: '#374151' }}>
-                      📅 {new Date(apt.appointmentDate + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}
+                      {"📅 " + new Date(apt.appointmentDate + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}
                     </span>
-                    <span style={{ fontSize: 12, color: '#374151' }}>🕐 {apt.appointmentTime}</span>
+                    <span style={{ fontSize: 12, color: '#374151' }}>{"🕐 " + apt.appointmentTime}</span>
                   </div>
                   {apt.reason && <p style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>{apt.reason}</p>}
                 </div>
               </div>
 
-              {/* Top right buttons */}
               <div style={{ display: 'flex', gap: 6, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                 {apt.status === 'pending' && (
-                  <>
-                    <button className="action-btn"
-                      style={{ background: '#f0fdfa', color: '#0d9488', border: '1.5px solid #ccfbf1' }}
+                  <span>
+                    <button className="action-btn" style={{ background: '#f0fdfa', color: '#0d9488', border: '1.5px solid #ccfbf1' }}
                       onClick={() => updateStatus(apt.id, 'confirmed')}>
-                      ✓ Confirm
+                      Confirm
                     </button>
-                    <button className="action-btn"
-                      style={{ background: '#fef2f2', color: '#dc2626', border: '1.5px solid #fecaca' }}
+                    <button className="action-btn" style={{ background: '#fef2f2', color: '#dc2626', border: '1.5px solid #fecaca', marginLeft: 6 }}
                       onClick={() => updateStatus(apt.id, 'cancelled')}>
                       Decline
                     </button>
-                  </>
+                  </span>
                 )}
                 {apt.status === 'confirmed' && (
-                  <button className="action-btn"
-                    style={{ background: '#f0fdf4', color: '#16a34a', border: '1.5px solid #bbf7d0' }}
+                  <button className="action-btn" style={{ background: '#f0fdf4', color: '#16a34a', border: '1.5px solid #bbf7d0' }}
                     onClick={() => updateStatus(apt.id, 'completed')}>
-                    ✓ Mark Complete
+                    Mark Complete
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Action row */}
             {(apt.status === 'confirmed' || apt.status === 'completed') && (
               <div className="action-row">
-
-                {/* Chat */}
-                <button className="chat-btn" onClick={() => navigate(`/chat/${apt.patientId}`)}>
+                <button className="chat-btn" onClick={() => navigate("/chat/" + apt.patientId)}>
                   <svg width="13" height="13" fill="none" viewBox="0 0 24 24">
                     <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
                   </svg>
                   Chat with Patient
                 </button>
 
-                {/* Meet — confirmed only */}
                 {apt.status === 'confirmed' && (
-                  <a href={meetLink} target="_blank" rel="noreferrer" className="meet-btn"
-                    onClick={() => ensureMeetLink(apt)}>
+                  <a href={meetLink} target="_blank" rel="noreferrer" className="meet-btn" onClick={() => ensureMeetLink(apt)}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="white">
                       <path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z"/>
                     </svg>
@@ -214,11 +199,9 @@ export default function DoctorAppointments() {
                   </a>
                 )}
 
-                {/* Prescribe — completed only */}
                 {apt.status === 'completed' && (
-                  <button className="action-btn"
-                    style={{ background: '#eff6ff', color: '#2563eb', border: '1.5px solid #bfdbfe' }}
-                    onClick={() => navigate(`/prescription/${apt.id}`)}>
+                  <button className="action-btn" style={{ background: '#eff6ff', color: '#2563eb', border: '1.5px solid #bfdbfe' }}
+                    onClick={() => navigate("/prescription/" + apt.id)}>
                     <svg width="13" height="13" fill="none" viewBox="0 0 24 24">
                       <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke="#2563eb" strokeWidth="1.8" strokeLinecap="round"/>
                     </svg>
@@ -228,10 +211,9 @@ export default function DoctorAppointments() {
               </div>
             )}
 
-            {/* Pending note */}
             {apt.status === 'pending' && (
               <div style={{ marginTop: 10, padding: '8px 14px', background: '#fffbeb', borderRadius: 8, border: '1px solid #fde68a' }}>
-                <p style={{ fontSize: 12, color: '#92400e' }}>⏳ Confirm this appointment to enable chat and video call.</p>
+                <p style={{ fontSize: 12, color: '#92400e' }}>Confirm this appointment to enable chat and video call.</p>
               </div>
             )}
           </article>
