@@ -57,22 +57,16 @@ export default function Landing() {
         *, *::before, *::after { font-family:'Inter',sans-serif; box-sizing:border-box; margin:0; padding:0; }
         html { scroll-behavior:smooth; }
 
-        /* NAVBAR */
         .l-nav { position:fixed; top:0; left:0; right:0; z-index:100; background:rgba(255,255,255,0.96); backdrop-filter:blur(10px); border-bottom:1px solid #e5e7eb; padding:0 24px; height:60px; display:flex; align-items:center; justify-content:space-between; }
         .l-nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
         .l-nav-links { display:flex; align-items:center; gap:28px; }
         .l-nav-links a { font-size:14px; font-weight:500; color:#374151; text-decoration:none; transition:color 0.15s; }
         .l-nav-links a:hover { color:#0d9488; }
-
-        /* Hamburger — shown only on mobile */
         .l-hamburger { background:none; border:1.5px solid #e5e7eb; border-radius:8px; padding:6px 10px; cursor:pointer; display:none; }
-
-        /* Mobile menu */
         .l-mobile-menu { display:none; position:fixed; top:60px; left:0; right:0; background:white; border-bottom:1px solid #e5e7eb; padding:16px 24px; z-index:99; flex-direction:column; gap:12px; }
         .l-mobile-menu.open { display:flex; }
         .l-mobile-menu a { font-size:15px; font-weight:500; color:#374151; text-decoration:none; padding:8px 0; border-bottom:1px solid #f3f4f6; }
 
-        /* BUTTONS */
         .btn-ghost { padding:8px 18px; background:none; border:1.5px solid #e5e7eb; border-radius:8px; font-size:14px; font-weight:500; color:#374151; text-decoration:none; transition:all 0.15s; white-space:nowrap; }
         .btn-ghost:hover { border-color:#0d9488; color:#0d9488; }
         .btn-solid { padding:8px 18px; background:#0d9488; border:none; border-radius:8px; font-size:14px; font-weight:600; color:white; text-decoration:none; transition:all 0.15s; white-space:nowrap; }
@@ -80,7 +74,6 @@ export default function Landing() {
         .btn-hero { padding:14px 28px; background:#0d9488; color:white; border:none; border-radius:10px; font-size:15px; font-weight:700; text-decoration:none; transition:all 0.2s; display:inline-flex; align-items:center; gap:10px; -webkit-tap-highlight-color:transparent; }
         .btn-hero:hover { background:#0f766e; transform:translateY(-2px); box-shadow:0 12px 32px rgba(13,148,136,0.3); }
 
-        /* HERO */
         .l-hero { min-height:100svh; background:linear-gradient(135deg,#f0fdfa 0%,#ffffff 50%,#f0f9ff 100%); display:flex; flex-direction:column; padding-top:60px; }
         .l-hero-inner { flex:1; display:flex; align-items:center; padding:40px 24px; max-width:1200px; margin:0 auto; width:100%; gap:60px; }
         .l-hero-left  { flex:1; }
@@ -90,35 +83,26 @@ export default function Landing() {
         .l-hero-title span { color:#0d9488; }
         .l-hero-desc  { font-size:clamp(15px,2vw,18px); color:#6b7280; line-height:1.75; margin-bottom:32px; }
 
-        /* STATS */
         .l-stats { background:#0d9488; padding:36px 24px; }
         .l-stats-grid { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:repeat(4,1fr); gap:24px; }
 
-        /* FEATURES */
         .l-features-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
         .l-feature-card { background:white; border-radius:14px; border:1px solid #e5e7eb; padding:24px; transition:all 0.25s; }
         .l-feature-card:hover { border-color:#0d9488; box-shadow:0 8px 32px rgba(13,148,136,0.1); transform:translateY(-3px); }
 
-        /* HOW IT WORKS */
         .l-steps-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
         .l-step-card  { display:flex; gap:18px; align-items:flex-start; padding:24px; background:white; border-radius:14px; border:1px solid #e5e7eb; transition:all 0.2s; }
         .l-step-card:hover { border-color:#0d9488; }
         .l-step-num   { font-size:32px; font-weight:900; color:#e5e7eb; line-height:1; flex-shrink:0; transition:color 0.2s; }
         .l-step-card:hover .l-step-num { color:#0d9488; }
 
-        /* SPEC PILLS */
         .l-spec-pill  { padding:10px 18px; background:white; border:1px solid #e5e7eb; border-radius:50px; font-size:14px; font-weight:500; color:#374151; text-decoration:none; transition:all 0.15s; white-space:nowrap; }
         .l-spec-pill:hover { background:#0d9488; border-color:#0d9488; color:white; }
 
-        /* SECTIONS */
         .l-section       { padding:80px 24px; }
         .l-section-inner { max-width:1200px; margin:0 auto; }
         .l-section-head  { text-align:center; margin-bottom:48px; }
-
-        /* EMERGENCY */
         .l-emergency { background:linear-gradient(135deg,#7f1d1d,#991b1b); padding:72px 24px; text-align:center; }
-
-        /* FOOTER */
         .l-footer        { background:#0f172a; padding:48px 24px 24px; }
         .l-footer-grid   { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:48px; margin-bottom:40px; }
         .l-footer-bottom { max-width:1200px; margin:0 auto; padding-top:24px; border-top:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
@@ -127,14 +111,9 @@ export default function Landing() {
         .fade-up { animation:fadeUp 0.6s ease forwards; }
         .d1{animation-delay:0.1s;opacity:0} .d2{animation-delay:0.2s;opacity:0} .d3{animation-delay:0.3s;opacity:0} .d4{animation-delay:0.4s;opacity:0}
 
-        /* ═══ RESPONSIVE ═══ */
-
-        /* Desktop — hamburger hidden, nav links visible */
         @media screen and (min-width:769px) {
-          .l-hamburger { display:none !important; }
+          .l-hamburger  { display:none !important; }
         }
-
-        /* Mobile — nav links hidden, hamburger visible */
         @media screen and (max-width:768px) {
           .l-nav-links  { display:none !important; }
           .l-nav-btns   { display:none !important; }
@@ -142,17 +121,15 @@ export default function Landing() {
           .l-hero-inner { flex-direction:column; padding:24px 20px 40px; gap:28px; }
           .l-hero-right { display:none; }
           .l-hero-badge { font-size:10px; }
-          .l-stats-grid   { grid-template-columns:repeat(2,1fr); gap:16px; }
-          .l-features-grid{ grid-template-columns:1fr; }
-          .l-steps-grid   { grid-template-columns:1fr; }
-          .l-footer-grid  { grid-template-columns:1fr; gap:24px; }
-          .l-footer-bottom{ flex-direction:column; text-align:center; }
-          .l-section      { padding:48px 20px; }
-          .l-section-head { margin-bottom:32px; }
-          .l-emergency    { padding:48px 20px; }
+          .l-stats-grid    { grid-template-columns:repeat(2,1fr); gap:16px; }
+          .l-features-grid { grid-template-columns:1fr; }
+          .l-steps-grid    { grid-template-columns:1fr; }
+          .l-footer-grid   { grid-template-columns:1fr; gap:24px; }
+          .l-footer-bottom { flex-direction:column; text-align:center; }
+          .l-section       { padding:48px 20px; }
+          .l-section-head  { margin-bottom:32px; }
+          .l-emergency     { padding:48px 20px; }
         }
-
-        /* Tablet */
         @media screen and (min-width:769px) and (max-width:1024px) {
           .l-hero-inner    { gap:32px; padding:32px 24px; }
           .l-stats-grid    { grid-template-columns:repeat(2,1fr); }
@@ -160,8 +137,6 @@ export default function Landing() {
           .l-steps-grid    { grid-template-columns:repeat(2,1fr); }
           .l-footer-grid   { grid-template-columns:1fr 1fr; gap:32px; }
         }
-
-        /* Small phone */
         @media screen and (max-width:390px) {
           .l-hero-title { font-size:28px; }
           .l-stats-grid { grid-template-columns:repeat(2,1fr); }
@@ -180,20 +155,19 @@ export default function Landing() {
           </div>
         </Link>
 
-        {/* Desktop nav links */}
         <div className="l-nav-links">
           <a href="#features">Features</a>
           <a href="#how-it-works">How it works</a>
           <a href="#specializations">Specializations</a>
         </div>
 
-        {/* Desktop buttons — hidden on mobile */}
+        {/* Desktop buttons */}
         <div className="l-nav-btns" style={{ display:'flex', alignItems:'center', gap:10 }}>
           <Link to="/login" className="btn-ghost">Sign in</Link>
           <Link to="/register" className="btn-solid">Get started</Link>
         </div>
 
-        {/* Mobile hamburger — hidden on desktop */}
+        {/* Mobile hamburger */}
         <button className="l-hamburger" onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
           <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
             {menuOpen
@@ -209,9 +183,13 @@ export default function Landing() {
         <a href="#features"        onClick={() => setMenuOpen(false)}>Features</a>
         <a href="#how-it-works"    onClick={() => setMenuOpen(false)}>How it works</a>
         <a href="#specializations" onClick={() => setMenuOpen(false)}>Specializations</a>
-        <Link to="/login" style={{ fontSize:15, fontWeight:500, color:'#374151', textDecoration:'none', padding:'8px 0', borderBottom:'1px solid #f3f4f6' }}
-          onClick={() => setMenuOpen(false)}>Sign in</Link>
-        <Link to="/register" style={{ display:'block', padding:'12px', background:'#0d9488', color:'white', borderRadius:8, textAlign:'center', fontWeight:600, textDecoration:'none', marginTop:4 }}
+        <Link to="/login"
+          style={{ fontSize:15, fontWeight:500, color:'#374151', textDecoration:'none', padding:'8px 0', borderBottom:'1px solid #f3f4f6' }}
+          onClick={() => setMenuOpen(false)}>
+          Sign in
+        </Link>
+        <Link to="/register"
+          style={{ display:'block', padding:'12px', background:'#0d9488', color:'white', borderRadius:8, textAlign:'center', fontWeight:600, textDecoration:'none', marginTop:4 }}
           onClick={() => setMenuOpen(false)}>
           Get started free
         </Link>
@@ -231,15 +209,15 @@ export default function Landing() {
             <p className="l-hero-desc fade-up d3">
               Connect with 500+ verified doctors, get AI-powered diagnosis, emergency SOS, multilingual consultations — all in one platform.
             </p>
-            <div className="fade-up d4" style={{ display:'flex', gap:12, flexWrap:'wrap', marginBottom:28 }}>
+
+            {/* Single CTA button — no duplicate */}
+            <div className="fade-up d4" style={{ marginBottom:28 }}>
               <Link to="/register" className="btn-hero">
                 Get started free
                 <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke="white" strokeWidth="2" strokeLinecap="round"/></svg>
               </Link>
-              <Link to="/login" style={{ padding:'14px 24px', background:'white', color:'#374151', border:'1.5px solid #e5e7eb', borderRadius:10, fontSize:15, fontWeight:600, textDecoration:'none', display:'inline-flex', alignItems:'center', transition:'all 0.2s' }}>
-                Sign in
-              </Link>
             </div>
+
             <div className="fade-up d4" style={{ display:'flex', alignItems:'center', gap:16, flexWrap:'wrap' }}>
               {[
                 { icon:'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', label:'Verified Doctors' },
