@@ -69,8 +69,6 @@ export default function Landing() {
 
         .btn-ghost { padding:8px 18px; background:none; border:1.5px solid #e5e7eb; border-radius:8px; font-size:14px; font-weight:500; color:#374151; text-decoration:none; transition:all 0.15s; white-space:nowrap; }
         .btn-ghost:hover { border-color:#0d9488; color:#0d9488; }
-        .btn-solid { padding:8px 18px; background:#0d9488; border:none; border-radius:8px; font-size:14px; font-weight:600; color:white; text-decoration:none; transition:all 0.15s; white-space:nowrap; }
-        .btn-solid:hover { background:#0f766e; }
         .btn-hero { padding:14px 28px; background:#0d9488; color:white; border:none; border-radius:10px; font-size:15px; font-weight:700; text-decoration:none; transition:all 0.2s; display:inline-flex; align-items:center; gap:10px; -webkit-tap-highlight-color:transparent; }
         .btn-hero:hover { background:#0f766e; transform:translateY(-2px); box-shadow:0 12px 32px rgba(13,148,136,0.3); }
 
@@ -112,7 +110,7 @@ export default function Landing() {
         .d1{animation-delay:0.1s;opacity:0} .d2{animation-delay:0.2s;opacity:0} .d3{animation-delay:0.3s;opacity:0} .d4{animation-delay:0.4s;opacity:0}
 
         @media screen and (min-width:769px) {
-          .l-hamburger  { display:none !important; }
+          .l-hamburger { display:none !important; }
         }
         @media screen and (max-width:768px) {
           .l-nav-links  { display:none !important; }
@@ -155,16 +153,16 @@ export default function Landing() {
           </div>
         </Link>
 
+        {/* Desktop nav links */}
         <div className="l-nav-links">
           <a href="#features">Features</a>
           <a href="#how-it-works">How it works</a>
           <a href="#specializations">Specializations</a>
         </div>
 
-        {/* Desktop buttons */}
+        {/* Navbar — Sign in only, no Get started */}
         <div className="l-nav-btns" style={{ display:'flex', alignItems:'center', gap:10 }}>
           <Link to="/login" className="btn-ghost">Sign in</Link>
-          <Link to="/register" className="btn-solid">Get started</Link>
         </div>
 
         {/* Mobile hamburger */}
@@ -210,7 +208,7 @@ export default function Landing() {
               Connect with 500+ verified doctors, get AI-powered diagnosis, emergency SOS, multilingual consultations — all in one platform.
             </p>
 
-            {/* Single CTA button — no duplicate */}
+            {/* Hero CTA — Get started only here */}
             <div className="fade-up d4" style={{ marginBottom:28 }}>
               <Link to="/register" className="btn-hero">
                 Get started free
@@ -232,7 +230,7 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Hero cards — hidden on mobile */}
+          {/* Hero right cards */}
           <div className="l-hero-right">
             <div style={{ background:'white', borderRadius:14, border:'1px solid #e5e7eb', padding:'18px', boxShadow:'0 4px 20px rgba(0,0,0,0.07)' }}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
