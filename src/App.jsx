@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Toaster } from "react-hot-toast";
-
+import InsuranceCoverage from "./pages/InsuranceCoverage";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -75,7 +75,7 @@ function App() {
           <Route path="/health-records" element={<Navigate to="/my-appointments" />} />
           <Route path="/emergency" element={<Navigate to="/nearby-hospitals" />} />
           <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
+        <Route path="/insurance" element={<PrivateRoute><InsuranceCoverage /></PrivateRoute>} /></Routes>
       </Router>
     </AuthProvider>
   );

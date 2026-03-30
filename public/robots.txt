@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://telemed-connect-6e817.web.app/sitemap.xml

@@ -1,4 +1,5 @@
-import NextStepBanner from "../components/NextStepBanner";import { useState, useEffect } from "react";
+import NextStepBanner from "../components/NextStepBanner";
+import { useState, useEffect } from "react";
 import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { updateProfile } from "firebase/auth";
 import { db, auth } from "../firebase/config";
@@ -17,6 +18,7 @@ export default function EditProfile() {
   const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("personal");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [form, setForm] = useState({
     fullName: "", email: "", phone: "", preferredLanguage: "English",
     bloodGroup: "", dateOfBirth: "", address: "", allergies: "", medications: "", medicalHistory: "",
@@ -78,42 +80,121 @@ export default function EditProfile() {
         .save-btn:disabled { background: #5eead4; cursor: not-allowed; }
         .cancel-btn { padding: 11px 24px; background: white; color: #374151; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: Inter, sans-serif; transition: all 0.2s; }
         .cancel-btn:hover { border-color: #0d9488; color: #0d9488; }
+
+        /* Mobile hamburger & sidebar overlay */
+        .mobile-topbar {
+          display: none;
+          padding: 12px 16px;
+          background: white;
+          border-bottom: 1px solid #e5e7eb;
+          align-items: center;
+          gap: 12px;
+          position: sticky;
+          top: 0;
+          z-index: 40;
+        }
+        .hamburger-btn {
+          width: 36px; height: 36px; border-radius: 8px; border: 1.5px solid #e5e7eb;
+          background: white; display: flex; align-items: center; justify-content: center;
+          cursor: pointer; flex-shrink: 0;
+        }
+        .sidebar-overlay {
+          display: none;
+          position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+          z-index: 50;
+        }
+        .sidebar-drawer {
+          position: fixed; top: 0; left: 0; height: 100vh; width: 260px;
+          background: white; z-index: 60; transform: translateX(-100%);
+          transition: transform 0.28s ease; overflow-y: auto;
+          box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+        }
+        .sidebar-drawer.open { transform: translateX(0); }
+
+        /* Desktop: normal sidebar */
+        .desktop-sidebar { display: block; }
+        .main-content { margin-left: 250px; flex: 1; display: flex; flex-direction: column; }
+
+        @media screen and (max-width: 768px) {
+          .mobile-topbar { display: flex; }
+          .sidebar-overlay { display: block; }
+          .desktop-sidebar { display: none; }
+          .main-content { margin-left: 0 !important; }
+          .profile-grid { grid-template-columns: 1fr !important; }
+          .tab-bar-wrap { flex-wrap: wrap; gap: 6px !important; }
+          .tab-btn { padding: 7px 12px !important; font-size: 12px !important; }
+          .header-actions { flex-direction: column; align-items: flex-start !important; gap: 10px !important; }
+          .form-2col { grid-template-columns: 1fr !important; }
+        }
       `}</style>
 
       <div style={{ display: 'flex', minHeight: '100vh', background: '#f9fafb' }}>
-        <Sidebar />
-        <main style={{ marginLeft: 250, flex: 1, display: 'flex', flexDirection: 'column' }}>
 
-          <header style={{ background: 'white', borderBottom: '1px solid #e5e7eb', padding: '24px 32px', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 4 }}>Account</p>
-              <h1 style={{ fontSize: 22, fontWeight: 800, color: '#111827', letterSpacing: '-0.01em' }}>
-                {role === "doctor" ? "Doctor Profile" : "Health Profile"}
-              </h1>
-            </div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button className="cancel-btn" onClick={() => navigate(-1)}>Cancel</button>
-              <button className="save-btn" onClick={handleSave} disabled={saving}>
-                {saving ? "Saving..." : "Save Changes"}
-              </button>
+        {/* Desktop sidebar — always visible on large screens */}
+        <div className="desktop-sidebar">
+          <Sidebar />
+        </div>
+
+        {/* Mobile sidebar overlay */}
+        {sidebarOpen && (
+          <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} style={{ display: 'block' }} />
+        )}
+
+        {/* Mobile sidebar drawer */}
+        <div className={`sidebar-drawer ${sidebarOpen ? 'open' : ''}`}>
+          <div style={{ padding: '16px', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <p style={{ fontSize: 14, fontWeight: 700, color: '#111827' }}>Menu</p>
+            <button onClick={() => setSidebarOpen(false)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: 20, color: '#6b7280' }}>✕</button>
+          </div>
+          <Sidebar />
+        </div>
+
+        <main className="main-content">
+
+          {/* Mobile top bar with hamburger */}
+          <div className="mobile-topbar">
+            <button className="hamburger-btn" onClick={() => setSidebarOpen(true)}>
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+                <path d="M4 6h16M4 12h16M4 18h16" stroke="#374151" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </button>
+            <p style={{ fontSize: 15, fontWeight: 700, color: '#111827' }}>
+              {role === "doctor" ? "Doctor Profile" : "Health Profile"}
+            </p>
+          </div>
+
+          <header style={{ background: 'white', borderBottom: '1px solid #e5e7eb', padding: '20px 24px', flexShrink: 0 }}>
+            <div className="header-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+              <div>
+                <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 3 }}>Account</p>
+                <h1 style={{ fontSize: 20, fontWeight: 800, color: '#111827', letterSpacing: '-0.01em' }}>
+                  {role === "doctor" ? "Doctor Profile" : "Health Profile"}
+                </h1>
+              </div>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button className="cancel-btn" onClick={() => navigate(-1)}>Cancel</button>
+                <button className="save-btn" onClick={handleSave} disabled={saving}>
+                  {saving ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
             </div>
           </header>
 
-          <div style={{ padding: '28px 32px', flex: 1 }}>
+          <div style={{ padding: '24px', flex: 1 }}>
 
             {/* Profile card */}
-            <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '20px 24px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#0d9488', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 18, fontWeight: 700, flexShrink: 0 }}>
+            <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '18px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 52, height: 52, borderRadius: '50%', background: '#0d9488', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 16, fontWeight: 700, flexShrink: 0 }}>
                 {form.fullName?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || "U"}
               </div>
               <div style={{ flex: 1 }}>
-                <p style={{ fontSize: 16, fontWeight: 700, color: '#111827', marginBottom: 3 }}>{form.fullName || "Your Name"}</p>
+                <p style={{ fontSize: 15, fontWeight: 700, color: '#111827', marginBottom: 3 }}>{form.fullName || "Your Name"}</p>
                 <p style={{ fontSize: 13, color: '#6b7280' }}>{form.email} · <span style={{ color: '#0d9488', fontWeight: 600, textTransform: 'capitalize' }}>{role}</span></p>
               </div>
             </div>
 
             {/* Tabs */}
-            <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+            <div className="tab-bar-wrap" style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
               {tabs.map(t => (
                 <button key={t.id} className={`tab-btn ${activeTab === t.id ? 'active' : ''}`} onClick={() => setActiveTab(t.id)}>
                   {t.label}
@@ -123,9 +204,9 @@ export default function EditProfile() {
 
             {/* Personal Info tab */}
             {activeTab === "personal" && (
-              <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-                <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', paddingBottom: 14, borderBottom: '1px solid #f3f4f6' }}>Personal Information</p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', paddingBottom: 12, borderBottom: '1px solid #f3f4f6' }}>Personal Information</p>
+                <div className="form-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                   <div>
                     <label>Full Name *</label>
                     <input className="form-input" value={form.fullName} onChange={e => handleChange("fullName", e.target.value)} placeholder="Your full name"/>
@@ -167,8 +248,8 @@ export default function EditProfile() {
 
             {/* Medical History tab (patient) */}
             {activeTab === "medical" && role === "patient" && (
-              <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-                <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', paddingBottom: 14, borderBottom: '1px solid #f3f4f6' }}>Medical History</p>
+              <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', paddingBottom: 12, borderBottom: '1px solid #f3f4f6' }}>Medical History</p>
                 <div>
                   <label>Known Allergies</label>
                   <textarea className="form-input" value={form.allergies} onChange={e => handleChange("allergies", e.target.value)} placeholder="e.g. Penicillin, Dust, Pollen..." rows={3} style={{ resize: 'vertical' }}/>
@@ -186,9 +267,9 @@ export default function EditProfile() {
 
             {/* Professional tab (doctor) */}
             {activeTab === "professional" && role === "doctor" && (
-              <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '24px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-                <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', paddingBottom: 14, borderBottom: '1px solid #f3f4f6' }}>Professional Information</p>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', paddingBottom: 12, borderBottom: '1px solid #f3f4f6' }}>Professional Information</p>
+                <div className="form-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                   <div>
                     <label>Specialization</label>
                     <select className="form-input" value={form.specialization} onChange={e => handleChange("specialization", e.target.value)}>
@@ -218,8 +299,8 @@ export default function EditProfile() {
 
             {/* Availability tab (doctor) */}
             {activeTab === "availability" && role === "doctor" && (
-              <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '24px' }}>
-                <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', paddingBottom: 14, borderBottom: '1px solid #f3f4f6', marginBottom: 18 }}>Availability</p>
+              <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', padding: '20px' }}>
+                <p style={{ fontSize: 14, fontWeight: 700, color: '#111827', paddingBottom: 12, borderBottom: '1px solid #f3f4f6', marginBottom: 16 }}>Availability</p>
                 <div>
                   <label>Working Hours & Days</label>
                   <textarea className="form-input" value={form.availability} onChange={e => handleChange("availability", e.target.value)} placeholder="e.g. Mon-Fri: 9AM-5PM, Sat: 9AM-1PM" rows={4} style={{ resize: 'vertical' }}/>
@@ -236,16 +317,17 @@ export default function EditProfile() {
           </div>
         </main>
       </div>
-<NextStepBanner
-  icon="🔍"
-  title="Profile saved! Now find a doctor"
-  desc="Your updated health profile helps doctors give you better, more personalised advice."
-  btnLabel="Find a Doctor"
-  btnPath="/search-doctors"
-  btnSecondaryLabel="My Appointments"
-  btnSecondaryPath="/my-appointments"
-  color="teal"
-/>
+
+      <NextStepBanner
+        icon="🔍"
+        title="Profile saved! Now find a doctor"
+        desc="Your updated health profile helps doctors give you better, more personalised advice."
+        btnLabel="Find a Doctor"
+        btnPath="/search-doctors"
+        btnSecondaryLabel="My Appointments"
+        btnSecondaryPath="/my-appointments"
+        color="teal"
+      />
     </>
   );
 }

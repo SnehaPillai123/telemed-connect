@@ -1,4 +1,5 @@
-import NextStepBanner from "../components/NextStepBanner";import { useState, useEffect } from "react";
+import NextStepBanner from "../components/NextStepBanner";
+import { useState, useEffect } from "react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
@@ -23,7 +24,7 @@ export default function MyPrescriptions() {
   const [newMed, setNewMed] = useState({ name:'', frequency:'Once daily', time:'08:00' });
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchData = async () => {
       try {
         const q = query(collection(db, "prescriptions"), where("patientId", "==", user.uid));
         const snap = await getDocs(q);
@@ -33,7 +34,7 @@ export default function MyPrescriptions() {
       } catch(err) { console.error(err); }
       finally { setLoading(false); }
     };
-    fetch();
+    fetchData();
   }, [user]);
 
   const toggleTaken = (medId, dayIdx) => {
@@ -73,19 +74,44 @@ export default function MyPrescriptions() {
         .day-btn.today-day { border-color:#0d9488; }
         .form-input { width:100%; padding:10px 12px; border:1.5px solid #e5e7eb; border-radius:8px; font-size:13px; color:#111827; outline:none; transition:all 0.2s; font-family:Inter,sans-serif; background:white; }
         .form-input:focus { border-color:#0d9488; box-shadow:0 0 0 3px rgba(13,148,136,0.1); }
+
+        /* Stat boxes — 2x2 on mobile */
+        .rx-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 12px;
+          margin-bottom: 20px;
+        }
+        .rx-stat-box {
+          border-radius: 10px;
+          padding: 14px;
+          border: 1px solid #e5e7eb;
+          text-align: center;
+        }
+        .rx-stat-val { font-size: 22px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+        .rx-stat-lbl { font-size: 11px; color: #6b7280; }
+
+        @media screen and (max-width: 599px) {
+          .rx-stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+          .rx-stat-box { padding: 10px !important; }
+          .rx-stat-val { font-size: 18px !important; }
+          .rx-stat-lbl { font-size: 10px !important; }
+          .med-card { flex-wrap: wrap; gap: 8px; }
+          .tracker-layout { grid-template-columns: 1fr !important; }
+        }
       `}</style>
 
-      {/* Stats row */}
-      <div className="grid-4col" style={{ marginBottom:20 }}>
+      {/* Stats — 2x2 on mobile */}
+      <div className="rx-stats-grid">
         {[
           { l:'Prescriptions', v:prescriptions.length, c:'#0d9488', bg:'#f0fdfa' },
           { l:'Medicines Tracked', v:meds.length, c:'#2563eb', bg:'#eff6ff' },
           { l:"Today's Adherence", v:`${adherence}%`, c:'#16a34a', bg:'#f0fdf4' },
           { l:'Taken Today', v:`${todayTaken}/${meds.length}`, c:'#d97706', bg:'#fffbeb' },
         ].map((s,i) => (
-          <div key={i} style={{ background:s.bg, borderRadius:10, padding:'16px', border:'1px solid #e5e7eb', textAlign:'center' }}>
-            <p style={{ fontSize:24, fontWeight:800, color:s.c, lineHeight:1, marginBottom:4 }}>{loading&&i===0?'—':s.v}</p>
-            <p style={{ fontSize:12, color:'#6b7280' }}>{s.l}</p>
+          <div key={i} className="rx-stat-box" style={{ background: s.bg }}>
+            <p className="rx-stat-val" style={{ color: s.c }}>{loading && i===0 ? '—' : s.v}</p>
+            <p className="rx-stat-lbl">{s.l}</p>
           </div>
         ))}
       </div>
@@ -193,9 +219,8 @@ export default function MyPrescriptions() {
             </div>
           )}
 
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 240px', gap:20, alignItems:'start' }}>
+          <div className="tracker-layout" style={{ display:'grid', gridTemplateColumns:'1fr 240px', gap:20, alignItems:'start' }}>
             <div>
-              {/* Day headers */}
               <div style={{ display:'flex', alignItems:'center', marginBottom:10, paddingLeft:4 }}>
                 <div style={{ width:190, flexShrink:0 }}/>
                 <div style={{ display:'flex', gap:7 }}>
@@ -228,7 +253,6 @@ export default function MyPrescriptions() {
               ))}
             </div>
 
-            {/* Adherence ring */}
             <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
               <div style={{ background:'white', borderRadius:12, border:'1px solid #e5e7eb', padding:'18px', textAlign:'center' }}>
                 <p style={{ fontSize:13, fontWeight:700, color:'#111827', marginBottom:14 }}>Today's Adherence</p>
@@ -260,16 +284,17 @@ export default function MyPrescriptions() {
           </div>
         </div>
       )}
-<NextStepBanner
-  icon="💊"
-  title="Need to order your medicines?"
-  desc="Order your prescribed medicines directly from 1mg or PharmEasy with one click."
-  btnLabel="Order on 1mg"
-  btnPath="https://www.1mg.com"
-  btnSecondaryLabel="Order on PharmEasy"
-  btnSecondaryPath="https://pharmeasy.in"
-  color="green"
-/>
+
+      <NextStepBanner
+        icon="💊"
+        title="Need to order your medicines?"
+        desc="Order your prescribed medicines directly from 1mg or PharmEasy with one click."
+        btnLabel="Order on 1mg"
+        btnPath="https://www.1mg.com"
+        btnSecondaryLabel="Order on PharmEasy"
+        btnSecondaryPath="https://pharmeasy.in"
+        color="green"
+      />
     </Layout>
   );
 }

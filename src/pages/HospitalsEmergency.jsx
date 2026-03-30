@@ -78,19 +78,45 @@ export default function HospitalsEmergency() {
         .filter-chip.active { background:#0d9488; border-color:#0d9488; color:white; }
         .contact-card { background:white; border-radius:10px; border:1px solid #e5e7eb; padding:16px; transition:all 0.2s; }
         .contact-card:hover { border-color:#ef4444; }
+
+        /* Stat boxes — 2x2 on mobile */
+        .hosp-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 12px;
+          margin-bottom: 20px;
+        }
+        .hosp-stat-box {
+          border-radius: 10px;
+          padding: 14px;
+          border: 1px solid #e5e7eb;
+          text-align: center;
+        }
+        .hosp-stat-val { font-size: 18px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+        .hosp-stat-lbl { font-size: 11px; color: #6b7280; }
+
+        @media screen and (max-width: 599px) {
+          .hosp-stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+          .hosp-stat-box { padding: 10px !important; }
+          .hosp-stat-val { font-size: 15px !important; }
+          .hosp-stat-lbl { font-size: 10px !important; }
+          .hosp-grid { grid-template-columns: 1fr !important; }
+          .emergency-grid { grid-template-columns: 1fr !important; }
+          .contact-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
       `}</style>
 
-      {/* Stats row */}
-      <div className="grid-4col" style={{ marginBottom:20 }}>
+      {/* Stats — 2x2 on mobile */}
+      <div className="hosp-stats-grid">
         {[
           { l:'Hospitals Nearby', v:HOSPITALS.length, c:'#0d9488', bg:'#f0fdfa' },
           { l:'24/7 Emergency', v:HOSPITALS.filter(h=>h.emergency).length, c:'#dc2626', bg:'#fef2f2' },
           { l:'Avg Distance', v:'3.8 km', c:'#2563eb', bg:'#eff6ff' },
           { l:'My Location', v:locationStatus==='success'?'Found':'Getting...', c:locationStatus==='success'?'#16a34a':'#d97706', bg:locationStatus==='success'?'#f0fdf4':'#fffbeb' },
         ].map((s,i) => (
-          <div key={i} style={{ background:s.bg, borderRadius:10, padding:'16px', border:'1px solid #e5e7eb', textAlign:'center' }}>
-            <p style={{ fontSize:20, fontWeight:800, color:s.c, lineHeight:1, marginBottom:4 }}>{s.v}</p>
-            <p style={{ fontSize:12, color:'#6b7280' }}>{s.l}</p>
+          <div key={i} className="hosp-stat-box" style={{ background: s.bg }}>
+            <p className="hosp-stat-val" style={{ color: s.c }}>{s.v}</p>
+            <p className="hosp-stat-lbl">{s.l}</p>
           </div>
         ))}
       </div>
@@ -112,7 +138,7 @@ export default function HospitalsEmergency() {
             <button className={`filter-chip ${filter==='all'?'active':''}`} onClick={() => setFilter('all')}>All Hospitals</button>
             <button className={`filter-chip ${filter==='emergency'?'active':''}`} onClick={() => setFilter('emergency')}>Emergency Only</button>
           </div>
-          <div className="grid-3col">
+          <div className="hosp-grid grid-3col">
             {filtered.map((h,i) => (
               <article key={i} className="hospital-card fade-in" style={{ animationDelay:`${i*0.05}s`, opacity:0 }}>
                 <div style={{ padding:'18px', borderBottom:'1px solid #f9fafb' }}>
@@ -163,7 +189,7 @@ export default function HospitalsEmergency() {
 
       {/* EMERGENCY TAB */}
       {activeTab === 'emergency' && (
-        <div className="grid-2col">
+        <div className="emergency-grid grid-2col">
           {/* SOS */}
           <section>
             {!sosTriggered ? (
@@ -230,7 +256,7 @@ export default function HospitalsEmergency() {
           {/* Emergency contacts */}
           <section>
             <p style={{ fontSize:14, fontWeight:700, color:'#111827', marginBottom:14 }}>Emergency Helplines</p>
-            <div className="grid-2col" style={{ marginBottom:20 }}>
+            <div className="contact-grid" style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:10, marginBottom:20 }}>
               {EMERGENCY_CONTACTS.map((c,i) => (
                 <div key={i} className="contact-card">
                   <p style={{ fontSize:22, fontWeight:800, color:'#dc2626', marginBottom:3 }}>{c.number}</p>
@@ -250,9 +276,7 @@ export default function HospitalsEmergency() {
                   <p style={{ fontSize:13, fontWeight:600, color:'#111827', marginBottom:2 }}>{h.name}</p>
                   <p style={{ fontSize:11, color:'#6b7280' }}>{h.distance} · 24/7 Emergency</p>
                 </div>
-                <a href={`tel:${h.phone}`} className="call-btn" style={{ fontSize:12 }}>
-                  Call
-                </a>
+                <a href={`tel:${h.phone}`} className="call-btn" style={{ fontSize:12 }}>Call</a>
               </div>
             ))}
           </section>

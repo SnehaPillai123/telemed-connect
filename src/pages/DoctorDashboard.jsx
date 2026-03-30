@@ -1,4 +1,5 @@
-import NextStepBanner from "../components/NextStepBanner";import { useState, useEffect } from "react";
+import NextStepBanner from "../components/NextStepBanner";
+import { useState, useEffect } from "react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
@@ -46,19 +47,54 @@ export default function DoctorDashboard() {
       <style>{`
         @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .fade-up { animation: fadeUp 0.4s ease forwards; }
-        .stat-card { background: white; border-radius: 10px; border: 1px solid #e5e7eb; padding: 18px 20px; transition: all 0.2s; }
+
+        .stat-card {
+          background: white; border-radius: 10px; border: 1px solid #e5e7eb;
+          padding: 14px; transition: all 0.2s;
+        }
         .stat-card:hover { border-color: #0d9488; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(13,148,136,0.08); }
+
         .apt-row { padding: 12px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #f9fafb; transition: background 0.15s; }
         .apt-row:last-child { border-bottom: none; }
         .apt-row:hover { background: #fafafa; }
+
         .action-link { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; border-radius: 8px; text-decoration: none; transition: all 0.15s; }
         .action-link:hover { transform: translateX(3px); }
-        @media screen and (max-width: 1024px) { .doc-grid { grid-template-columns: 1fr !important; } }
-        @media screen and (max-width: 640px) { .doc-stats { grid-template-columns: 1fr 1fr !important; } }
+
+        /* Doctor stat boxes */
+        .doc-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 14px;
+          margin-bottom: 20px;
+        }
+        .doc-stat-val { font-size: 26px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+        .doc-stat-lbl { font-size: 11px; color: #6b7280; font-weight: 500; }
+        .doc-stat-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+
+        /* Main 2-col layout */
+        .doc-main-grid {
+          display: grid;
+          grid-template-columns: 1fr 340px;
+          gap: 16px;
+        }
+
+        @media screen and (max-width: 599px) {
+          .doc-stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+          .stat-card { padding: 10px !important; }
+          .doc-stat-val { font-size: 20px !important; }
+          .doc-stat-lbl { font-size: 10px !important; }
+          .doc-stat-icon { width: 26px !important; height: 26px !important; margin-bottom: 6px !important; }
+          .doc-main-grid { grid-template-columns: 1fr !important; }
+        }
+
+        @media screen and (min-width: 600px) and (max-width: 1024px) {
+          .doc-main-grid { grid-template-columns: 1fr !important; }
+        }
       `}</style>
 
-      {/* Stats */}
-     <div className="grid-4col" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14, marginBottom: 20 }}>
+      {/* Stats — 2x2 on mobile */}
+      <div className="doc-stats-grid">
         {[
           { label: "Today's", value: stats.today, color: '#0d9488', bg: '#f0fdfa', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
           { label: 'Pending', value: stats.pending, color: '#d97706', bg: '#fffbeb', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
@@ -66,17 +102,17 @@ export default function DoctorDashboard() {
           { label: 'Completed', value: stats.completed, color: '#16a34a', bg: '#f0fdf4', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
         ].map((s, i) => (
           <div key={i} className="stat-card fade-up" style={{ animationDelay: `${i*0.06}s`, opacity: 0 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 9, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
-              <svg width="17" height="17" fill="none" viewBox="0 0 24 24"><path d={s.icon} stroke={s.color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            <div className="doc-stat-icon" style={{ background: s.bg }}>
+              <svg width="15" height="15" fill="none" viewBox="0 0 24 24"><path d={s.icon} stroke={s.color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
             </div>
-            <p style={{ fontSize: 30, fontWeight: 800, color: s.color, lineHeight: 1, marginBottom: 4 }}>{loading ? '—' : s.value}</p>
-            <p style={{ fontSize: 12, color: '#6b7280', fontWeight: 500 }}>{s.label} Appointments</p>
+            <p className="doc-stat-val" style={{ color: s.color }}>{loading ? '—' : s.value}</p>
+            <p className="doc-stat-lbl">{s.label} Appointments</p>
           </div>
         ))}
       </div>
 
       {/* Two column */}
-      <div className="grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16 }}>
+      <div className="doc-main-grid">
         {/* Appointments list */}
         <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
           <div style={{ padding: '14px 16px', borderBottom: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -157,16 +193,17 @@ export default function DoctorDashboard() {
           </div>
         </div>
       </div>
-<NextStepBanner
-  icon="📅"
-  title="Review today's appointments"
-  desc="Confirm pending requests, mark consultations complete and write prescriptions."
-  btnLabel="View Appointments"
-  btnPath="/doctor-appointments"
-  btnSecondaryLabel="Update Profile"
-  btnSecondaryPath="/edit-profile"
-  color="blue"
-/>
+
+      <NextStepBanner
+        icon="📅"
+        title="Review today's appointments"
+        desc="Confirm pending requests, mark consultations complete and write prescriptions."
+        btnLabel="View Appointments"
+        btnPath="/doctor-appointments"
+        btnSecondaryLabel="Update Profile"
+        btnSecondaryPath="/edit-profile"
+        color="blue"
+      />
     </Layout>
   );
 }

@@ -58,7 +58,7 @@ export default function PatientDashboard() {
 
         .stat-card {
           background: white; border-radius: 12px; border: 1px solid #e5e7eb;
-          padding: 20px; text-decoration: none; display: block; transition: all 0.2s;
+          padding: 14px; text-decoration: none; display: block; transition: all 0.2s;
         }
         .stat-card:hover {
           border-color: #0d9488; transform: translateY(-3px);
@@ -86,42 +86,47 @@ export default function PatientDashboard() {
         }
         .meet-badge:hover { background: #1557b0; }
 
-        /* ── LAPTOP / DESKTOP — unchanged ── */
-        .dash-stats { grid-template-columns: repeat(3,1fr); }
+        /* Desktop */
+        .dash-stats { grid-template-columns: repeat(3, 1fr); }
         .dash-main  { grid-template-columns: 1fr 320px; }
+        .stat-icon  { width: 36px; height: 36px; margin-bottom: 10px; }
+        .stat-value { font-size: 28px; }
+        .stat-label { font-size: 12px; }
 
-        /* ── TABLET 600–991px ── */
+        /* Tablet */
         @media screen and (min-width: 600px) and (max-width: 991px) {
-          .dash-stats { grid-template-columns: repeat(3,1fr) !important; }
+          .dash-stats { grid-template-columns: repeat(3, 1fr) !important; }
           .dash-main  { grid-template-columns: 1fr !important; }
         }
 
-        /* ── PHONE < 600px ── */
+        /* Mobile */
         @media screen and (max-width: 599px) {
-          .dash-stats { grid-template-columns: repeat(2,1fr) !important; }
+          .dash-stats { grid-template-columns: repeat(2, 1fr) !important; }
           .dash-main  { grid-template-columns: 1fr !important; }
-          .stat-card  { padding: 14px !important; }
-          .stat-card p { font-size: 26px !important; }
+          .stat-card  { padding: 10px !important; }
+          .stat-icon  { width: 28px !important; height: 28px !important; margin-bottom: 6px !important; }
+          .stat-value { font-size: 20px !important; margin-bottom: 2px !important; }
+          .stat-label { font-size: 10px !important; }
         }
       `}</style>
 
       {/* STATS ROW */}
-      <div className="dash-stats" style={{ display: 'grid', gap: 14, marginBottom: 24 }}>
+      <div className="dash-stats" style={{ display: 'grid', gap: 12, marginBottom: 24 }}>
         {[
           { label: 'Upcoming Appointments', value: stats.upcoming, color: '#0d9488', bg: '#f0fdfa', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', to: '/my-appointments' },
           { label: 'Confirmed', value: stats.confirmed, color: '#2563eb', bg: '#eff6ff', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', to: '/my-appointments' },
           { label: 'Completed Visits', value: stats.completed, color: '#16a34a', bg: '#f0fdf4', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', to: '/my-appointments' },
         ].map((s, i) => (
           <Link key={i} to={s.to} className="stat-card fade-up" style={{ animationDelay: `${i*0.07}s`, opacity: 0 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 10, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-              <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
+            <div className="stat-icon" style={{ borderRadius: 8, background: s.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
                 <path d={s.icon} stroke={s.color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <p style={{ fontSize: 32, fontWeight: 800, color: s.color, lineHeight: 1, marginBottom: 6 }}>
+            <p className="stat-value" style={{ fontWeight: 800, color: s.color, lineHeight: 1, marginBottom: 4 }}>
               {loading ? '—' : s.value}
             </p>
-            <p style={{ fontSize: 13, color: '#6b7280', fontWeight: 500 }}>{s.label}</p>
+            <p className="stat-label" style={{ color: '#6b7280', fontWeight: 500 }}>{s.label}</p>
           </Link>
         ))}
       </div>
