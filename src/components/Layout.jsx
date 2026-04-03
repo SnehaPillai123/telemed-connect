@@ -17,6 +17,7 @@ const PATIENT_NAV = [
   ]},
   { section: "Care", items: [
     { to: '/nearby-hospitals', label: 'Hospitals & Emergency', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', emergency: true },
+    { to: '/insurance', label: 'Insurance Coverage', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', badge: 'New' },
     { to: '/edit-profile', label: 'Health Profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
   ]},
 ];
@@ -102,7 +103,6 @@ export default function Layout({ children, title, subtitle }) {
           min-height:100vh; min-width:0;
           transition:margin-left 0.3s cubic-bezier(0.4,0,0.2,1);
           max-width:100vw;
-          /* NO overflow-x:hidden here — it was clipping dropdowns */
         }
         .lyt-main.push { margin-left:${SIDEBAR_WIDTH}px; }
         .lyt-main.full { margin-left:0; }
@@ -158,7 +158,7 @@ export default function Layout({ children, title, subtitle }) {
         }
         .lyt-signout:hover { border-color:#0d9488; color:#0d9488; }
 
-        /* ── CONTENT — allow dropdowns to overflow ── */
+        /* ── CONTENT ── */
         .lyt-content { padding:16px; flex:1; overflow:visible; }
 
         /* ── GRID HELPERS ── */
@@ -196,6 +196,8 @@ export default function Layout({ children, title, subtitle }) {
           .tab-btn      { font-size:12px; padding:7px 8px; }
           .dash-main    { grid-template-columns:1fr !important; }
           .dash-stats   { grid-template-columns:repeat(3,1fr) !important; }
+          .doc-stats-grid { grid-template-columns:repeat(2,1fr) !important; }
+          .doc-main-grid  { grid-template-columns:1fr !important; }
         }
 
         /* PHONE < 600px */
@@ -211,6 +213,12 @@ export default function Layout({ children, title, subtitle }) {
           .tab-btn      { font-size:11px; padding:8px 6px; }
           .dash-main    { grid-template-columns:1fr !important; }
           .dash-stats   { grid-template-columns:repeat(2,1fr) !important; }
+          .doc-stats-grid { grid-template-columns:repeat(2,1fr) !important; gap:8px !important; }
+          .doc-main-grid  { grid-template-columns:1fr !important; }
+          .ins-stats-grid { grid-template-columns:repeat(2,1fr) !important; gap:8px !important; }
+          .hosp-grid      { grid-template-columns:1fr !important; }
+          .provider-grid  { grid-template-columns:repeat(2,1fr) !important; }
+          .ins-form-grid  { grid-template-columns:1fr !important; }
           .nsb-wrap { flex-direction:column !important; }
           .nsb-btns { width:100% !important; }
           .nsb-btn-primary,.nsb-btn-secondary { flex:1; text-align:center; }
@@ -218,6 +226,9 @@ export default function Layout({ children, title, subtitle }) {
           .meet-btn,.chat-btn,.rx-btn { font-size:11px !important; padding:6px 10px !important; }
           .apt-card { padding:12px !important; }
           .filter-chip,.filter-btn { padding:5px 10px !important; font-size:11px !important; }
+          .tracker-grid { grid-template-columns:1fr !important; }
+          .timeline-grid { grid-template-columns:1fr !important; }
+          .book-grid    { grid-template-columns:1fr !important; }
         }
 
         /* REDUCED MOTION */
