@@ -100,7 +100,6 @@ export default function BookAppointment() {
     </Layout>
   );
 
-  // ── SUCCESS SCREEN ──────────────────────────────────────
   if (showSuccess) return (
     <Layout title="Booking Confirmed!" subtitle="Appointment">
       <style>{`
@@ -109,97 +108,56 @@ export default function BookAppointment() {
         .success-card { animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
         .next-btn { width:100%; padding:13px; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; font-family:Inter,sans-serif; transition:all 0.2s; border:none; }
         .next-btn-primary { background:#0d9488; color:white; }
-        .next-btn-primary:hover { background:#0f766e; transform:translateY(-1px); box-shadow:0 6px 20px rgba(13,148,136,0.25); }
+        .next-btn-primary:hover { background:#0f766e; }
         .next-btn-secondary { background:white; color:#374151; border:1.5px solid #e5e7eb !important; }
         .next-btn-secondary:hover { border-color:#0d9488 !important; color:#0d9488; }
         .step-item { animation: fadeUp 0.4s ease forwards; }
       `}</style>
-      <div style={{ maxWidth:520, margin:"0 auto", padding:"20px 0" }}>
-
-        {/* Success card */}
+      <div style={{ maxWidth:520, margin:"0 auto", padding:"10px 0" }}>
         <div className="success-card" style={{ background:"white", borderRadius:20, border:"1px solid #e5e7eb", overflow:"hidden", marginBottom:16 }}>
-
-          {/* Green header */}
-          <div style={{ background:"linear-gradient(135deg,#0d9488,#0284c7)", padding:"36px 32px", textAlign:"center" }}>
-            <div style={{ width:72, height:72, borderRadius:"50%", background:"rgba(255,255,255,0.2)", border:"3px solid rgba(255,255,255,0.5)", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px" }}>
-              <svg width="36" height="36" fill="none" viewBox="0 0 24 24">
+          <div style={{ background:"linear-gradient(135deg,#0d9488,#0284c7)", padding:"32px 24px", textAlign:"center" }}>
+            <div style={{ width:64, height:64, borderRadius:"50%", background:"rgba(255,255,255,0.2)", border:"3px solid rgba(255,255,255,0.5)", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 14px" }}>
+              <svg width="32" height="32" fill="none" viewBox="0 0 24 24">
                 <path d="M5 13l4 4L19 7" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <p style={{ fontSize:22, fontWeight:800, color:"white", marginBottom:6 }}>Appointment Booked!</p>
-            <p style={{ fontSize:14, color:"rgba(255,255,255,0.85)" }}>Your request has been sent to Dr. {doctor.fullName}</p>
+            <p style={{ fontSize:20, fontWeight:800, color:"white", marginBottom:6 }}>Appointment Booked!</p>
+            <p style={{ fontSize:13, color:"rgba(255,255,255,0.85)" }}>Request sent to Dr. {doctor.fullName}</p>
           </div>
-
-          {/* Booking details */}
-          <div style={{ padding:"24px 28px" }}>
-            <div style={{ background:"#f9fafb", borderRadius:12, padding:"16px", marginBottom:20 }}>
-              <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:14, paddingBottom:14, borderBottom:"1px solid #e5e7eb" }}>
-                <div style={{ width:44, height:44, borderRadius:10, background:"linear-gradient(135deg,#f0fdfa,#e0f2fe)", border:"1px solid #ccfbf1", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                  <span style={{ fontSize:14, fontWeight:800, color:"#0d9488" }}>
+          <div style={{ padding:"20px" }}>
+            <div style={{ background:"#f9fafb", borderRadius:12, padding:"14px", marginBottom:16 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:12, paddingBottom:12, borderBottom:"1px solid #e5e7eb" }}>
+                <div style={{ width:40, height:40, borderRadius:10, background:"#f0fdfa", border:"1px solid #ccfbf1", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                  <span style={{ fontSize:13, fontWeight:800, color:"#0d9488" }}>
                     {doctor.fullName?.split(" ").map(n=>n[0]).join("").toUpperCase().slice(0,2)}
                   </span>
                 </div>
-                <div>
-                  <p style={{ fontSize:15, fontWeight:700, color:"#111827" }}>Dr. {doctor.fullName}</p>
+                <div style={{ flex:1 }}>
+                  <p style={{ fontSize:14, fontWeight:700, color:"#111827" }}>Dr. {doctor.fullName}</p>
                   <p style={{ fontSize:12, color:"#0d9488" }}>{doctor.specialization}</p>
                 </div>
-                <div style={{ marginLeft:"auto", textAlign:"right" }}>
-                  <span style={{ fontSize:11, fontWeight:600, color:"#d97706", background:"#fffbeb", padding:"3px 10px", borderRadius:20, border:"1px solid #fde68a" }}>Pending</span>
-                </div>
+                <span style={{ fontSize:11, fontWeight:600, color:"#d97706", background:"#fffbeb", padding:"3px 10px", borderRadius:20, border:"1px solid #fde68a", flexShrink:0 }}>Pending</span>
               </div>
               {[
                 { icon:"📅", label:"Date", value:formattedDate },
                 { icon:"🕐", label:"Time", value:selectedTime },
-                { icon:"💰", label:"Consultation Fee", value:`₹${doctor.consultationFee}` },
+                { icon:"💰", label:"Fee", value:"₹"+doctor.consultationFee },
               ].map((item,i) => (
-                <div key={i} style={{ display:"flex", alignItems:"center", gap:12, padding:"8px 0", borderBottom:i<2?"1px solid #f3f4f6":"none" }}>
-                  <span style={{ fontSize:16, width:24, textAlign:"center" }}>{item.icon}</span>
+                <div key={i} style={{ display:"flex", alignItems:"center", gap:10, padding:"7px 0", borderBottom:i<2?"1px solid #f3f4f6":"none" }}>
+                  <span style={{ fontSize:14, width:22 }}>{item.icon}</span>
                   <span style={{ fontSize:13, color:"#6b7280", flex:1 }}>{item.label}</span>
                   <span style={{ fontSize:13, fontWeight:600, color:"#111827" }}>{item.value}</span>
                 </div>
               ))}
             </div>
-
-            {/* Info note */}
-            <div style={{ background:"#fffbeb", borderRadius:10, padding:"12px 16px", marginBottom:20, border:"1px solid #fde68a", display:"flex", gap:10 }}>
-              <span style={{ fontSize:16, flexShrink:0 }}>💡</span>
-              <p style={{ fontSize:13, color:"#92400e", lineHeight:1.6 }}>
-                The doctor will review your request and confirm the appointment. You'll see the status update in your appointments.
-              </p>
+            <div style={{ background:"#fffbeb", borderRadius:10, padding:"10px 14px", marginBottom:16, border:"1px solid #fde68a", display:"flex", gap:8 }}>
+              <span style={{ fontSize:14, flexShrink:0 }}>💡</span>
+              <p style={{ fontSize:12, color:"#92400e", lineHeight:1.6 }}>Doctor will review and confirm your request. Check your appointments for status updates.</p>
             </div>
-
-            {/* What's next steps */}
-            <p style={{ fontSize:13, fontWeight:700, color:"#111827", marginBottom:12 }}>What happens next?</p>
-            <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:24 }}>
-              {[
-                { step:"1", text:"Doctor reviews your appointment request", done:true },
-                { step:"2", text:"You receive a confirmation when accepted", done:false },
-                { step:"3", text:"Attend your consultation at the scheduled time", done:false },
-                { step:"4", text:"Receive your digital prescription after the visit", done:false },
-              ].map((s,i) => (
-                <div key={i} className="step-item" style={{ display:"flex", alignItems:"center", gap:12, animationDelay:`${i*0.08}s`, opacity:0 }}>
-                  <div style={{ width:26, height:26, borderRadius:"50%", background:s.done?"#0d9488":"#f3f4f6", border:`2px solid ${s.done?"#0d9488":"#e5e7eb"}`, display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                    {s.done
-                      ? <svg width="12" height="12" fill="none" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke="white" strokeWidth="2.5" strokeLinecap="round"/></svg>
-                      : <span style={{ fontSize:11, fontWeight:700, color:"#9ca3af" }}>{s.step}</span>
-                    }
-                  </div>
-                  <p style={{ fontSize:13, color:s.done?"#0d9488":"#6b7280", fontWeight:s.done?600:400 }}>{s.text}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Action buttons */}
-            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-              <button className="next-btn next-btn-primary" onClick={() => navigate("/my-appointments")}>
-                📋 View My Appointments
-              </button>
-              <button className="next-btn next-btn-secondary" style={{ border:"1.5px solid #e5e7eb" }} onClick={() => navigate("/search-doctors")}>
-                🔍 Book Another Appointment
-              </button>
-              <button className="next-btn next-btn-secondary" style={{ border:"1.5px solid #e5e7eb" }} onClick={() => navigate("/patient-dashboard")}>
-                🏠 Go to Dashboard
-              </button>
+            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+              <button className="next-btn next-btn-primary" onClick={() => navigate("/my-appointments")}>📋 View My Appointments</button>
+              <button className="next-btn next-btn-secondary" style={{ border:"1.5px solid #e5e7eb" }} onClick={() => navigate("/search-doctors")}>🔍 Book Another</button>
+              <button className="next-btn next-btn-secondary" style={{ border:"1.5px solid #e5e7eb" }} onClick={() => navigate("/patient-dashboard")}>🏠 Dashboard</button>
             </div>
           </div>
         </div>
@@ -207,7 +165,6 @@ export default function BookAppointment() {
     </Layout>
   );
 
-  // ── MAIN FORM ────────────────────────────────────────────
   return (
     <Layout title="Book Appointment" subtitle="Consultation">
       <style>{`
@@ -215,55 +172,72 @@ export default function BookAppointment() {
         .form-input:focus { border-color:#0d9488; box-shadow:0 0 0 3px rgba(13,148,136,0.1); }
         .form-input.error { border-color:#ef4444; }
         .error-msg { font-size:12px; color:#ef4444; margin-top:4px; }
-        .time-slot { padding:9px 14px; border:1.5px solid #e5e7eb; border-radius:7px; font-size:13px; font-weight:500; color:#374151; background:white; cursor:pointer; transition:all 0.15s; text-align:center; font-family:Inter,sans-serif; }
+        .time-slot { padding:9px 8px; border:1.5px solid #e5e7eb; border-radius:7px; font-size:12px; font-weight:500; color:#374151; background:white; cursor:pointer; transition:all 0.15s; text-align:center; font-family:Inter,sans-serif; }
         .time-slot:hover { border-color:#0d9488; color:#0d9488; background:#f0fdfa; }
         .time-slot.selected { border-color:#0d9488; background:#0d9488; color:white; }
         .book-btn { width:100%; padding:13px; background:#0d9488; color:white; border:none; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; transition:all 0.2s; font-family:Inter,sans-serif; }
         .book-btn:hover { background:#0f766e; }
         .book-btn:disabled { background:#5eead4; cursor:not-allowed; }
         @keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-        .preview-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px); }
-        .preview-modal { background:white;border-radius:16px;width:100%;max-width:440px;overflow:hidden;animation:fadeInUp 0.3s ease; }
+        .preview-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px); }
+        .preview-modal { background:white;border-radius:16px;width:100%;max-width:440px;overflow:hidden;animation:fadeInUp 0.3s ease;max-height:90vh;overflow-y:auto; }
+
+        /* Book layout — stacked on mobile */
+        .book-layout { display:grid; grid-template-columns:1fr 300px; gap:20px; align-items:start; }
+        .book-sidebar { position:sticky; top:24px; display:flex; flex-direction:column; gap:14px; }
+
+        /* Time slots grid */
+        .slots-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+
+        @media screen and (max-width:599px) {
+          .book-layout { grid-template-columns:1fr !important; }
+          .book-sidebar { position:static !important; }
+          .slots-grid { grid-template-columns:repeat(3,1fr) !important; gap:6px !important; }
+          .time-slot { font-size:11px !important; padding:8px 4px !important; }
+        }
+        @media screen and (min-width:600px) and (max-width:991px) {
+          .book-layout { grid-template-columns:1fr !important; }
+          .book-sidebar { position:static !important; }
+        }
       `}</style>
 
-      {/* Preview modal */}
       {showPreview && (
         <div className="preview-overlay" onClick={() => setShowPreview(false)}>
           <div className="preview-modal" onClick={e => e.stopPropagation()}>
-            <div style={{ background:"linear-gradient(135deg,#0d9488,#0284c7)", padding:"20px 24px" }}>
-              <p style={{ fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.8)", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:6 }}>Review & Confirm</p>
-              <p style={{ fontSize:18, fontWeight:800, color:"white" }}>Confirm Your Appointment</p>
+            <div style={{ background:"linear-gradient(135deg,#0d9488,#0284c7)", padding:"18px 20px" }}>
+              <p style={{ fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.8)", textTransform:"uppercase", letterSpacing:"0.06em", marginBottom:4 }}>Review & Confirm</p>
+              <p style={{ fontSize:17, fontWeight:800, color:"white" }}>Confirm Your Appointment</p>
             </div>
-            <div style={{ padding:"20px 24px" }}>
-              <div style={{ display:"flex", gap:14, alignItems:"center", marginBottom:18, padding:"14px", background:"#f0fdfa", borderRadius:10, border:"1px solid #ccfbf1" }}>
-                <div style={{ width:44,height:44,borderRadius:10,background:"#0d9488",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
-                  <span style={{ fontSize:14,fontWeight:700,color:"white" }}>
+            <div style={{ padding:"18px 20px" }}>
+              <div style={{ display:"flex", gap:12, alignItems:"center", marginBottom:16, padding:"12px", background:"#f0fdfa", borderRadius:10, border:"1px solid #ccfbf1" }}>
+                <div style={{ width:40,height:40,borderRadius:10,background:"#0d9488",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+                  <span style={{ fontSize:13,fontWeight:700,color:"white" }}>
                     {doctor.fullName?.split(" ").map(n=>n[0]).join("").toUpperCase().slice(0,2)}
                   </span>
                 </div>
                 <div>
-                  <p style={{ fontSize:15,fontWeight:700,color:"#111827",marginBottom:2 }}>Dr. {doctor.fullName}</p>
+                  <p style={{ fontSize:14,fontWeight:700,color:"#111827",marginBottom:2 }}>Dr. {doctor.fullName}</p>
                   <p style={{ fontSize:12,color:"#0d9488" }}>{doctor.specialization}</p>
                 </div>
               </div>
-              <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:18 }}>
+              <div style={{ display:"flex", flexDirection:"column", gap:6, marginBottom:16 }}>
                 {[
                   { icon:"📅", label:"Date", value:formattedDate },
                   { icon:"🕐", label:"Time", value:selectedTime },
-                  { icon:"💰", label:"Fee", value:`₹${doctor.consultationFee}` },
+                  { icon:"💰", label:"Fee", value:"₹"+doctor.consultationFee },
                   { icon:"📝", label:"Reason", value:reason },
                 ].map((item,i) => (
-                  <div key={i} style={{ display:"flex",gap:12,padding:"10px 14px",background:"#f9fafb",borderRadius:8 }}>
-                    <span style={{ fontSize:16 }}>{item.icon}</span>
-                    <div style={{ flex:1 }}>
-                      <p style={{ fontSize:11,color:"#9ca3af",marginBottom:2 }}>{item.label}</p>
-                      <p style={{ fontSize:13,fontWeight:600,color:"#111827" }}>{item.value}</p>
+                  <div key={i} style={{ display:"flex",gap:10,padding:"9px 12px",background:"#f9fafb",borderRadius:8 }}>
+                    <span style={{ fontSize:15 }}>{item.icon}</span>
+                    <div style={{ flex:1,minWidth:0 }}>
+                      <p style={{ fontSize:11,color:"#9ca3af",marginBottom:1 }}>{item.label}</p>
+                      <p style={{ fontSize:13,fontWeight:600,color:"#111827",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{item.value}</p>
                     </div>
                   </div>
                 ))}
               </div>
-              <div style={{ background:"#fffbeb",borderRadius:8,padding:"10px 14px",marginBottom:18,border:"1px solid #fde68a" }}>
-                <p style={{ fontSize:12,color:"#92400e" }}>⚠️ Appointment will be confirmed once the doctor accepts your request.</p>
+              <div style={{ background:"#fffbeb",borderRadius:8,padding:"10px 12px",marginBottom:16,border:"1px solid #fde68a" }}>
+                <p style={{ fontSize:12,color:"#92400e" }}>⚠️ Appointment is pending until doctor accepts.</p>
               </div>
               <div style={{ display:"flex",gap:10 }}>
                 <button onClick={() => setShowPreview(false)} style={{ flex:1,padding:"11px",background:"white",color:"#374151",border:"1.5px solid #e5e7eb",borderRadius:9,fontSize:14,fontWeight:500,cursor:"pointer",fontFamily:"Inter,sans-serif" }}>
@@ -278,43 +252,43 @@ export default function BookAppointment() {
         </div>
       )}
 
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 320px", gap:24, alignItems:"start" }}>
-        <form noValidate style={{ display:"flex", flexDirection:"column", gap:16 }}>
+      <div className="book-layout">
+        <form noValidate style={{ display:"flex", flexDirection:"column", gap:14 }}>
 
           {/* Doctor info */}
-          <div style={{ background:"white", borderRadius:10, border:"1px solid #e5e7eb", padding:"20px" }}>
-            <div style={{ display:"flex", gap:14, alignItems:"center" }}>
-              <div style={{ width:50, height:50, borderRadius:10, background:"#f0fdfa", border:"1px solid #ccfbf1", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                <span style={{ fontSize:16, fontWeight:700, color:"#0d9488" }}>
+          <div style={{ background:"white", borderRadius:10, border:"1px solid #e5e7eb", padding:"16px" }}>
+            <div style={{ display:"flex", gap:12, alignItems:"center", flexWrap:"wrap" }}>
+              <div style={{ width:46, height:46, borderRadius:10, background:"#f0fdfa", border:"1px solid #ccfbf1", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                <span style={{ fontSize:14, fontWeight:700, color:"#0d9488" }}>
                   {doctor.fullName?.split(" ").map(n=>n[0]).join("").toUpperCase().slice(0,2)}
                 </span>
               </div>
-              <div style={{ flex:1 }}>
-                <p style={{ fontSize:16, fontWeight:700, color:"#111827", marginBottom:4 }}>Dr. {doctor.fullName}</p>
+              <div style={{ flex:1, minWidth:0 }}>
+                <p style={{ fontSize:15, fontWeight:700, color:"#111827", marginBottom:4 }}>Dr. {doctor.fullName}</p>
                 <span style={{ fontSize:12, fontWeight:600, color:"#0d9488", background:"#f0fdfa", padding:"3px 10px", borderRadius:20, border:"1px solid #ccfbf1" }}>{doctor.specialization}</span>
               </div>
-              <div style={{ textAlign:"right" }}>
-                <p style={{ fontSize:20, fontWeight:700, color:"#0d9488" }}>₹{doctor.consultationFee}</p>
-                <p style={{ fontSize:12, color:"#6b7280" }}>per consultation</p>
+              <div style={{ textAlign:"right", flexShrink:0 }}>
+                <p style={{ fontSize:18, fontWeight:700, color:"#0d9488" }}>₹{doctor.consultationFee}</p>
+                <p style={{ fontSize:11, color:"#6b7280" }}>per consultation</p>
               </div>
             </div>
           </div>
 
           {/* Date */}
-          <div style={{ background:"white", borderRadius:10, border:"1px solid #e5e7eb", padding:"20px" }}>
-            <p style={{ fontSize:14, fontWeight:700, color:"#111827", marginBottom:14 }}>Select Date</p>
-            <input className={`form-input ${dateError?"error":""}`} type="date" min={today} max={maxDateStr} value={selectedDate}
+          <div style={{ background:"white", borderRadius:10, border:"1px solid #e5e7eb", padding:"16px" }}>
+            <p style={{ fontSize:14, fontWeight:700, color:"#111827", marginBottom:12 }}>Select Date</p>
+            <input className={"form-input "+(dateError?"error":"")} type="date" min={today} max={maxDateStr} value={selectedDate}
               onChange={e => { setSelectedDate(e.target.value); validateDate(e.target.value); }}/>
             {dateError && <p className="error-msg">{dateError}</p>}
           </div>
 
           {/* Time slots */}
-          <div style={{ background:"white", borderRadius:10, border:"1px solid #e5e7eb", padding:"20px" }}>
-            <p style={{ fontSize:14, fontWeight:700, color:"#111827", marginBottom:14 }}>Select Time Slot</p>
-            <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8 }}>
+          <div style={{ background:"white", borderRadius:10, border:"1px solid #e5e7eb", padding:"16px" }}>
+            <p style={{ fontSize:14, fontWeight:700, color:"#111827", marginBottom:12 }}>Select Time Slot</p>
+            <div className="slots-grid">
               {TIME_SLOTS.map(slot => (
                 <button key={slot} type="button"
-                  className={`time-slot ${selectedTime===slot?"selected":""}`}
+                  className={"time-slot "+(selectedTime===slot?"selected":"")}
                   onClick={() => { setSelectedTime(slot); validateTime(slot); }}>
                   {slot}
                 </button>
@@ -324,9 +298,9 @@ export default function BookAppointment() {
           </div>
 
           {/* Reason */}
-          <div style={{ background:"white", borderRadius:10, border:"1px solid #e5e7eb", padding:"20px" }}>
-            <p style={{ fontSize:14, fontWeight:700, color:"#111827", marginBottom:14 }}>Reason for Visit</p>
-            <textarea className={`form-input ${reasonError?"error":""}`}
+          <div style={{ background:"white", borderRadius:10, border:"1px solid #e5e7eb", padding:"16px" }}>
+            <p style={{ fontSize:14, fontWeight:700, color:"#111827", marginBottom:12 }}>Reason for Visit</p>
+            <textarea className={"form-input "+(reasonError?"error":"")}
               placeholder="Describe your symptoms or reason for this consultation..."
               value={reason} onChange={e => { setReason(e.target.value); validateReason(e.target.value); }}
               rows={4} style={{ resize:"vertical" }}/>
@@ -346,38 +320,38 @@ export default function BookAppointment() {
         </form>
 
         {/* Summary sidebar */}
-        <aside style={{ position:"sticky", top:24, display:"flex", flexDirection:"column", gap:16 }}>
+        <aside className="book-sidebar">
           <div style={{ background:"white", borderRadius:10, border:"1px solid #e5e7eb", overflow:"hidden" }}>
-            <div style={{ padding:"16px 20px", borderBottom:"1px solid #f3f4f6", background:"#f9fafb" }}>
-              <p style={{ fontSize:14, fontWeight:700, color:"#111827" }}>Booking Summary</p>
+            <div style={{ padding:"14px 16px", borderBottom:"1px solid #f3f4f6", background:"#f9fafb" }}>
+              <p style={{ fontSize:13, fontWeight:700, color:"#111827" }}>Booking Summary</p>
             </div>
-            <div style={{ padding:"20px", display:"flex", flexDirection:"column", gap:12 }}>
+            <div style={{ padding:"16px", display:"flex", flexDirection:"column", gap:10 }}>
               {[
-                { label:"Doctor", value:`Dr. ${doctor.fullName}` },
+                { label:"Doctor", value:"Dr. "+doctor.fullName },
                 { label:"Specialization", value:doctor.specialization },
                 { label:"Date", value:formattedDate||"Not selected" },
                 { label:"Time", value:selectedTime||"Not selected" },
-                { label:"Fee", value:`₹${doctor.consultationFee}`, highlight:true },
+                { label:"Fee", value:"₹"+doctor.consultationFee, highlight:true },
               ].map((item,i) => (
-                <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:12 }}>
+                <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:10 }}>
                   <p style={{ fontSize:13, color:"#6b7280" }}>{item.label}</p>
                   <p style={{ fontSize:13, fontWeight:600, color:item.highlight?"#0d9488":"#111827", textAlign:"right" }}>{item.value}</p>
                 </div>
               ))}
             </div>
-            <div style={{ padding:"14px 20px", background:"#f0fdfa", borderTop:"1px solid #ccfbf1" }}>
+            <div style={{ padding:"12px 16px", background:"#f0fdfa", borderTop:"1px solid #ccfbf1" }}>
               <p style={{ fontSize:12, color:"#0f766e", lineHeight:1.6 }}>Appointment pending until doctor confirms.</p>
             </div>
           </div>
-          <div style={{ background:"white", borderRadius:10, border:"1px solid #e5e7eb", padding:"20px" }}>
-            <p style={{ fontSize:13, fontWeight:700, color:"#111827", marginBottom:14 }}>Doctor Info</p>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+          <div style={{ background:"white", borderRadius:10, border:"1px solid #e5e7eb", padding:"16px" }}>
+            <p style={{ fontSize:13, fontWeight:700, color:"#111827", marginBottom:12 }}>Doctor Info</p>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
               {[
-                { label:"Experience", value:`${doctor.experience||"—"} yrs` },
+                { label:"Experience", value:(doctor.experience||"—")+" yrs" },
                 { label:"Rating", value:doctor.rating||"4.5" },
               ].map((s,i) => (
-                <div key={i} style={{ background:"#f9fafb", borderRadius:7, padding:"12px", textAlign:"center" }}>
-                  <p style={{ fontSize:16, fontWeight:700, color:"#0d9488", marginBottom:2 }}>{s.value}</p>
+                <div key={i} style={{ background:"#f9fafb", borderRadius:7, padding:"10px", textAlign:"center" }}>
+                  <p style={{ fontSize:15, fontWeight:700, color:"#0d9488", marginBottom:2 }}>{s.value}</p>
                   <p style={{ fontSize:11, color:"#6b7280" }}>{s.label}</p>
                 </div>
               ))}
