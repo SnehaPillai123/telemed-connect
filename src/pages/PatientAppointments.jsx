@@ -76,7 +76,7 @@ export default function PatientAppointments() {
         .rx-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; background:#0d9488; color:white; border-radius:8px; font-size:12px; font-weight:600; text-decoration:none; transition:all 0.15s; border:none; cursor:pointer; font-family:Inter,sans-serif; }
         .rx-btn:hover { background:#0f766e; transform:translateY(-1px); }
         .action-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px solid #f3f4f6; align-items:center; }
-        .records-grid { display:grid; grid-template-columns:1fr 280px; gap:20px; }
+        .records-grid { display:grid; grid-template-columns:1fr 260px; gap:20px; }
         @media screen and (max-width:799px) {
           .records-grid { grid-template-columns:1fr !important; }
         }
