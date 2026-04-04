@@ -38,9 +38,11 @@ export default function Login() {
         *, *::before, *::after { font-family:'Inter',sans-serif; box-sizing:border-box; margin:0; padding:0; }
 
         .login-wrap  { min-height:100svh; display:flex; background:#f9fafb; }
-        .login-left  { width:420px; flex-shrink:0; background:linear-gradient(160deg,#0d9488,#0f766e); display:flex; flex-direction:column; justify-content:center; padding:48px 40px; }
+
+        /* Left panel — 50% on desktop */
+        .login-left  { width:50%; flex-shrink:0; background:linear-gradient(160deg,#0d9488,#0f766e); display:flex; flex-direction:column; justify-content:center; padding:60px 56px; }
         .login-right { flex:1; display:flex; align-items:center; justify-content:center; padding:40px 24px; overflow-y:auto; }
-        .login-card  { width:100%; max-width:420px; }
+        .login-card  { width:100%; max-width:440px; }
 
         .l-input { width:100%; padding:13px 14px; border:1.5px solid #e5e7eb; border-radius:9px; font-size:16px; color:#111827; background:white; outline:none; transition:all 0.2s; font-family:Inter,sans-serif; -webkit-appearance:none; }
         .l-input:focus { border-color:#0d9488; box-shadow:0 0 0 3px rgba(13,148,136,0.1); }
@@ -52,12 +54,12 @@ export default function Login() {
         @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
         .fade-up { animation:fadeUp 0.5s ease forwards; }
 
-        /* ── TABLET ── */
-        @media screen and (max-width:900px) {
-          .login-left { width:340px; padding:40px 28px; }
+        /* TABLET */
+        @media screen and (max-width:1024px) {
+          .login-left { width:45%; padding:48px 40px; }
         }
 
-        /* ── MOBILE ── */
+        /* MOBILE */
         @media screen and (max-width:700px) {
           .login-left  { display:none !important; }
           .login-right { padding:32px 20px; align-items:flex-start; min-height:100svh; }
@@ -65,63 +67,62 @@ export default function Login() {
           .l-mobile-header { display:flex !important; }
         }
 
-        /* Mobile header (logo) — hidden on desktop */
         .l-mobile-header { display:none; align-items:center; gap:10px; margin-bottom:32px; }
       `}</style>
 
       <div className="login-wrap">
 
-        {/* ── LEFT PANEL (hidden on mobile) ── */}
+        {/* LEFT PANEL */}
         <div className="login-left">
-          <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:44 }}>
-            <div style={{ width:40, height:40, borderRadius:10, background:'rgba(255,255,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M12 7v10M7 12h10" stroke="white" strokeWidth="2.5" strokeLinecap="round"/></svg>
+          <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:48 }}>
+            <div style={{ width:44, height:44, borderRadius:11, background:'rgba(255,255,255,0.2)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path d="M12 7v10M7 12h10" stroke="white" strokeWidth="2.5" strokeLinecap="round"/></svg>
             </div>
             <div>
-              <p style={{ fontWeight:800, fontSize:16, color:'white', lineHeight:1.1 }}>TeleMed Connect</p>
+              <p style={{ fontWeight:800, fontSize:17, color:'white', lineHeight:1.1 }}>TeleMed Connect</p>
               <p style={{ fontSize:10, color:'rgba(255,255,255,0.7)', fontWeight:600, letterSpacing:'0.08em', textTransform:'uppercase' }}>Healthcare Platform</p>
             </div>
           </div>
 
-          <h2 style={{ fontSize:30, fontWeight:800, color:'white', lineHeight:1.2, marginBottom:18, letterSpacing:'-0.02em' }}>
+          <h2 style={{ fontSize:'clamp(28px,3vw,40px)', fontWeight:800, color:'white', lineHeight:1.15, marginBottom:20, letterSpacing:'-0.02em' }}>
             Healthcare that<br/>comes to you.
           </h2>
-          <p style={{ fontSize:15, color:'rgba(255,255,255,0.8)', lineHeight:1.8, marginBottom:36 }}>
-            Connect with 500+ verified doctors, get AI-powered diagnosis, emergency SOS, and multilingual consultations.
+          <p style={{ fontSize:16, color:'rgba(255,255,255,0.8)', lineHeight:1.8, marginBottom:40 }}>
+            Connect with 500+ verified doctors, get AI-powered diagnosis, emergency SOS, and multilingual consultations — all in one place.
           </p>
 
-          <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+          <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
             {[
               { icon:'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', text:'500+ Verified Doctors' },
               { icon:'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z', text:'AI Symptom Checker' },
               { icon:'M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9', text:'Emergency SOS' },
+              { icon:'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', text:'Digital Prescriptions' },
             ].map((f,i) => (
-              <div key={i} style={{ display:'flex', alignItems:'center', gap:12 }}>
-                <div style={{ width:32, height:32, borderRadius:8, background:'rgba(255,255,255,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d={f.icon} stroke="white" strokeWidth="1.8" strokeLinecap="round"/></svg>
+              <div key={i} style={{ display:'flex', alignItems:'center', gap:14 }}>
+                <div style={{ width:36, height:36, borderRadius:9, background:'rgba(255,255,255,0.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d={f.icon} stroke="white" strokeWidth="1.8" strokeLinecap="round"/></svg>
                 </div>
-                <span style={{ fontSize:14, color:'rgba(255,255,255,0.9)', fontWeight:500 }}>{f.text}</span>
+                <span style={{ fontSize:15, color:'rgba(255,255,255,0.9)', fontWeight:500 }}>{f.text}</span>
               </div>
             ))}
           </div>
 
-          <div style={{ marginTop:44, paddingTop:28, borderTop:'1px solid rgba(255,255,255,0.2)' }}>
-            <div style={{ display:'flex', gap:24 }}>
+          <div style={{ marginTop:48, paddingTop:32, borderTop:'1px solid rgba(255,255,255,0.2)' }}>
+            <div style={{ display:'flex', gap:32 }}>
               {[['500+','Doctors'],['10K+','Patients'],['98%','Satisfaction']].map(([val,label],i) => (
                 <div key={i}>
-                  <p style={{ fontSize:22, fontWeight:800, color:'white', lineHeight:1 }}>{val}</p>
-                  <p style={{ fontSize:12, color:'rgba(255,255,255,0.65)', marginTop:3 }}>{label}</p>
+                  <p style={{ fontSize:26, fontWeight:800, color:'white', lineHeight:1 }}>{val}</p>
+                  <p style={{ fontSize:13, color:'rgba(255,255,255,0.65)', marginTop:4 }}>{label}</p>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* ── RIGHT PANEL ── */}
+        {/* RIGHT PANEL */}
         <div className="login-right">
           <div className="login-card fade-up">
 
-            {/* Logo shown only on mobile */}
             <div className="l-mobile-header">
               <div style={{ width:36, height:36, borderRadius:8, background:'#0d9488', display:'flex', alignItems:'center', justifyContent:'center' }}>
                 <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M12 7v10M7 12h10" stroke="white" strokeWidth="2.5" strokeLinecap="round"/></svg>
@@ -133,7 +134,7 @@ export default function Login() {
             </div>
 
             <div style={{ marginBottom:28 }}>
-              <h1 style={{ fontSize:24, fontWeight:800, color:'#111827', letterSpacing:'-0.02em', marginBottom:6 }}>Welcome back</h1>
+              <h1 style={{ fontSize:26, fontWeight:800, color:'#111827', letterSpacing:'-0.02em', marginBottom:6 }}>Welcome back</h1>
               <p style={{ fontSize:14, color:'#6b7280' }}>Sign in to your account to continue</p>
             </div>
 

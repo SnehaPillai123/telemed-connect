@@ -76,6 +76,10 @@ export default function PatientAppointments() {
         .rx-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; background:#0d9488; color:white; border-radius:8px; font-size:12px; font-weight:600; text-decoration:none; transition:all 0.15s; border:none; cursor:pointer; font-family:Inter,sans-serif; }
         .rx-btn:hover { background:#0f766e; transform:translateY(-1px); }
         .action-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px solid #f3f4f6; align-items:center; }
+        .records-grid { display:grid; grid-template-columns:1fr 280px; gap:20px; }
+        @media screen and (max-width:799px) {
+          .records-grid { grid-template-columns:1fr !important; }
+        }
 
         /* Summary stat boxes — 2x2 on mobile */
         .apt-stats-grid {
@@ -244,7 +248,7 @@ export default function PatientAppointments() {
             </div>
           )}
 
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 280px', gap:20 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 280px', flexWrap:'wrap', gap:20 }}>
             <div>
               <p style={{ fontSize:14, fontWeight:700, color:'#111827', marginBottom:16 }}>Medical Timeline</p>
               {[...appointments.map(a=>({...a,_type:'appointment'})), ...prescriptions.map(r=>({...r,_type:'prescription'}))].sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)).map((item, i) => (
