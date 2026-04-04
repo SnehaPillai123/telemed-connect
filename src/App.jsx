@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Toaster } from "react-hot-toast";
 import InsuranceCoverage from "./pages/InsuranceCoverage";
+import VideoCall from "./pages/VideoCall";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -68,6 +69,7 @@ function App() {
           <Route path="/chat/:otherId" element={<PrivateRoute><Chat /></PrivateRoute>} />
           <Route path="/health-center" element={<PrivateRoute patientOnly><HealthCenter /></PrivateRoute>} />
           <Route path="/nearby-hospitals" element={<PrivateRoute patientOnly><HospitalsEmergency /></PrivateRoute>} />
+          <Route path="/video-call/:appointmentId" element={<PrivateRoute><VideoCall /></PrivateRoute>} />
           {/* Old routes redirect to new combined pages */}
           <Route path="/symptom-checker" element={<Navigate to="/health-center" />} />
           <Route path="/ask-before-book" element={<Navigate to="/health-center" />} />

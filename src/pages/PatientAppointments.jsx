@@ -69,8 +69,8 @@ export default function PatientAppointments() {
         .filter-chip.active { background:#0d9488; border-color:#0d9488; color:white; }
         .apt-card { background:white; border-radius:12px; border:1px solid #e5e7eb; padding:16px 18px; transition:all 0.2s; margin-bottom:10px; }
         .apt-card:hover { border-color:#0d9488; box-shadow:0 4px 14px rgba(13,148,136,0.07); }
-        .meet-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:#1a73e8; color:white; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none; transition:all 0.15s; }
-        .meet-btn:hover { background:#1557b0; transform:translateY(-1px); box-shadow:0 4px 12px rgba(26,115,232,0.3); }
+        .meet-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:#0d9488; color:white; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none; transition:all 0.15s; border:none; cursor:pointer; }
+        .meet-btn:hover { background:#0f766e; transform:translateY(-1px); box-shadow:0 4px 12px rgba(13,148,136,0.3); }
         .chat-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; background:#7c3aed; color:white; border-radius:8px; font-size:12px; font-weight:600; text-decoration:none; transition:all 0.15s; border:none; cursor:pointer; font-family:Inter,sans-serif; }
         .chat-btn:hover { background:#6d28d9; transform:translateY(-1px); }
         .rx-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; background:#0d9488; color:white; border-radius:8px; font-size:12px; font-weight:600; text-decoration:none; transition:all 0.15s; border:none; cursor:pointer; font-family:Inter,sans-serif; }
@@ -202,13 +202,13 @@ export default function PatientAppointments() {
                         Chat with Doctor
                       </button>
                     )}
-                    {apt.status === 'confirmed' && apt.meetLink && (
-                      <a href={apt.meetLink} target="_blank" rel="noreferrer" className="meet-btn">
+                    {apt.status === 'confirmed' && (
+                      <button className="meet-btn" onClick={() => navigate("/video-call/" + apt.id)}>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="white">
                           <path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z"/>
                         </svg>
-                        Join Google Meet
-                      </a>
+                        🎥 Join Video Call
+                      </button>
                     )}
                     {apt.status === 'completed' && rx && (
                       <button className="rx-btn" onClick={() => navigate('/my-prescriptions')}>
@@ -220,9 +220,6 @@ export default function PatientAppointments() {
                     )}
                     {apt.status === 'pending' && (
                       <p style={{ fontSize:12, color:'#9ca3af', fontStyle:'italic' }}>⏳ Waiting for doctor to confirm...</p>
-                    )}
-                    {apt.status === 'confirmed' && !apt.meetLink && (
-                      <p style={{ fontSize:12, color:'#9ca3af', fontStyle:'italic' }}>📹 Video call link will appear here</p>
                     )}
                   </div>
                 )}

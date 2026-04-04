@@ -3,6 +3,7 @@ import { doc, getDoc, addDoc, collection, serverTimestamp } from "firebase/fires
 import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
 import Layout from "../components/Layout";
+import PaymentGateway from "../components/PaymentGateway";
 import { useParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -27,6 +28,7 @@ export default function BookAppointment() {
   const [timeError, setTimeError] = useState("");
   const [reasonError, setReasonError] = useState("");
   const [showPreview, setShowPreview] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
@@ -58,8 +60,8 @@ export default function BookAppointment() {
     setReasonError(""); return true;
   };
 
-  const handleBook = async () => {
-    setShowPreview(false);
+  const handleBook = async (paymentId) => {
+    setShowPayment(false);
     setBooking(true);
     try {
       await addDoc(collection(db, "appointments"), {
@@ -67,7 +69,10 @@ export default function BookAppointment() {
         doctorId: doctor.id, doctorName: doctor.fullName,
         doctorSpecialization: doctor.specialization,
         appointmentDate: selectedDate, appointmentTime: selectedTime,
-        reason: reason.trim(), status: "pending", createdAt: serverTimestamp()
+        reason: reason.trim(), status: "pending",
+        paymentId: paymentId || null,
+        paymentStatus: paymentId ? "paid" : "free",
+        createdAt: serverTimestamp()
       });
       setShowSuccess(true);
     } catch {
@@ -97,6 +102,18 @@ export default function BookAppointment() {
       <div style={{ textAlign:"center", padding:"80px 0" }}>
         <p style={{ color:"#6b7280" }}>Doctor not found.</p>
       </div>
+    </Layout>
+  );
+
+  // ── Payment screen ──────────────────────────────────────────────────────────
+  if (showPayment) return (
+    <Layout title="Complete Payment" subtitle="Secure Checkout">
+      <PaymentGateway
+        doctor={doctor}
+        patientName={user?.displayName}
+        onSuccess={(paymentId) => handleBook(paymentId)}
+        onCancel={() => setShowPayment(false)}
+      />
     </Layout>
   );
 
@@ -243,8 +260,8 @@ export default function BookAppointment() {
                 <button onClick={() => setShowPreview(false)} style={{ flex:1,padding:"11px",background:"white",color:"#374151",border:"1.5px solid #e5e7eb",borderRadius:9,fontSize:14,fontWeight:500,cursor:"pointer",fontFamily:"Inter,sans-serif" }}>
                   Edit
                 </button>
-                <button onClick={handleBook} disabled={booking} style={{ flex:2,padding:"11px",background:"#0d9488",color:"white",border:"none",borderRadius:9,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"Inter,sans-serif" }}>
-                  {booking ? "Booking..." : "✓ Confirm Booking"}
+                <button onClick={() => { setShowPreview(false); setShowPayment(true); }} disabled={booking} style={{ flex:2,padding:"11px",background:"#0d9488",color:"white",border:"none",borderRadius:9,fontSize:14,fontWeight:700,cursor:"pointer",fontFamily:"Inter,sans-serif" }}>
+                  💳 Proceed to Pay ₹{doctor.consultationFee}
                 </button>
               </div>
             </div>
