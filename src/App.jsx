@@ -1,4 +1,7 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import PDFPrescription from "./pages/PDFPrescription";
+import DoctorReviews from "./pages/DoctorReviews";
+import LabReports from "./pages/LabReports";
+import AISymptomChecker from "./pages/AISymptomChecker";import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Toaster } from "react-hot-toast";
 import InsuranceCoverage from "./pages/InsuranceCoverage";
@@ -77,7 +80,10 @@ function App() {
           <Route path="/health-records" element={<Navigate to="/my-appointments" />} />
           <Route path="/emergency" element={<Navigate to="/nearby-hospitals" />} />
           <Route path="*" element={<Navigate to="/" />} />
-        <Route path="/insurance" element={<PrivateRoute><InsuranceCoverage /></PrivateRoute>} /></Routes>
+        <Route path="/insurance" element={<PrivateRoute><InsuranceCoverage /></PrivateRoute>} /><Route path="/prescription-pdf/:prescriptionId" element={<PrivateRoute><PDFPrescription /></PrivateRoute>} />
+<Route path="/doctor-reviews/:doctorId" element={<PrivateRoute><DoctorReviews /></PrivateRoute>} />
+<Route path="/lab-reports" element={<PrivateRoute patientOnly><LabReports /></PrivateRoute>} />
+<Route path="/ai-symptom-checker" element={<PrivateRoute><AISymptomChecker /></PrivateRoute>} /></Routes>
       </Router>
     </AuthProvider>
   );
