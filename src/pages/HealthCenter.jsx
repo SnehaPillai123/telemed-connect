@@ -71,8 +71,40 @@ export default function HealthCenter() {
   const analyzeSymptoms = async () => {
     if (!symptoms.trim()) return;
     setScLoading(true); setScResult(null);
-    await new Promise(r=>setTimeout(r,1800));
-    setScResult(getMockResult(symptoms));
+    try {
+      const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+      const prompt = `You are a medical AI assistant. A patient described their symptoms. Analyze and respond ONLY with a valid JSON object, no markdown, no explanation.
+
+Patient: Age ${age || "unknown"}, Gender ${gender}
+Symptoms: ${symptoms}
+
+Respond with exactly this JSON structure:
+{
+  "possibleConditions": ["condition1", "condition2", "condition3"],
+  "recommendedSpecialist": "Doctor type",
+  "urgency": "low" or "medium" or "high",
+  "urgencyReason": "one sentence explanation",
+  "generalAdvice": "2-3 sentences of home care advice",
+  "redFlags": ["warning sign 1", "warning sign 2", "warning sign 3"]
+}`;
+
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        }
+      );
+      const data = await res.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const clean = text.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(clean);
+      setScResult(parsed);
+    } catch (err) {
+      // Fallback to mock if Gemini fails
+      setScResult(getMockResult(symptoms));
+    }
     setScLoading(false);
   };
 
