@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
-import { useParams, useNavigate } from "react-router-dom";
-import Layout from "../components/Layout";
-import toast from "react-hot-toast";
 
 export default function VideoCall() {
   const { appointmentId } = useParams();
@@ -12,325 +10,196 @@ export default function VideoCall() {
   const navigate = useNavigate();
   const jitsiRef = useRef(null);
   const apiRef = useRef(null);
-
   const [appointment, setAppointment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [callStarted, setCallStarted] = useState(false);
   const [callEnded, setCallEnded] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
+  const [duration, setDuration] = useState(0);
   const timerRef = useRef(null);
 
-  // Fetch appointment details
   useEffect(() => {
-    const fetch = async () => {
-      try {
-        const snap = await getDoc(doc(db, "appointments", appointmentId));
-        if (snap.exists()) {
-          setAppointment({ id: snap.id, ...snap.data() });
-        } else {
-          toast.error("Appointment not found.");
-          navigate(-1);
-        }
-      } catch {
-        toast.error("Failed to load appointment.");
-      } finally {
-        setLoading(false);
-      }
+    const fetchApt = async () => {
+      const snap = await getDoc(doc(db, "appointments", appointmentId));
+      if (snap.exists()) setAppointment({ id: snap.id, ...snap.data() });
+      setLoading(false);
     };
-    fetch();
+    fetchApt();
   }, [appointmentId]);
 
-  // Load Jitsi script
   useEffect(() => {
+    if (!appointment || callStarted) return;
+
+    // Load Jitsi script
     const script = document.createElement("script");
     script.src = "https://meet.jit.si/external_api.js";
     script.async = true;
-    document.body.appendChild(script);
-    return () => document.body.removeChild(script);
-  }, []);
+    script.onload = () => initJitsi();
+    document.head.appendChild(script);
 
-  // Start the call
-  const startCall = () => {
-    if (!window.JitsiMeetExternalAPI) {
-      toast.error("Video library not loaded. Please refresh the page.");
-      return;
-    }
+    return () => {
+      document.head.removeChild(script);
+      if (apiRef.current) apiRef.current.dispose();
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [appointment]);
 
-    const roomName = `TeleMedConnect-${appointmentId}`;
+  const initJitsi = () => {
+    if (!window.JitsiMeetExternalAPI || !jitsiRef.current) return;
+
+    const roomName = "TeleMedConnect-" + appointmentId.slice(0, 10);
     const displayName = role === "doctor"
-      ? `Dr. ${user.displayName || "Doctor"}`
-      : (user.displayName || "Patient");
+      ? "Dr. " + user.displayName
+      : user.displayName;
 
-    const options = {
+    const api = new window.JitsiMeetExternalAPI("meet.jit.si", {
       roomName,
+      parentNode: jitsiRef.current,
       width: "100%",
       height: "100%",
-      parentNode: jitsiRef.current,
+      userInfo: { displayName, email: user.email },
       configOverwrite: {
         startWithAudioMuted: false,
         startWithVideoMuted: false,
-        disableDeepLinking: true,
         prejoinPageEnabled: false,
+        disableDeepLinking: true,
+        enableWelcomePage: false,
         toolbarButtons: [
-          "microphone", "camera", "closedcaptions",
-          "desktop", "fullscreen", "hangup",
-          "chat", "raisehand", "tileview",
+          "microphone","camera","hangup","chat",
+          "raisehand","tileview","fullscreen","settings"
         ],
       },
       interfaceConfigOverwrite: {
         SHOW_JITSI_WATERMARK: false,
         SHOW_BRAND_WATERMARK: false,
-        DEFAULT_BACKGROUND: "#0f172a",
+        SHOW_WATERMARK_FOR_GUESTS: false,
+        MOBILE_APP_PROMO: false,
         TOOLBAR_ALWAYS_VISIBLE: true,
+        HIDE_INVITE_MORE_HEADER: true,
+        DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
+        BRAND_WATERMARK_LINK: "",
+        DEFAULT_LOGO_URL: "",
+        JITSI_WATERMARK_LINK: "",
       },
-      userInfo: { displayName },
-    };
-
-    apiRef.current = new window.JitsiMeetExternalAPI("meet.jit.si", options);
-
-    apiRef.current.addEventListener("videoConferenceJoined", () => {
-      setCallStarted(true);
-      timerRef.current = setInterval(() => setElapsed(s => s + 1), 1000);
     });
 
-    apiRef.current.addEventListener("readyToClose", () => {
-      handleEndCall();
+    apiRef.current = api;
+    setCallStarted(true);
+
+    // Start timer
+    timerRef.current = setInterval(() => setDuration(d => d + 1), 1000);
+
+    api.addEventListener("videoConferenceLeft", () => {
+      setCallEnded(true);
+      if (timerRef.current) clearInterval(timerRef.current);
     });
+
+    api.addEventListener("readyToClose", () => {
+      setCallEnded(true);
+      if (timerRef.current) clearInterval(timerRef.current);
+    });
+  };
+
+  const formatDuration = (secs) => {
+    const m = Math.floor(secs / 60).toString().padStart(2, "0");
+    const s = (secs % 60).toString().padStart(2, "0");
+    return m + ":" + s;
   };
 
   const handleEndCall = () => {
-    if (apiRef.current) {
-      apiRef.current.dispose();
-      apiRef.current = null;
-    }
-    clearInterval(timerRef.current);
+    if (apiRef.current) apiRef.current.executeCommand("hangup");
     setCallEnded(true);
-    setCallStarted(false);
+    if (timerRef.current) clearInterval(timerRef.current);
   };
 
-  useEffect(() => {
-    return () => {
-      if (apiRef.current) apiRef.current.dispose();
-      clearInterval(timerRef.current);
-    };
-  }, []);
-
-  const formatTime = (s) => {
-    const m = Math.floor(s / 60);
-    const sec = s % 60;
-    return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  const goBack = () => {
+    if (role === "doctor") navigate("/doctor-appointments");
+    else navigate("/my-appointments");
   };
 
   if (loading) return (
-    <Layout>
-      <div style={styles.center}>
-        <div style={styles.spinner} />
-        <p style={{ color: "#6b7280", marginTop: 12 }}>Loading appointment…</p>
+    <div style={{ minHeight:"100vh", background:"#0f172a", display:"flex", alignItems:"center", justifyContent:"center" }}>
+      <div style={{ textAlign:"center" }}>
+        <div style={{ width:40, height:40, border:"3px solid #334155", borderTopColor:"#0d9488", borderRadius:"50%", animation:"spin 0.8s linear infinite", margin:"0 auto 16px" }}/>
+        <p style={{ color:"#94a3b8", fontSize:14 }}>Connecting to video call...</p>
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
-    </Layout>
+    </div>
   );
 
-  // ── Call ended screen ──────────────────────────────────────────────────────
   if (callEnded) return (
-    <Layout>
-      <div style={styles.center}>
-        <div style={styles.endCard}>
-          <div style={{ fontSize: 56, marginBottom: 12 }}>✅</div>
-          <h2 style={{ color: "#0d9488", marginBottom: 6 }}>Call Ended</h2>
-          <p style={{ color: "#6b7280", marginBottom: 4 }}>
-            Duration: <strong>{formatTime(elapsed)}</strong>
-          </p>
-          <p style={{ color: "#6b7280", marginBottom: 24, fontSize: 14 }}>
-            Consultation with {role === "doctor" ? appointment?.patientName : `Dr. ${appointment?.doctorName}`}
-          </p>
-          <button
-            onClick={() => navigate(role === "doctor" ? "/doctor-appointments" : "/my-appointments")}
-            style={styles.backBtn}
-          >
+    <div style={{ minHeight:"100vh", background:"#0f172a", display:"flex", alignItems:"center", justifyContent:"center", padding:20 }}>
+      <div style={{ background:"#1e293b", borderRadius:20, padding:"40px 32px", textAlign:"center", maxWidth:400, width:"100%", border:"1px solid #334155" }}>
+        <div style={{ width:72, height:72, borderRadius:"50%", background:"rgba(13,148,136,0.2)", border:"2px solid #0d9488", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 20px" }}>
+          <svg width="32" height="32" fill="none" viewBox="0 0 24 24">
+            <path d="M5 13l4 4L19 7" stroke="#0d9488" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        <h2 style={{ fontSize:22, fontWeight:800, color:"white", marginBottom:8 }}>Call Ended</h2>
+        <p style={{ fontSize:14, color:"#94a3b8", marginBottom:6 }}>
+          {appointment?.patientName || appointment?.doctorName}
+        </p>
+        <div style={{ background:"#0d9488", borderRadius:10, padding:"12px 20px", margin:"20px 0", display:"inline-block" }}>
+          <p style={{ fontSize:28, fontWeight:800, color:"white", fontFamily:"monospace" }}>{formatDuration(duration)}</p>
+          <p style={{ fontSize:11, color:"rgba(255,255,255,0.7)", marginTop:2 }}>Call Duration</p>
+        </div>
+        <div style={{ display:"flex", flexDirection:"column", gap:10, marginTop:8 }}>
+          <button onClick={goBack}
+            style={{ padding:"12px", background:"#0d9488", color:"white", border:"none", borderRadius:10, fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Inter,sans-serif" }}>
             Back to Appointments
           </button>
+          {role === "doctor" && (
+            <button onClick={() => navigate("/prescription/"+appointmentId)}
+              style={{ padding:"12px", background:"#1e3a5f", color:"#60a5fa", border:"1px solid #1d4ed8", borderRadius:10, fontSize:14, fontWeight:600, cursor:"pointer", fontFamily:"Inter,sans-serif" }}>
+              Write Prescription
+            </button>
+          )}
         </div>
       </div>
-    </Layout>
+    </div>
   );
 
   return (
-    <Layout>
-      <div style={styles.page}>
-        {/* ── Header ── */}
-        <div style={styles.header}>
-          <div style={styles.headerLeft}>
-            <span style={styles.liveDot} />
-            <div>
-              <div style={styles.headerTitle}>
-                Video Consultation
-              </div>
-              <div style={styles.headerSub}>
-                {role === "doctor"
-                  ? `Patient: ${appointment?.patientName}`
-                  : `Dr. ${appointment?.doctorName} · ${appointment?.doctorSpecialization}`}
-              </div>
-            </div>
+    <div style={{ minHeight:"100vh", background:"#0f172a", display:"flex", flexDirection:"column" }}>
+      {/* Header */}
+      <div style={{ background:"#1e293b", borderBottom:"1px solid #334155", padding:"12px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0, zIndex:10 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+          <div style={{ width:32, height:32, borderRadius:7, background:"#0d9488", display:"flex", alignItems:"center", justifyContent:"center" }}>
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M12 7v10M7 12h10" stroke="white" strokeWidth="2.5" strokeLinecap="round"/></svg>
           </div>
-          <div style={styles.headerRight}>
-            {callStarted && (
-              <span style={styles.timer}>⏱ {formatTime(elapsed)}</span>
-            )}
-            {callStarted && (
-              <button onClick={handleEndCall} style={styles.endBtn}>
-                📵 End Call
-              </button>
-            )}
+          <div>
+            <p style={{ fontSize:13, fontWeight:700, color:"white" }}>
+              {role === "doctor" ? "Consultation with " + appointment?.patientName : "Consultation with Dr. " + appointment?.doctorName}
+            </p>
+            <p style={{ fontSize:11, color:"#94a3b8" }}>
+              {appointment?.doctorSpecialization} · {appointment?.appointmentDate}
+            </p>
           </div>
         </div>
-
-        {/* ── Pre-call panel OR Jitsi frame ── */}
-        {!callStarted ? (
-          <div style={styles.preCall}>
-            <div style={styles.preCallCard}>
-              <div style={{ fontSize: 64, marginBottom: 16 }}>🎥</div>
-              <h2 style={styles.preCallTitle}>Ready to Join?</h2>
-              <p style={styles.preCallSub}>
-                You'll join a private, secure video room for this consultation.
-                Make sure your camera and microphone are allowed in the browser.
-              </p>
-
-              <div style={styles.infoGrid}>
-                <div style={styles.infoItem}>
-                  <span style={styles.infoIcon}>📅</span>
-                  <div>
-                    <div style={styles.infoLabel}>Date</div>
-                    <div style={styles.infoValue}>{appointment?.appointmentDate}</div>
-                  </div>
-                </div>
-                <div style={styles.infoItem}>
-                  <span style={styles.infoIcon}>🕐</span>
-                  <div>
-                    <div style={styles.infoLabel}>Time</div>
-                    <div style={styles.infoValue}>{appointment?.appointmentTime}</div>
-                  </div>
-                </div>
-                <div style={styles.infoItem}>
-                  <span style={styles.infoIcon}>👤</span>
-                  <div>
-                    <div style={styles.infoLabel}>
-                      {role === "doctor" ? "Patient" : "Doctor"}
-                    </div>
-                    <div style={styles.infoValue}>
-                      {role === "doctor"
-                        ? appointment?.patientName
-                        : `Dr. ${appointment?.doctorName}`}
-                    </div>
-                  </div>
-                </div>
-                <div style={styles.infoItem}>
-                  <span style={styles.infoIcon}>💬</span>
-                  <div>
-                    <div style={styles.infoLabel}>Reason</div>
-                    <div style={styles.infoValue} title={appointment?.reason}>
-                      {appointment?.reason?.slice(0, 30)}{appointment?.reason?.length > 30 ? "…" : ""}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div style={styles.tips}>
-                <div style={styles.tipRow}>✅ Find a quiet, well-lit space</div>
-                <div style={styles.tipRow}>✅ Allow camera & microphone when prompted</div>
-                <div style={styles.tipRow}>✅ Use headphones for better audio</div>
-              </div>
-
-              <button onClick={startCall} style={styles.joinBtn}>
-                🎥 Join Video Call
-              </button>
-              <button onClick={() => navigate(-1)} style={styles.backLinkBtn}>
-                ← Back to Appointments
-              </button>
+        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+          {callStarted && (
+            <div style={{ display:"flex", alignItems:"center", gap:6, background:"rgba(239,68,68,0.15)", padding:"5px 12px", borderRadius:20, border:"1px solid rgba(239,68,68,0.3)" }}>
+              <div style={{ width:7, height:7, borderRadius:"50%", background:"#ef4444", animation:"pulse 1.5s infinite" }}/>
+              <span style={{ fontSize:12, fontWeight:600, color:"#f87171", fontFamily:"monospace" }}>{formatDuration(duration)}</span>
             </div>
-          </div>
-        ) : (
-          /* ── Jitsi iframe container ── */
-          <div style={styles.jitsiContainer}>
-            <div ref={jitsiRef} style={styles.jitsiFrame} />
-          </div>
-        )}
+          )}
+          <button onClick={handleEndCall}
+            style={{ padding:"8px 16px", background:"#ef4444", color:"white", border:"none", borderRadius:8, fontSize:13, fontWeight:600, cursor:"pointer", fontFamily:"Inter,sans-serif", display:"flex", alignItems:"center", gap:6 }}>
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+              <path d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
+            </svg>
+            End Call
+          </button>
+        </div>
       </div>
 
-      <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }`}</style>
-    </Layout>
+      {/* Jitsi iframe container */}
+      <div ref={jitsiRef} style={{ flex:1, width:"100%", minHeight:0 }}/>
+
+      <style>{`
+        @keyframes spin { to { transform:rotate(360deg); } }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        * { font-family: Inter, sans-serif; box-sizing: border-box; }
+      `}</style>
+    </div>
   );
 }
-
-// ─── Styles ──────────────────────────────────────────────────────────────────
-const styles = {
-  page: { display: "flex", flexDirection: "column", height: "calc(100vh - 64px)" },
-  center: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 400 },
-  spinner: { width: 36, height: 36, border: "3px solid #e5e7eb", borderTopColor: "#0d9488", borderRadius: "50%", animation: "spin 0.8s linear infinite" },
-
-  // Header
-  header: {
-    display: "flex", alignItems: "center", justifyContent: "space-between",
-    background: "#fff", borderBottom: "1px solid #e5e7eb",
-    padding: "12px 24px", flexShrink: 0,
-  },
-  headerLeft: { display: "flex", alignItems: "center", gap: 10 },
-  liveDot: {
-    width: 10, height: 10, borderRadius: "50%", background: "#22c55e",
-    animation: "pulse 1.5s infinite", flexShrink: 0,
-  },
-  headerTitle: { fontWeight: 700, fontSize: 16, color: "#111827" },
-  headerSub: { fontSize: 12, color: "#6b7280", marginTop: 2 },
-  headerRight: { display: "flex", alignItems: "center", gap: 12 },
-  timer: { fontFamily: "monospace", fontSize: 16, color: "#0d9488", fontWeight: 700 },
-  endBtn: {
-    padding: "8px 18px", background: "#dc2626", color: "#fff",
-    border: "none", borderRadius: 8, fontWeight: 600, cursor: "pointer", fontSize: 14,
-  },
-
-  // Pre-call
-  preCall: { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px", background: "#f9fafb" },
-  preCallCard: {
-    background: "#fff", borderRadius: 20, boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
-    padding: "40px 36px", maxWidth: 520, width: "100%", textAlign: "center",
-  },
-  preCallTitle: { fontSize: 24, fontWeight: 700, color: "#111827", marginBottom: 8 },
-  preCallSub: { color: "#6b7280", fontSize: 14, marginBottom: 24, lineHeight: 1.6 },
-  infoGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20, textAlign: "left" },
-  infoItem: {
-    background: "#f0fdfa", border: "1px solid #99f6e4",
-    borderRadius: 10, padding: "10px 14px", display: "flex", alignItems: "flex-start", gap: 10,
-  },
-  infoIcon: { fontSize: 18, marginTop: 2 },
-  infoLabel: { fontSize: 11, color: "#6b7280", marginBottom: 2 },
-  infoValue: { fontSize: 13, color: "#111827", fontWeight: 600 },
-  tips: {
-    background: "#f9fafb", borderRadius: 10, padding: "12px 16px",
-    marginBottom: 24, textAlign: "left",
-  },
-  tipRow: { fontSize: 13, color: "#374151", marginBottom: 4 },
-  joinBtn: {
-    width: "100%", padding: "14px 0",
-    background: "linear-gradient(135deg, #0d9488 0%, #0f766e 100%)",
-    color: "#fff", border: "none", borderRadius: 10,
-    fontSize: 16, fontWeight: 700, cursor: "pointer", marginBottom: 10,
-  },
-  backLinkBtn: {
-    width: "100%", padding: "10px 0", background: "transparent",
-    color: "#6b7280", border: "1px solid #e5e7eb",
-    borderRadius: 10, fontSize: 14, cursor: "pointer",
-  },
-
-  // Jitsi frame
-  jitsiContainer: { flex: 1, background: "#0f172a", padding: 0 },
-  jitsiFrame: { width: "100%", height: "100%" },
-
-  // End card
-  endCard: {
-    background: "#fff", borderRadius: 20, boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
-    padding: "48px 36px", maxWidth: 400, width: "100%", textAlign: "center",
-  },
-  backBtn: {
-    padding: "12px 28px", background: "#0d9488", color: "#fff",
-    border: "none", borderRadius: 10, fontWeight: 600, cursor: "pointer", fontSize: 15,
-  },
-};
