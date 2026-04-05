@@ -72,47 +72,68 @@ export default function HealthCenter() {
     if (!symptoms.trim()) return;
     setScLoading(true); setScResult(null);
     try {
-      const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-      const prompt = `You are an expert medical AI assistant helping patients in India understand their symptoms. Be thorough, warm, and helpful like a knowledgeable doctor friend.
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer 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",
+          "HTTP-Referer": "https://telemed-connect-6e817.web.app",
+          "X-Title": "TeleMed Connect"
+        },
+        body: JSON.stringify({
+          model: "meta-llama/llama-3.2-3b-instruct:free",
+          messages: [
+            {
+              role: "user",
+              content: `You are a medical AI for patients in India. Patient: Age ${age||"unknown"}, Gender: ${gender}, Symptoms: ${symptoms}.
 
-Patient Details:
-- Age: ${age || "not specified"}
-- Gender: ${gender}
-- Symptoms: ${symptoms}
-
-Analyze these symptoms carefully and respond ONLY with a valid JSON object (no markdown, no backticks, no explanation outside JSON).
-
-Use this exact JSON structure:
+Return ONLY this JSON (no other text):
 {
-  "possibleConditions": ["Most likely condition", "Second possibility", "Third possibility"],
-  "recommendedSpecialist": "Specific doctor type (e.g. General Physician, Cardiologist)",
-  "urgency": "low" or "medium" or "high",
-  "urgencyReason": "Clear one sentence explanation of urgency level",
-  "generalAdvice": "Write 3-4 warm, detailed sentences covering what the patient should do right now, how to manage symptoms at home, and when to expect improvement.",
-  "homeRemedies": ["Specific remedy 1 with how to use it", "Specific remedy 2 with details", "Specific remedy 3 with details"],
-  "dietTips": ["Food/drink to have and why", "Food/drink to avoid and why", "Specific tip for recovery"],
-  "restAdvice": "Detailed advice about rest, sleep position, activity restrictions — 2-3 sentences",
-  "medications": ["Safe OTC medicine 1 available in India with dosage", "Safe OTC medicine 2 if applicable"],
-  "redFlags": ["Specific warning sign 1 that needs emergency care", "Warning sign 2", "Warning sign 3"]
-}`;
-
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.4, maxOutputTokens: 1024 }
-          }),
-        }
-      );
+  "possibleConditions": ["most likely condition", "second possibility", "third possibility"],
+  "recommendedSpecialist": "specific doctor type",
+  "urgency": "low",
+  "urgencyReason": "brief explanation",
+  "generalAdvice": "Write 3-4 detailed sentences about what to do at home right now and when to expect improvement.",
+  "homeRemedies": ["Remedy 1: specific remedy with exact instructions how to use", "Remedy 2: specific remedy with details", "Remedy 3: specific remedy with details"],
+  "dietTips": ["Eat this specific food and why it helps", "Avoid this specific food and why", "Drink this and how much"],
+  "restAdvice": "Write 2-3 sentences about rest position, sleep hours, and activity restrictions.",
+  "medications": ["Medicine name + dosage + frequency available in India", "Second medicine if applicable"],
+  "redFlags": ["Go to emergency if this specific symptom occurs", "Second warning sign", "Third warning sign"]
+}`
+            }
+          ],
+          temperature: 0.2,
+          max_tokens: 900
+        })
+      });
       const data = await res.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      const clean = text.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(clean);
-      setScResult(parsed);
-    } catch (err) {
+      if (data.error) {
+        console.error("OpenRouter error:", data.error);
+        setScResult(getMockResult(symptoms));
+        setScLoading(false);
+        return;
+      }
+      const text = data.choices?.[0]?.message?.content || "";
+      console.log("AI raw response:", text);
+      const s = text.indexOf("{");
+      const e = text.lastIndexOf("}");
+      if (s !== -1 && e !== -1) {
+        try {
+          const parsed = JSON.parse(text.slice(s, e + 1));
+          if (parsed.possibleConditions && parsed.possibleConditions.length > 0) {
+            setScResult(parsed);
+          } else {
+            setScResult(getMockResult(symptoms));
+          }
+        } catch(parseErr) {
+          console.error("JSON parse error:", parseErr);
+          setScResult(getMockResult(symptoms));
+        }
+      } else {
+        setScResult(getMockResult(symptoms));
+      }
+    } catch(err) {
+      console.error("Fetch error:", err);
       setScResult(getMockResult(symptoms));
     }
     setScLoading(false);
@@ -195,7 +216,8 @@ Use this exact JSON structure:
             {scLoading && (
               <div style={{ background:'white', borderRadius:12, border:'1px solid #e5e7eb', padding:'60px', display:'flex', flexDirection:'column', alignItems:'center', gap:14 }}>
                 <div style={{ width:36, height:36, border:'3px solid #e5e7eb', borderTopColor:'#0d9488', borderRadius:'50%', animation:'spin 0.8s linear infinite' }}/>
-                <p style={{ color:'#6b7280', fontSize:14 }}>Analyzing your symptoms...</p>
+                <p style={{ color:'#6b7280', fontSize:14 }}>Analyzing with AI...</p>
+                <p style={{ color:'#9ca3af', fontSize:12, marginTop:4 }}>Powered by Llama AI via OpenRouter</p>
               </div>
             )}
             {scResult && !scLoading && (

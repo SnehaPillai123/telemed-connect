@@ -6,7 +6,7 @@ const MOCK_RESPONSES = {
   default: { possibleConditions:["Viral infection","Common cold","Seasonal allergies"], recommendedSpecialist:"General Physician", urgency:"low", urgencyReason:"Symptoms appear mild and manageable", generalAdvice:"Rest well and stay hydrated. Monitor symptoms for 48 hours.", redFlags:["High fever above 103°F","Difficulty breathing","Chest pain"] },
   chest: { possibleConditions:["Angina","Acid reflux","Musculoskeletal strain"], recommendedSpecialist:"Cardiologist", urgency:"high", urgencyReason:"Chest symptoms require prompt cardiac evaluation", generalAdvice:"Avoid strenuous activity until assessed by a doctor.", redFlags:["Pain radiating to arm or jaw","Sweating with chest pain","Sudden severe pain"] },
   skin: { possibleConditions:["Eczema","Contact dermatitis","Psoriasis","Fungal infection"], recommendedSpecialist:"Dermatologist", urgency:"low", urgencyReason:"Skin conditions are generally non-urgent unless spreading rapidly", generalAdvice:"Avoid scratching. Keep skin moisturized.", redFlags:["Rapidly spreading rash","Fever with skin changes","Blistering"] },
-  head: { possibleConditions:["Migraine","Tension headache","Sinusitis"], recommendedSpecialist:"Neurologist", urgency:"medium", urgencyReason:"Persistent headaches with fever warrant professional evaluation", generalAdvice:"Rest in a quiet, dark room away from bright lights and noise. Apply a cold or warm compress on your forehead. Stay well hydrated by drinking at least 8-10 glasses of water. Avoid screens and stressful activities until symptoms improve.", homeRemedies:["Ginger tea: Boil fresh ginger in water for 10 minutes, drink twice daily to reduce nausea and headache","Peppermint oil: Apply diluted peppermint oil on temples and forehead for cooling relief","Cold compress: Place ice pack wrapped in cloth on forehead for 15-20 minutes"], dietTips:["Eat light meals like khichdi, dal, and rice that are easy to digest","Avoid caffeine, alcohol, and spicy foods that can worsen headache","Drink ORS or coconut water to stay hydrated especially with fever"], restAdvice:"Rest in a dark, quiet room with your head slightly elevated on a pillow. Avoid any strenuous physical activity. Sleep for at least 8 hours and avoid looking at phone or TV screens.", medications:["Paracetamol 500mg - take one tablet every 6 hours for fever and headache","Domperidone 10mg - for nausea and vomiting, take before meals"], redFlags:["Sudden severe thunderclap headache - go to ER immediately","Headache with stiff neck and sensitivity to light - possible meningitis","Headache with confusion, weakness or vision changes"] },
+  head: { possibleConditions:["Tension headache","Migraine","Sinusitis"], recommendedSpecialist:"Neurologist", urgency:"medium", urgencyReason:"Persistent headaches warrant professional evaluation", generalAdvice:"Rest in a quiet, dark room. Stay hydrated.", redFlags:["Sudden severe headache","Headache with stiff neck","Confusion"] },
   stomach: { possibleConditions:["Gastritis","IBS","Food intolerance"], recommendedSpecialist:"General Physician", urgency:"low", urgencyReason:"Digestive symptoms are usually manageable", generalAdvice:"Eat small meals and avoid spicy foods.", redFlags:["Blood in stool","Severe abdominal pain","Unexplained weight loss"] },
   breathing: { possibleConditions:["Asthma","Bronchitis","Respiratory infection"], recommendedSpecialist:"Pulmonologist", urgency:"high", urgencyReason:"Breathing difficulties require prompt attention", generalAdvice:"Avoid respiratory irritants like smoke.", redFlags:["Severe shortness of breath","Blue lips or fingertips"] },
   joint: { possibleConditions:["Arthritis","Tendinitis","Ligament strain"], recommendedSpecialist:"Orthopedic", urgency:"low", urgencyReason:"Joint pain is usually manageable with rest", generalAdvice:"Rest the joint and apply ice.", redFlags:["Severe swelling with fever","Inability to bear weight"] },
@@ -74,15 +74,68 @@ export default function HealthCenter() {
     try {
       const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
-        headers: {"Content-Type": "application/json", "Authorization": "Bearer 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"},
-        body: JSON.stringify({model: "meta-llama/llama-3.2-3b-instruct:free", messages: [{role: "system", content: "You are medical AI for India. Return ONLY JSON with fields: possibleConditions, recommendedSpecialist, urgency, urgencyReason, generalAdvice, homeRemedies, dietTips, restAdvice, medications, redFlags"}, {role: "user", content: "Age: " + (age||"unknown") + ", Gender: " + gender + ", Symptoms: " + symptoms}]})
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer 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",
+          "HTTP-Referer": "https://telemed-connect-6e817.web.app",
+          "X-Title": "TeleMed Connect"
+        },
+        body: JSON.stringify({
+          model: "meta-llama/llama-3.2-3b-instruct:free",
+          messages: [
+            {
+              role: "user",
+              content: `You are a medical AI for patients in India. Patient: Age ${age||"unknown"}, Gender: ${gender}, Symptoms: ${symptoms}.
+
+Return ONLY this JSON (no other text):
+{
+  "possibleConditions": ["most likely condition", "second possibility", "third possibility"],
+  "recommendedSpecialist": "specific doctor type",
+  "urgency": "low",
+  "urgencyReason": "brief explanation",
+  "generalAdvice": "Write 3-4 detailed sentences about what to do at home right now and when to expect improvement.",
+  "homeRemedies": ["Remedy 1: specific remedy with exact instructions how to use", "Remedy 2: specific remedy with details", "Remedy 3: specific remedy with details"],
+  "dietTips": ["Eat this specific food and why it helps", "Avoid this specific food and why", "Drink this and how much"],
+  "restAdvice": "Write 2-3 sentences about rest position, sleep hours, and activity restrictions.",
+  "medications": ["Medicine name + dosage + frequency available in India", "Second medicine if applicable"],
+  "redFlags": ["Go to emergency if this specific symptom occurs", "Second warning sign", "Third warning sign"]
+}`
+            }
+          ],
+          temperature: 0.2,
+          max_tokens: 900
+        })
       });
       const data = await res.json();
+      if (data.error) {
+        console.error("OpenRouter error:", data.error);
+        setScResult(getMockResult(symptoms));
+        setScLoading(false);
+        return;
+      }
       const text = data.choices?.[0]?.message?.content || "";
-      const s = text.indexOf("{"); const e = text.lastIndexOf("}");
-      if(s>-1&&e>-1){const p=JSON.parse(text.slice(s,e+1)); if(p.possibleConditions){setScResult(p);}else{setScResult(getMockResult(symptoms));}}
-      else{setScResult(getMockResult(symptoms));}
-    } catch(e){setScResult(getMockResult(symptoms));}
+      console.log("AI raw response:", text);
+      const s = text.indexOf("{");
+      const e = text.lastIndexOf("}");
+      if (s !== -1 && e !== -1) {
+        try {
+          const parsed = JSON.parse(text.slice(s, e + 1));
+          if (parsed.possibleConditions && parsed.possibleConditions.length > 0) {
+            setScResult(parsed);
+          } else {
+            setScResult(getMockResult(symptoms));
+          }
+        } catch(parseErr) {
+          console.error("JSON parse error:", parseErr);
+          setScResult(getMockResult(symptoms));
+        }
+      } else {
+        setScResult(getMockResult(symptoms));
+      }
+    } catch(err) {
+      console.error("Fetch error:", err);
+      setScResult(getMockResult(symptoms));
+    }
     setScLoading(false);
   };
 
@@ -163,7 +216,8 @@ export default function HealthCenter() {
             {scLoading && (
               <div style={{ background:'white', borderRadius:12, border:'1px solid #e5e7eb', padding:'60px', display:'flex', flexDirection:'column', alignItems:'center', gap:14 }}>
                 <div style={{ width:36, height:36, border:'3px solid #e5e7eb', borderTopColor:'#0d9488', borderRadius:'50%', animation:'spin 0.8s linear infinite' }}/>
-                <p style={{ color:'#6b7280', fontSize:14 }}>Analyzing your symptoms...</p>
+                <p style={{ color:'#6b7280', fontSize:14 }}>Analyzing with AI...</p>
+                <p style={{ color:'#9ca3af', fontSize:12, marginTop:4 }}>Powered by Llama AI via OpenRouter</p>
               </div>
             )}
             {scResult && !scLoading && (
@@ -191,9 +245,49 @@ export default function HealthCenter() {
                   ))}
                 </div>
                 <div style={{ background:'white', borderRadius:10, border:'1px solid #e5e7eb', padding:'16px', borderLeft:'4px solid #0d9488' }}>
-                  <p style={{ fontSize:13, fontWeight:600, color:'#111827', marginBottom:8 }}>General Advice</p>
-                  <p style={{ fontSize:13, color:'#6b7280', lineHeight:1.7 }}>{scResult.generalAdvice}</p>
+                  <p style={{ fontSize:13, fontWeight:600, color:'#111827', marginBottom:8 }}>💊 General Advice</p>
+                  <p style={{ fontSize:13, color:'#6b7280', lineHeight:1.8 }}>{scResult.generalAdvice}</p>
                 </div>
+                {scResult.restAdvice && (
+                  <div style={{ background:'#f0fdfa', borderRadius:10, border:'1px solid #ccfbf1', padding:'16px' }}>
+                    <p style={{ fontSize:13, fontWeight:600, color:'#0d9488', marginBottom:8 }}>😴 Rest & Activity</p>
+                    <p style={{ fontSize:13, color:'#374151', lineHeight:1.8 }}>{scResult.restAdvice}</p>
+                  </div>
+                )}
+                {scResult.homeRemedies?.length > 0 && (
+                  <div style={{ background:'white', borderRadius:10, border:'1px solid #e5e7eb', padding:'16px' }}>
+                    <p style={{ fontSize:13, fontWeight:600, color:'#111827', marginBottom:10 }}>🌿 Home Remedies</p>
+                    {scResult.homeRemedies.map((r,i) => (
+                      <div key={i} style={{ display:'flex', gap:10, padding:'8px 0', borderBottom:i<scResult.homeRemedies.length-1?'1px solid #f3f4f6':'none' }}>
+                        <span style={{ fontSize:16, flexShrink:0 }}>•</span>
+                        <p style={{ fontSize:13, color:'#374151', lineHeight:1.7 }}>{r}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {scResult.dietTips?.length > 0 && (
+                  <div style={{ background:'#fffbeb', borderRadius:10, border:'1px solid #fde68a', padding:'16px' }}>
+                    <p style={{ fontSize:13, fontWeight:600, color:'#92400e', marginBottom:10 }}>🥗 Diet & Nutrition Tips</p>
+                    {scResult.dietTips.map((t,i) => (
+                      <div key={i} style={{ display:'flex', gap:10, padding:'6px 0', borderBottom:i<scResult.dietTips.length-1?'1px solid #fef3c7':'none' }}>
+                        <span style={{ fontSize:13, flexShrink:0, color:'#d97706' }}>→</span>
+                        <p style={{ fontSize:13, color:'#78350f', lineHeight:1.7 }}>{t}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {scResult.medications?.length > 0 && (
+                  <div style={{ background:'#eff6ff', borderRadius:10, border:'1px solid #bfdbfe', padding:'16px' }}>
+                    <p style={{ fontSize:13, fontWeight:600, color:'#1e40af', marginBottom:10 }}>💊 OTC Medicines (if needed)</p>
+                    {scResult.medications.map((m,i) => (
+                      <div key={i} style={{ display:'flex', gap:10, padding:'6px 0', borderBottom:i<scResult.medications.length-1?'1px solid #dbeafe':'none' }}>
+                        <span style={{ fontSize:13, flexShrink:0, color:'#2563eb' }}>•</span>
+                        <p style={{ fontSize:13, color:'#1e3a8a', lineHeight:1.7 }}>{m}</p>
+                      </div>
+                    ))}
+                    <p style={{ fontSize:11, color:'#6b7280', marginTop:8, fontStyle:'italic' }}>⚠️ Always consult a doctor before taking any medicine.</p>
+                  </div>
+                )}
                 {scResult.redFlags?.length>0 && (
                   <div style={{ background:'#fef2f2', borderRadius:10, border:'1px solid #fecaca', padding:'16px' }}>
                     <p style={{ fontSize:13, fontWeight:600, color:'#dc2626', marginBottom:8 }}>Seek immediate care if:</p>
@@ -325,5 +419,3 @@ export default function HealthCenter() {
     </Layout>
   );
 }
-
-
