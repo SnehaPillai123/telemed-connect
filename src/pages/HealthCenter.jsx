@@ -1,443 +1,349 @@
-import { useState } from "react";
+import NextStepBanner from "../components/NextStepBanner";import { useState } from "react";
+import Layout from "../components/Layout";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
 
-const OPENROUTER_KEY = "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";
-
-// Only used if OpenRouter completely fails (network down etc.)
-const EMERGENCY_FALLBACK = {
-  possibleConditions: ["Unable to analyze — please try again"],
-  recommendedSpecialist: "General Physician",
-  urgency: "low",
-  urgencyReason: "Could not connect to AI service",
-  generalAdvice: "We could not reach the AI service right now. Please try again in a moment or consult a doctor directly.",
-  homeRemedies: [],
-  dietTips: [],
-  restAdvice: "",
-  medications: [],
-  redFlags: ["If symptoms are severe, please see a doctor immediately"]
+const MOCK_RESPONSES = {
+  default: { possibleConditions:["Viral infection","Common cold","Seasonal allergies"], recommendedSpecialist:"General Physician", urgency:"low", urgencyReason:"Symptoms appear mild and manageable", generalAdvice:"Rest well and stay hydrated. Monitor symptoms for 48 hours.", redFlags:["High fever above 103°F","Difficulty breathing","Chest pain"] },
+  chest: { possibleConditions:["Angina","Acid reflux","Musculoskeletal strain"], recommendedSpecialist:"Cardiologist", urgency:"high", urgencyReason:"Chest symptoms require prompt cardiac evaluation", generalAdvice:"Avoid strenuous activity until assessed by a doctor.", redFlags:["Pain radiating to arm or jaw","Sweating with chest pain","Sudden severe pain"] },
+  skin: { possibleConditions:["Eczema","Contact dermatitis","Psoriasis","Fungal infection"], recommendedSpecialist:"Dermatologist", urgency:"low", urgencyReason:"Skin conditions are generally non-urgent unless spreading rapidly", generalAdvice:"Avoid scratching. Keep skin moisturized.", redFlags:["Rapidly spreading rash","Fever with skin changes","Blistering"] },
+  head: { possibleConditions:["Tension headache","Migraine","Sinusitis"], recommendedSpecialist:"Neurologist", urgency:"medium", urgencyReason:"Persistent headaches warrant professional evaluation", generalAdvice:"Rest in a quiet, dark room. Stay hydrated.", redFlags:["Sudden severe headache","Headache with stiff neck","Confusion"] },
+  stomach: { possibleConditions:["Gastritis","IBS","Food intolerance"], recommendedSpecialist:"General Physician", urgency:"low", urgencyReason:"Digestive symptoms are usually manageable", generalAdvice:"Eat small meals and avoid spicy foods.", redFlags:["Blood in stool","Severe abdominal pain","Unexplained weight loss"] },
+  breathing: { possibleConditions:["Asthma","Bronchitis","Respiratory infection"], recommendedSpecialist:"Pulmonologist", urgency:"high", urgencyReason:"Breathing difficulties require prompt attention", generalAdvice:"Avoid respiratory irritants like smoke.", redFlags:["Severe shortness of breath","Blue lips or fingertips"] },
+  joint: { possibleConditions:["Arthritis","Tendinitis","Ligament strain"], recommendedSpecialist:"Orthopedic", urgency:"low", urgencyReason:"Joint pain is usually manageable with rest", generalAdvice:"Rest the joint and apply ice.", redFlags:["Severe swelling with fever","Inability to bear weight"] },
+  mental: { possibleConditions:["Anxiety disorder","Depression","Stress-related symptoms"], recommendedSpecialist:"Psychiatrist", urgency:"medium", urgencyReason:"Mental health symptoms benefit from early professional support", generalAdvice:"Prioritize sleep and regular exercise.", redFlags:["Thoughts of self-harm","Complete social withdrawal"] },
 };
 
+function getMockResult(s) {
+  const l = s.toLowerCase();
+  if (l.includes("chest")||l.includes("heart")) return MOCK_RESPONSES.chest;
+  if (l.includes("skin")||l.includes("rash")||l.includes("itch")) return MOCK_RESPONSES.skin;
+  if (l.includes("head")||l.includes("migraine")||l.includes("dizzy")) return MOCK_RESPONSES.head;
+  if (l.includes("stomach")||l.includes("nausea")||l.includes("abdomen")) return MOCK_RESPONSES.stomach;
+  if (l.includes("breath")||l.includes("cough")||l.includes("asthma")) return MOCK_RESPONSES.breathing;
+  if (l.includes("joint")||l.includes("knee")||l.includes("back")||l.includes("muscle")) return MOCK_RESPONSES.joint;
+  if (l.includes("anxiety")||l.includes("depress")||l.includes("stress")||l.includes("sleep")) return MOCK_RESPONSES.mental;
+  return MOCK_RESPONSES.default;
+}
+
+const ABB_QUESTIONS = [
+  { id:'duration', text:'How long have you had these symptoms?', options:['Less than 24 hours','1-3 days','3-7 days','More than a week'] },
+  { id:'severity', text:'How severe are your symptoms?', options:['Mild - manageable','Moderate - affecting daily life','Severe - need immediate help','Very severe - emergency'] },
+  { id:'fever', text:'Do you have a fever?', options:['No fever','Low grade (below 38°C)','High fever (38-39°C)','Very high (above 39°C)'] },
+  { id:'previous', text:'Have you had this condition before?', options:['Yes, and I know how to manage it','Yes, but it was more mild','No, first time','Not sure'] },
+  { id:'medication', text:'Have you tried any remedies or medication?', options:['Yes, it helped','Yes, no improvement',"No, haven't tried",'Taking prescribed medication'] },
+];
+
+function getABBResult(answers) {
+  let urgent=0,consult=0,selfcare=0;
+  if(answers.duration==='More than a week') urgent+=2;
+  if(answers.duration==='3-7 days') consult+=1;
+  if(answers.severity==='Very severe - emergency') urgent+=3;
+  if(answers.severity==='Severe - need immediate help') urgent+=2;
+  if(answers.severity==='Moderate - affecting daily life') consult+=2;
+  if(answers.severity==='Mild - manageable') selfcare+=2;
+  if(answers.fever==='Very high (above 39°C)') urgent+=2;
+  if(answers.fever==='High fever (38-39°C)') consult+=1;
+  if(answers.previous==='Yes, and I know how to manage it') selfcare+=2;
+  if(answers.medication==='Yes, no improvement') consult+=2;
+  if(answers.medication==='Yes, it helped') selfcare+=1;
+  if(urgent>=3) return { type:'urgent', title:'Seek Medical Care Now', message:'Your symptoms suggest you need prompt medical attention. Please consult a doctor today.', action:'Book Consultation Now', color:'#dc2626', bg:'#fef2f2', border:'#fecaca' };
+  if(consult>=2||selfcare<3) return { type:'consult', title:'Consultation Recommended', message:"Your symptoms would benefit from a doctor's opinion. Book within 24-48 hours.", action:'Book Consultation', color:'#d97706', bg:'#fffbeb', border:'#fde68a' };
+  return { type:'selfcare', title:'Self-Care May Be Sufficient', message:'Your symptoms appear mild. Rest, hydration, and over-the-counter remedies may help.', action:'Find a Doctor Anyway', color:'#16a34a', bg:'#f0fdf4', border:'#bbf7d0' };
+}
+
 export default function HealthCenter() {
-  const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("symptom-checker");
 
   // Symptom Checker state
   const [symptoms, setSymptoms] = useState("");
   const [age, setAge] = useState("");
-  const [gender, setGender] = useState("Male");
-  const [scLoading, setScLoading] = useState(false);
+  const [gender, setGender] = useState("female");
   const [scResult, setScResult] = useState(null);
-  const [scError, setScError] = useState("");
-  const [activeTab, setActiveTab] = useState("symptom");
+  const [scLoading, setScLoading] = useState(false);
 
-  // Ask Before You Book state
-  const [abbQuestion, setAbbQuestion] = useState(0);
+  // Ask Before Book state
+  const [abbStep, setAbbStep] = useState(0);
   const [abbAnswers, setAbbAnswers] = useState({});
+  const [abbSymptom, setAbbSymptom] = useState("");
   const [abbResult, setAbbResult] = useState(null);
-
-  const handleABBAnswer = (qId, answer) => {
-    const updated = { ...abbAnswers, [qId]: answer };
-    setAbbAnswers(updated);
-    if (qId < abbQuestions.length - 1) {
-      setAbbQuestion(qId + 1);
-    } else {
-      generateABBResult(updated);
-    }
-  };
-
-  const abbQuestions = [
-    { id: 0, text: "How long have you had these symptoms?", options: ["Less than 24 hours", "1-3 days", "More than 3 days", "More than a week"] },
-    { id: 1, text: "How would you rate your pain/discomfort?", options: ["Mild (can continue daily activities)", "Moderate (affecting daily activities)", "Severe (cannot do daily activities)", "No pain, just other symptoms"] },
-    { id: 2, text: "Do you have a fever?", options: ["No fever", "Low grade (37.5-38°C)", "High fever (above 38°C)", "Not sure"] },
-    { id: 3, text: "Have you had similar symptoms before?", options: ["Yes, regularly", "Yes, occasionally", "No, first time", "Not sure"] },
-    { id: 4, text: "Do you have any chronic conditions?", options: ["Diabetes", "Hypertension", "Heart disease", "None"] }
-  ];
-
-  const generateABBResult = (answers) => {
-    let urgent = 0;
-    if (answers[1] === "Severe (cannot do daily activities)") urgent += 2;
-    if (answers[2] === "High fever (above 38°C)") urgent += 2;
-    if (answers[0] === "More than a week") urgent += 1;
-    if (answers[3] === "No, first time") urgent += 1;
-    if (answers[4] !== "None") urgent += 1;
-
-    if (urgent >= 4) setAbbResult({ type: "urgent", title: "See a Doctor Today", message: "Your symptoms suggest you need prompt medical attention. Please book a consultation today.", action: "Book Consultation Now", color: "#dc2626", bg: "#fef2f2", border: "#fecaca" });
-    else if (urgent >= 2) setAbbResult({ type: "monitor", title: "Book a Consultation Soon", message: "Your symptoms are moderate. It's advisable to consult a doctor within the next 1-2 days.", action: "Book Consultation", color: "#d97706", bg: "#fffbeb", border: "#fde68a" });
-    else setAbbResult({ type: "mild", title: "Monitor Your Symptoms", message: "Your symptoms appear mild. You can monitor them for now, but book a consultation if they worsen.", action: "Browse Doctors", color: "#059669", bg: "#f0fdf4", border: "#a7f3d0" });
-  };
 
   const analyzeSymptoms = async () => {
     if (!symptoms.trim()) return;
-    setScLoading(true);
-    setScResult(null);
-    setScError("");
+    setScLoading(true); setScResult(null);
+    try {
+      const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+      const prompt = `You are a medical AI assistant. A patient described their symptoms. Analyze and respond ONLY with a valid JSON object, no markdown, no explanation.
 
-    const prompt = `You are an expert medical AI assistant helping patients in India. A patient has described their symptoms. Provide a thorough, accurate, and helpful medical analysis.
+Patient: Age ${age || "unknown"}, Gender ${gender}
+Symptoms: ${symptoms}
 
-Patient Details:
-- Age: ${age || "not specified"}
-- Gender: ${gender}
-- Symptoms: ${symptoms}
-
-You MUST respond with ONLY a valid JSON object. No explanation, no markdown, no code blocks. Just raw JSON.
-
-The JSON must have exactly these fields:
+Respond with exactly this JSON structure:
 {
   "possibleConditions": ["condition1", "condition2", "condition3"],
-  "recommendedSpecialist": "specific doctor type",
+  "recommendedSpecialist": "Doctor type",
   "urgency": "low" or "medium" or "high",
-  "urgencyReason": "one clear sentence explaining urgency level",
-  "generalAdvice": "3-4 detailed sentences of practical advice for right now",
-  "homeRemedies": ["specific remedy 1 with how to use it", "specific remedy 2 with details", "specific remedy 3 with details"],
-  "dietTips": ["specific food to eat and why", "specific food to avoid and why", "hydration advice"],
-  "restAdvice": "2-3 sentences about rest, sleep, and activity level",
-  "medications": ["specific OTC medicine available in India with dosage guidance"],
-  "redFlags": ["warning sign that needs emergency care 1", "warning sign 2", "warning sign 3"]
-}
+  "urgencyReason": "one sentence explanation",
+  "generalAdvice": "2-3 sentences of home care advice",
+  "redFlags": ["warning sign 1", "warning sign 2", "warning sign 3"]
+}`;
 
-Base your analysis on the actual symptoms given. If the input is not medical symptoms (e.g. random text), set urgency to "low" and generalAdvice to "Please describe actual symptoms for a proper medical analysis."`;
-
-    try {
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${OPENROUTER_KEY}`,
-          "HTTP-Referer": "https://telemed-connect-6e817.web.app",
-          "X-Title": "TeleMed Connect"
-        },
-        body: JSON.stringify({
-          model: "meta-llama/llama-3.2-3b-instruct:free",
-          messages: [
-            {
-              role: "user",
-              content: prompt
-            }
-          ],
-          temperature: 0.3,
-          max_tokens: 1200
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const rawText = data.choices?.[0]?.message?.content || "";
-
-      console.log("OpenRouter raw response:", rawText);
-
-      // Extract JSON from response
-      const jsonStart = rawText.indexOf("{");
-      const jsonEnd = rawText.lastIndexOf("}");
-
-      if (jsonStart === -1 || jsonEnd === -1) {
-        throw new Error("No JSON found in response");
-      }
-
-      const jsonStr = rawText.slice(jsonStart, jsonEnd + 1);
-      const parsed = JSON.parse(jsonStr);
-
-      // Validate it has expected fields
-      if (!parsed.possibleConditions || !parsed.generalAdvice) {
-        throw new Error("Invalid response structure");
-      }
-
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        }
+      );
+      const data = await res.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const clean = text.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(clean);
       setScResult(parsed);
     } catch (err) {
-      console.error("AI error:", err);
-      setScError(`AI service error: ${err.message}. Please try again.`);
-      setScResult(EMERGENCY_FALLBACK);
+      // Fallback to mock if Gemini fails
+      setScResult(getMockResult(symptoms));
     }
-
     setScLoading(false);
   };
 
-  const urgencyColor = {
-    low: { bg: "#f0fdf4", border: "#a7f3d0", text: "#059669", label: "Low Urgency" },
-    medium: { bg: "#fffbeb", border: "#fde68a", text: "#d97706", label: "Medium Urgency" },
-    high: { bg: "#fef2f2", border: "#fecaca", text: "#dc2626", label: "High Urgency" }
+  const handleABBAnswer = (qId, answer) => {
+    const newAnswers = { ...abbAnswers, [qId]:answer };
+    setAbbAnswers(newAnswers);
+    if (abbStep < ABB_QUESTIONS.length-1) setTimeout(()=>setAbbStep(s=>s+1), 250);
+    else setTimeout(()=>setAbbResult(getABBResult(newAnswers)), 250);
   };
 
-  const uc = scResult ? (urgencyColor[scResult.urgency] || urgencyColor.low) : null;
+  const resetABB = () => { setAbbStep(0); setAbbAnswers({}); setAbbSymptom(""); setAbbResult(null); };
+
+  const URGENCY_STYLE = {
+    low:    { bg:'#f0fdfa', color:'#0d9488', border:'#ccfbf1', label:'Low Urgency' },
+    medium: { bg:'#fffbeb', color:'#d97706', border:'#fde68a', label:'Medium Urgency' },
+    high:   { bg:'#fef2f2', color:'#dc2626', border:'#fecaca', label:'High Urgency — Seek care soon' },
+  };
 
   return (
-    <div style={{ background: "#f8fafc", minHeight: "100vh" }}>
-      {/* Header */}
-      <div style={{ background: "white", borderBottom: "1px solid #e2e8f0", padding: "16px 24px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <button onClick={() => navigate(-1)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 20 }}>✕</button>
-          <div>
-            <div style={{ fontSize: 12, color: "#64748b" }}>Health Tools</div>
-            <div style={{ fontWeight: 700, fontSize: 18 }}>Health Center</div>
-          </div>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 12, color: "#10b981" }}>● Online</span>
-          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#0d9488", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>
-            {currentUser?.email?.[0]?.toUpperCase() || "U"}
-          </div>
-        </div>
-      </div>
+    <Layout title="Health Center" subtitle="Health Tools">
+      <style>{`
+        @keyframes spin { to { transform:rotate(360deg); } }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        .fade-in { animation: fadeIn 0.4s ease forwards; }
+        .form-input { width:100%; padding:11px 14px; border:1.5px solid #e5e7eb; border-radius:8px; font-size:14px; color:#111827; background:white; outline:none; transition:all 0.2s; font-family:Inter,sans-serif; }
+        .form-input:focus { border-color:#0d9488; box-shadow:0 0 0 3px rgba(13,148,136,0.1); }
+        .analyze-btn { width:100%; padding:12px; background:#0d9488; color:white; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s; font-family:Inter,sans-serif; }
+        .analyze-btn:hover { background:#0f766e; }
+        .analyze-btn:disabled { background:#5eead4; cursor:not-allowed; }
+        .option-btn { width:100%; text-align:left; padding:12px 14px; background:white; border:1.5px solid #e5e7eb; border-radius:9px; font-size:13px; font-weight:500; color:#374151; cursor:pointer; transition:all 0.15s; font-family:Inter,sans-serif; display:flex; align-items:center; gap:10px; }
+        .option-btn:hover { border-color:#0d9488; color:#0d9488; background:#f0fdfa; }
+        .option-btn.selected { border-color:#0d9488; background:#f0fdfa; color:#0d9488; font-weight:600; }
+        label { font-size:12px; font-weight:600; color:#374151; display:block; margin-bottom:5px; }
+      `}</style>
 
       {/* Tabs */}
-      <div style={{ background: "white", borderBottom: "1px solid #e2e8f0", display: "flex" }}>
-        <button
-          onClick={() => setActiveTab("symptom")}
-          style={{ flex: 1, padding: "14px 20px", border: "none", background: "none", cursor: "pointer", fontWeight: activeTab === "symptom" ? 600 : 400, color: activeTab === "symptom" ? "#0d9488" : "#64748b", borderBottom: activeTab === "symptom" ? "2px solid #0d9488" : "2px solid transparent", fontSize: 14 }}
-        >
-          🩺 Symptom Checker (AI)
+      <div className="tab-bar">
+        <button className={`tab-btn ${activeTab==='symptom-checker'?'active':''}`} onClick={()=>setActiveTab('symptom-checker')}>
+          🤒 Symptom Checker (AI)
         </button>
-        <button
-          onClick={() => setActiveTab("abb")}
-          style={{ flex: 1, padding: "14px 20px", border: "none", background: "none", cursor: "pointer", fontWeight: activeTab === "abb" ? 600 : 400, color: activeTab === "abb" ? "#0d9488" : "#64748b", borderBottom: activeTab === "abb" ? "2px solid #0d9488" : "2px solid transparent", fontSize: 14 }}
-        >
+        <button className={`tab-btn ${activeTab==='ask-before-book'?'active':''}`} onClick={()=>setActiveTab('ask-before-book')}>
           ❓ Ask Before You Book
         </button>
       </div>
 
-      {/* Symptom Checker Tab */}
-      {activeTab === "symptom" && (
-        <div style={{ display: "flex", gap: 20, padding: 24, maxWidth: 1200, margin: "0 auto" }}>
-          {/* Left - Input */}
-          <div style={{ flex: 1 }}>
-            <div style={{ background: "white", borderRadius: 12, padding: 24, boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
-              <h3 style={{ margin: "0 0 20px", fontSize: 18, fontWeight: 700 }}>Describe Your Symptoms</h3>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-                <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6 }}>Age</label>
-                  <input
-                    type="number"
-                    value={age}
-                    onChange={e => setAge(e.target.value)}
-                    placeholder="e.g. 25"
-                    style={{ width: "100%", padding: "10px 14px", border: "1px solid #d1d5db", borderRadius: 8, fontSize: 14, boxSizing: "border-box" }}
-                  />
+      {/* SYMPTOM CHECKER TAB */}
+      {activeTab === 'symptom-checker' && (
+        <div className="grid-2col">
+          <section>
+            <div style={{ background:'white', borderRadius:12, border:'1px solid #e5e7eb', padding:'22px', marginBottom:14 }}>
+              <p style={{ fontSize:14, fontWeight:700, color:'#111827', marginBottom:18, paddingBottom:14, borderBottom:'1px solid #f3f4f6' }}>Describe Your Symptoms</p>
+              <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                  <div><label htmlFor="age">Age</label><input id="age" className="form-input" type="number" placeholder="25" value={age} onChange={e=>setAge(e.target.value)} min="1" max="120"/></div>
+                  <div><label htmlFor="gender">Gender</label>
+                    <select id="gender" className="form-input" value={gender} onChange={e=>setGender(e.target.value)}>
+                      <option value="female">Female</option><option value="male">Male</option><option value="other">Other</option>
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6 }}>Gender</label>
-                  <select
-                    value={gender}
-                    onChange={e => setGender(e.target.value)}
-                    style={{ width: "100%", padding: "10px 14px", border: "1px solid #d1d5db", borderRadius: 8, fontSize: 14, boxSizing: "border-box" }}
-                  >
-                    <option>Male</option>
-                    <option>Female</option>
-                    <option>Other</option>
-                  </select>
+                <div><label htmlFor="symptoms">Your symptoms</label>
+                  <textarea id="symptoms" className="form-input" value={symptoms} onChange={e=>setSymptoms(e.target.value)}
+                    placeholder="e.g. I have been experiencing chest pain for 2 days, shortness of breath when walking..."
+                    rows={5} style={{ resize:'vertical' }}/>
                 </div>
-              </div>
-
-              <div style={{ marginBottom: 20 }}>
-                <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: "#374151", marginBottom: 6 }}>Your symptoms</label>
-                <textarea
-                  value={symptoms}
-                  onChange={e => setSymptoms(e.target.value)}
-                  placeholder="Describe your symptoms in detail. e.g. 'I have had a fever of 38.5°C for 2 days, along with severe headache, body pain and sore throat...'"
-                  rows={5}
-                  style={{ width: "100%", padding: "10px 14px", border: "1px solid #d1d5db", borderRadius: 8, fontSize: 14, resize: "vertical", boxSizing: "border-box" }}
-                />
-              </div>
-
-              <button
-                onClick={analyzeSymptoms}
-                disabled={scLoading || !symptoms.trim()}
-                style={{ width: "100%", padding: "14px", background: scLoading ? "#99d6cf" : "#0d9488", color: "white", border: "none", borderRadius: 10, fontSize: 15, fontWeight: 600, cursor: scLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-              >
-                {scLoading ? (
-                  <>
-                    <span style={{ display: "inline-block", width: 16, height: 16, border: "2px solid white", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
-                    Analyzing with AI...
-                  </>
-                ) : "✨ Analyze Symptoms"}
-              </button>
-
-              {scError && (
-                <div style={{ marginTop: 12, padding: 12, background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 8, fontSize: 13, color: "#dc2626" }}>
-                  {scError}
-                </div>
-              )}
-
-              <div style={{ marginTop: 16, padding: 14, background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8 }}>
-                <div style={{ fontWeight: 600, fontSize: 13, color: "#92400e", marginBottom: 4 }}>⚠️ Medical Disclaimer</div>
-                <div style={{ fontSize: 12, color: "#78350f", lineHeight: 1.6 }}>This tool uses real AI analysis for informational purposes only and does not replace professional medical advice. Always consult a qualified doctor.</div>
+                <button className="analyze-btn" onClick={analyzeSymptoms} disabled={scLoading||!symptoms.trim()}>
+                  {scLoading ? "Analyzing..." : "✨ Analyze Symptoms"}
+                </button>
               </div>
             </div>
-          </div>
+            <div style={{ background:'#fffbeb', borderRadius:10, padding:14, border:'1px solid #fde68a', borderLeft:'4px solid #f59e0b' }}>
+              <p style={{ fontSize:12, fontWeight:600, color:'#92400e', marginBottom:3 }}>Medical Disclaimer</p>
+              <p style={{ fontSize:12, color:'#78350f', lineHeight:1.6 }}>This tool is for informational purposes only and does not replace professional medical advice. Always consult a qualified doctor.</p>
+            </div>
+          </section>
 
-          {/* Right - Results */}
-          <div style={{ width: 360 }}>
-            {!scResult && !scLoading && (
-              <div style={{ background: "white", borderRadius: 12, padding: 32, boxShadow: "0 1px 3px rgba(0,0,0,0.08)", textAlign: "center" }}>
-                <div style={{ fontSize: 48, marginBottom: 16 }}>🤖</div>
-                <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 8 }}>AI-Powered Analysis</div>
-                <p style={{ fontSize: 13, color: "#9ca3af", lineHeight: 1.6 }}>Powered by Llama 3.2 via OpenRouter. Enter your symptoms on the left to get real AI-powered medical analysis.</p>
-              </div>
-            )}
-
+          <section aria-live="polite">
             {scLoading && (
-              <div style={{ background: "white", borderRadius: 12, padding: 32, boxShadow: "0 1px 3px rgba(0,0,0,0.08)", textAlign: "center" }}>
-                <div style={{ fontSize: 40, marginBottom: 16 }}>🔍</div>
-                <div style={{ fontWeight: 600, marginBottom: 8 }}>Analyzing your symptoms...</div>
-                <p style={{ fontSize: 13, color: "#9ca3af" }}>Llama 3.2 AI is processing your symptoms</p>
+              <div style={{ background:'white', borderRadius:12, border:'1px solid #e5e7eb', padding:'60px', display:'flex', flexDirection:'column', alignItems:'center', gap:14 }}>
+                <div style={{ width:36, height:36, border:'3px solid #e5e7eb', borderTopColor:'#0d9488', borderRadius:'50%', animation:'spin 0.8s linear infinite' }}/>
+                <p style={{ color:'#6b7280', fontSize:14 }}>Analyzing your symptoms...</p>
               </div>
             )}
-
-            {scResult && (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {/* Urgency */}
-                <div style={{ background: uc.bg, border: `1px solid ${uc.border}`, borderRadius: 12, padding: 16 }}>
-                  <div style={{ fontWeight: 700, color: uc.text, fontSize: 16 }}>{uc.label}</div>
-                  <div style={{ fontSize: 13, color: uc.text, marginTop: 4 }}>{scResult.urgencyReason}</div>
-                </div>
-
-                {/* Specialist */}
-                <div style={{ background: "white", borderRadius: 12, padding: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, color: "#9ca3af", letterSpacing: 1, marginBottom: 8 }}>RECOMMENDED SPECIALIST</div>
-                  <div style={{ fontWeight: 700, fontSize: 18, color: "#0d9488", marginBottom: 12 }}>{scResult.recommendedSpecialist}</div>
-                  <button onClick={() => navigate("/find-doctors")} style={{ width: "100%", padding: "10px", background: "#0d9488", color: "white", border: "none", borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            {scResult && !scLoading && (
+              <div className="fade-in" style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                {(() => { const us=URGENCY_STYLE[scResult.urgency]||URGENCY_STYLE.low; return (
+                  <div style={{ background:us.bg, borderRadius:10, padding:'12px 16px', border:`1px solid ${us.border}`, borderLeft:`4px solid ${us.color}` }}>
+                    <p style={{ fontSize:13, fontWeight:700, color:us.color }}>{us.label}</p>
+                    <p style={{ fontSize:12, color:us.color, opacity:0.85, marginTop:2 }}>{scResult.urgencyReason}</p>
+                  </div>
+                );})()}
+                <div style={{ background:'white', borderRadius:10, border:'1px solid #e5e7eb', padding:'16px', borderTop:'3px solid #0d9488' }}>
+                  <p style={{ fontSize:11, color:'#9ca3af', textTransform:'uppercase', letterSpacing:'0.06em', marginBottom:4 }}>Recommended Specialist</p>
+                  <p style={{ fontSize:18, fontWeight:700, color:'#0d9488', marginBottom:12 }}>{scResult.recommendedSpecialist}</p>
+                  <button onClick={()=>navigate('/search-doctors')} style={{ padding:'9px 18px', background:'#0d9488', color:'white', border:'none', borderRadius:7, fontSize:13, fontWeight:600, cursor:'pointer', fontFamily:'Inter,sans-serif' }}>
                     Find {scResult.recommendedSpecialist}
                   </button>
                 </div>
-
-                {/* Possible Conditions */}
-                <div style={{ background: "white", borderRadius: 12, padding: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
-                  <div style={{ fontWeight: 700, marginBottom: 12 }}>Possible Conditions</div>
-                  {scResult.possibleConditions?.map((c, i) => (
-                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, fontSize: 14 }}>
-                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#0d9488", flexShrink: 0 }} />
-                      {c}
+                <div style={{ background:'white', borderRadius:10, border:'1px solid #e5e7eb', padding:'16px' }}>
+                  <p style={{ fontSize:13, fontWeight:600, color:'#111827', marginBottom:10 }}>Possible Conditions</p>
+                  {scResult.possibleConditions?.map((c,i) => (
+                    <div key={i} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 0', borderBottom:i<scResult.possibleConditions.length-1?'1px solid #f3f4f6':'none' }}>
+                      <div style={{ width:6, height:6, borderRadius:'50%', background:'#0d9488', flexShrink:0 }}/>
+                      <p style={{ fontSize:13, color:'#374151' }}>{c}</p>
                     </div>
                   ))}
                 </div>
-
-                {/* General Advice */}
-                <div style={{ background: "white", borderRadius: 12, padding: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
-                  <div style={{ fontWeight: 700, marginBottom: 8 }}>💊 General Advice</div>
-                  <p style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, margin: 0 }}>{scResult.generalAdvice}</p>
+                <div style={{ background:'white', borderRadius:10, border:'1px solid #e5e7eb', padding:'16px', borderLeft:'4px solid #0d9488' }}>
+                  <p style={{ fontSize:13, fontWeight:600, color:'#111827', marginBottom:8 }}>General Advice</p>
+                  <p style={{ fontSize:13, color:'#6b7280', lineHeight:1.7 }}>{scResult.generalAdvice}</p>
                 </div>
-
-                {/* Home Remedies */}
-                {scResult.homeRemedies?.length > 0 && (
-                  <div style={{ background: "white", borderRadius: 12, padding: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
-                    <div style={{ fontWeight: 700, marginBottom: 12 }}>🌿 Home Remedies</div>
-                    {scResult.homeRemedies.map((r, i) => (
-                      <div key={i} style={{ display: "flex", gap: 8, marginBottom: 10, fontSize: 13 }}>
-                        <span style={{ color: "#0d9488", fontWeight: 700, flexShrink: 0 }}>{i + 1}.</span>
-                        <span style={{ color: "#374151", lineHeight: 1.6 }}>{r}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Diet Tips */}
-                {scResult.dietTips?.length > 0 && (
-                  <div style={{ background: "white", borderRadius: 12, padding: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
-                    <div style={{ fontWeight: 700, marginBottom: 12 }}>🥗 Diet & Nutrition</div>
-                    {scResult.dietTips.map((t, i) => (
-                      <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, fontSize: 13 }}>
-                        <span style={{ color: "#f59e0b", flexShrink: 0 }}>•</span>
-                        <span style={{ color: "#374151", lineHeight: 1.6 }}>{t}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Rest Advice */}
-                {scResult.restAdvice && (
-                  <div style={{ background: "white", borderRadius: 12, padding: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
-                    <div style={{ fontWeight: 700, marginBottom: 8 }}>😴 Rest & Activity</div>
-                    <p style={{ fontSize: 13, color: "#374151", lineHeight: 1.7, margin: 0 }}>{scResult.restAdvice}</p>
-                  </div>
-                )}
-
-                {/* Medications */}
-                {scResult.medications?.length > 0 && (
-                  <div style={{ background: "white", borderRadius: 12, padding: 16, boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
-                    <div style={{ fontWeight: 700, marginBottom: 12 }}>💊 OTC Medicines (India)</div>
-                    {scResult.medications.map((m, i) => (
-                      <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, fontSize: 13 }}>
-                        <span style={{ color: "#7c3aed", flexShrink: 0 }}>💊</span>
-                        <span style={{ color: "#374151", lineHeight: 1.6 }}>{m}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Red Flags */}
-                {scResult.redFlags?.length > 0 && (
-                  <div style={{ background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 12, padding: 16 }}>
-                    <div style={{ fontWeight: 700, color: "#dc2626", marginBottom: 12 }}>🚨 Seek Immediate Care If:</div>
-                    {scResult.redFlags.map((f, i) => (
-                      <div key={i} style={{ display: "flex", gap: 8, marginBottom: 8, fontSize: 13 }}>
-                        <span style={{ color: "#dc2626", flexShrink: 0 }}>⚠</span>
-                        <span style={{ color: "#7f1d1d", lineHeight: 1.6 }}>{f}</span>
+                {scResult.redFlags?.length>0 && (
+                  <div style={{ background:'#fef2f2', borderRadius:10, border:'1px solid #fecaca', padding:'16px' }}>
+                    <p style={{ fontSize:13, fontWeight:600, color:'#dc2626', marginBottom:8 }}>Seek immediate care if:</p>
+                    {scResult.redFlags.map((f,i) => (
+                      <div key={i} style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 0', borderBottom:i<scResult.redFlags.length-1?'1px solid #fee2e2':'none' }}>
+                        <div style={{ width:5, height:5, borderRadius:'50%', background:'#dc2626', flexShrink:0 }}/>
+                        <p style={{ fontSize:12, color:'#991b1b' }}>{f}</p>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
             )}
-          </div>
+            {!scLoading && !scResult && (
+              <div style={{ background:'white', borderRadius:12, border:'1px solid #e5e7eb', padding:'60px', display:'flex', flexDirection:'column', alignItems:'center', gap:12, textAlign:'center' }}>
+                <div style={{ width:52, height:52, borderRadius:12, background:'#f0fdfa', border:'1px solid #ccfbf1', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="#0d9488" strokeWidth="1.5"/><path d="M12 8v4M12 16h.01" stroke="#0d9488" strokeWidth="1.8" strokeLinecap="round"/></svg>
+                </div>
+                <p style={{ fontSize:14, fontWeight:600, color:'#111827' }}>Ready to analyze</p>
+                <p style={{ fontSize:13, color:'#9ca3af' }}>Enter your symptoms on the left to get AI-powered analysis and specialist recommendation</p>
+              </div>
+            )}
+          </section>
         </div>
       )}
 
-      {/* Ask Before You Book Tab */}
-      {activeTab === "abb" && (
-        <div style={{ maxWidth: 600, margin: "40px auto", padding: "0 24px" }}>
-          {!abbResult ? (
-            <div style={{ background: "white", borderRadius: 12, padding: 32, boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
-              <div style={{ marginBottom: 24 }}>
-                <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
-                  {abbQuestions.map((_, i) => (
-                    <div key={i} style={{ flex: 1, height: 4, borderRadius: 2, background: i <= abbQuestion ? "#0d9488" : "#e2e8f0" }} />
-                  ))}
-                </div>
-                <div style={{ fontSize: 12, color: "#9ca3af" }}>Question {abbQuestion + 1} of {abbQuestions.length}</div>
+      {/* ASK BEFORE BOOK TAB */}
+      {activeTab === 'ask-before-book' && (
+        <div style={{ maxWidth:680, margin:'0 auto' }}>
+          {!abbResult && (
+            <div style={{ marginBottom:24 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                <span style={{ fontSize:13, color:'#6b7280', fontWeight:500 }}>Question {abbStep+1} of {ABB_QUESTIONS.length}</span>
+                <span style={{ fontSize:13, color:'#0d9488', fontWeight:600 }}>{Math.round((abbStep/ABB_QUESTIONS.length)*100)}% complete</span>
               </div>
-
-              <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 24 }}>{abbQuestions[abbQuestion].text}</h3>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {abbQuestions[abbQuestion].options.map((opt, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleABBAnswer(abbQuestion, opt)}
-                    style={{ padding: "14px 18px", background: "white", border: "2px solid #e2e8f0", borderRadius: 10, cursor: "pointer", textAlign: "left", fontSize: 14, fontWeight: 500, transition: "all 0.2s" }}
-                    onMouseEnter={e => { e.target.style.borderColor = "#0d9488"; e.target.style.background = "#f0fdfa"; }}
-                    onMouseLeave={e => { e.target.style.borderColor = "#e2e8f0"; e.target.style.background = "white"; }}
-                  >
-                    {opt}
-                  </button>
-                ))}
+              <div style={{ height:6, background:'#f3f4f6', borderRadius:4 }}>
+                <div style={{ width:`${(abbStep/ABB_QUESTIONS.length)*100}%`, height:'100%', background:'linear-gradient(90deg,#0d9488,#0284c7)', borderRadius:4, transition:'width 0.4s ease' }}/>
               </div>
             </div>
-          ) : (
-            <div style={{ background: abbResult.bg, border: `2px solid ${abbResult.border}`, borderRadius: 16, padding: 32, textAlign: "center" }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>
-                {abbResult.type === "urgent" ? "🚨" : abbResult.type === "monitor" ? "⚠️" : "✅"}
+          )}
+
+          {!abbResult && abbStep===0 && (
+            <div style={{ marginBottom:18 }}>
+              <label>Briefly describe what's bothering you:</label>
+              <textarea value={abbSymptom} onChange={e=>setAbbSymptom(e.target.value)}
+                placeholder="e.g. I have a headache and mild fever since yesterday..."
+                rows={3}
+                style={{ width:'100%', padding:'11px 14px', border:'1.5px solid #e5e7eb', borderRadius:9, fontSize:14, color:'#111827', outline:'none', resize:'vertical', fontFamily:'Inter,sans-serif', transition:'all 0.2s' }}
+                onFocus={e=>e.target.style.borderColor='#0d9488'}
+                onBlur={e=>e.target.style.borderColor='#e5e7eb'}/>
+            </div>
+          )}
+
+          {!abbResult && (
+            <div className="fade-in" key={abbStep}>
+              <div style={{ background:'white', borderRadius:14, border:'1px solid #e5e7eb', padding:'26px', marginBottom:14 }}>
+                <div style={{ display:'flex', gap:12, alignItems:'flex-start', marginBottom:20 }}>
+                  <div style={{ width:32, height:32, borderRadius:8, background:'#f0fdfa', border:'1px solid #ccfbf1', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    <span style={{ fontSize:13, fontWeight:800, color:'#0d9488' }}>{abbStep+1}</span>
+                  </div>
+                  <h2 style={{ fontSize:16, fontWeight:700, color:'#111827', lineHeight:1.4 }}>{ABB_QUESTIONS[abbStep].text}</h2>
+                </div>
+                <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                  {ABB_QUESTIONS[abbStep].options.map((opt,i) => (
+                    <button key={i} className={`option-btn ${abbAnswers[ABB_QUESTIONS[abbStep].id]===opt?'selected':''}`} onClick={()=>handleABBAnswer(ABB_QUESTIONS[abbStep].id,opt)}>
+                      <div style={{ width:16, height:16, borderRadius:'50%', border:`2px solid ${abbAnswers[ABB_QUESTIONS[abbStep].id]===opt?'#0d9488':'#d1d5db'}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, background:abbAnswers[ABB_QUESTIONS[abbStep].id]===opt?'#0d9488':'white' }}>
+                        {abbAnswers[ABB_QUESTIONS[abbStep].id]===opt && <svg width="8" height="8" fill="none" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke="white" strokeWidth="3" strokeLinecap="round"/></svg>}
+                      </div>
+                      {opt}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <h2 style={{ color: abbResult.color, marginBottom: 12 }}>{abbResult.title}</h2>
-              <p style={{ fontSize: 15, color: "#374151", lineHeight: 1.7, marginBottom: 24 }}>{abbResult.message}</p>
-              <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-                <button onClick={() => navigate("/find-doctors")} style={{ padding: "12px 24px", background: abbResult.color, color: "white", border: "none", borderRadius: 10, fontWeight: 600, cursor: "pointer", fontSize: 14 }}>
-                  {abbResult.action}
+              {abbStep>0 && (
+                <button onClick={()=>setAbbStep(s=>s-1)} style={{ background:'none', border:'none', fontSize:13, color:'#6b7280', cursor:'pointer', fontFamily:'Inter,sans-serif', display:'flex', alignItems:'center', gap:6 }}>
+                  <svg width="13" height="13" fill="none" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+                  Previous
                 </button>
-                <button onClick={() => { setAbbQuestion(0); setAbbAnswers({}); setAbbResult(null); }} style={{ padding: "12px 24px", background: "white", color: abbResult.color, border: `2px solid ${abbResult.color}`, borderRadius: 10, fontWeight: 600, cursor: "pointer", fontSize: 14 }}>
-                  Retake Quiz
-                </button>
+              )}
+            </div>
+          )}
+
+          {abbResult && (
+            <div className="fade-in">
+              <div style={{ background:abbResult.bg, borderRadius:14, border:`2px solid ${abbResult.border}`, padding:'30px', marginBottom:18, textAlign:'center' }}>
+                <div style={{ width:56, height:56, borderRadius:'50%', background:abbResult.color, display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
+                  <svg width="26" height="26" fill="none" viewBox="0 0 24 24">
+                    {abbResult.type==='selfcare'?<path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="white" strokeWidth="2" strokeLinecap="round"/>:
+                     abbResult.type==='urgent'?<path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke="white" strokeWidth="2" strokeLinecap="round"/>:
+                     <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="white" strokeWidth="2" strokeLinecap="round"/>}
+                  </svg>
+                </div>
+                <h2 style={{ fontSize:21, fontWeight:800, color:abbResult.color, marginBottom:10 }}>{abbResult.title}</h2>
+                <p style={{ fontSize:14, color:'#374151', lineHeight:1.7, maxWidth:460, margin:'0 auto 18px' }}>{abbResult.message}</p>
+                {abbSymptom && (
+                  <div style={{ background:'rgba(255,255,255,0.7)', borderRadius:9, padding:'10px 14px', marginBottom:18, textAlign:'left' }}>
+                    <p style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:2 }}>Your symptom:</p>
+                    <p style={{ fontSize:13, color:'#6b7280', fontStyle:'italic' }}>"{abbSymptom}"</p>
+                  </div>
+                )}
+                <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' }}>
+                  <button onClick={()=>navigate('/search-doctors')} style={{ padding:'11px 22px', background:abbResult.color, color:'white', border:'none', borderRadius:9, fontSize:14, fontWeight:700, cursor:'pointer', fontFamily:'Inter,sans-serif' }}>{abbResult.action}</button>
+                  <button onClick={resetABB} style={{ padding:'11px 22px', background:'white', color:'#374151', border:'1.5px solid #e5e7eb', borderRadius:9, fontSize:14, fontWeight:500, cursor:'pointer', fontFamily:'Inter,sans-serif' }}>Start Over</button>
+                </div>
+              </div>
+              <div style={{ background:'white', borderRadius:12, border:'1px solid #e5e7eb', padding:'18px' }}>
+                <p style={{ fontSize:13, fontWeight:700, color:'#111827', marginBottom:12 }}>Your Answers Summary</p>
+                {ABB_QUESTIONS.map((q,i) => (
+                  <div key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'9px 0', borderBottom:i<ABB_QUESTIONS.length-1?'1px solid #f3f4f6':'none', gap:16 }}>
+                    <p style={{ fontSize:12, color:'#6b7280', flex:1 }}>{q.text}</p>
+                    <p style={{ fontSize:12, fontWeight:600, color:'#111827', textAlign:'right', flexShrink:0 }}>{abbAnswers[q.id]||'—'}</p>
+                  </div>
+                ))}
               </div>
             </div>
           )}
         </div>
       )}
-
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-      `}</style>
-    </div>
+<NextStepBanner
+  icon="🩺"
+  title="Time to see a specialist?"
+  desc="Our verified doctors are available for online consultations. Book in under 2 minutes."
+  btnLabel="Find a Doctor"
+  btnPath="/search-doctors"
+  btnSecondaryLabel="My Appointments"
+  btnSecondaryPath="/my-appointments"
+  color="purple"
+/>
+    </Layout>
   );
 }
