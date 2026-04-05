@@ -112,7 +112,7 @@ export default function LabReports() {
       `}</style>
 
       {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 20 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 20 }} className="lab-stats-grid">
         {[
           { l: "Total Reports", v: reports.length, c: "#0d9488", bg: "#f0fdfa" },
           { l: "This Month", v: reports.filter(r => new Date(r.createdAt?.seconds * 1000).getMonth() === new Date().getMonth()).length, c: "#2563eb", bg: "#eff6ff" },
@@ -129,7 +129,7 @@ export default function LabReports() {
       {role === "patient" && (
         <div style={{ background: "white", borderRadius: 14, border: "1px solid #e5e7eb", padding: "20px", marginBottom: 20 }}>
           <p style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginBottom: 16 }}>Upload New Report</p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }} className="lab-upload-grid">
             <div>
               <label style={{ fontSize: 12, fontWeight: 600, color: "#374151", display: "block", marginBottom: 5 }}>Report Name *</label>
               <input className="form-input" placeholder="e.g. Complete Blood Count" value={reportName} onChange={e => setReportName(e.target.value)}/>
@@ -200,7 +200,7 @@ export default function LabReports() {
       )}
 
       {reports.map((r, i) => (
-        <div key={r.id} className="fade-in" style={{ background: "white", borderRadius: 12, border: "1px solid #e5e7eb", padding: "14px 16px", marginBottom: 10, display: "flex", gap: 14, alignItems: "center", animationDelay: i * 0.04 + "s", opacity: 0 }}>
+        <div key={r.id} className="fade-in lab-item" style={{ background: "white", borderRadius: 12, border: "1px solid #e5e7eb", padding: "14px 16px", marginBottom: 10, display: "flex", gap: 14, alignItems: "center", animationDelay: i * 0.04 + "s", opacity: 0 }}>
           <div style={{ width: 44, height: 44, borderRadius: 10, background: getTypeColor(r.reportType) + "15", border: "1px solid " + getTypeColor(r.reportType) + "30", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
             <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
               <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke={getTypeColor(r.reportType)} strokeWidth="1.8" strokeLinecap="round"/>

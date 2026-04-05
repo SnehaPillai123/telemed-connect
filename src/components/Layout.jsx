@@ -203,17 +203,16 @@ export default function Layout({ children, title, subtitle }) {
         /* PHONE < 600px */
         @media screen and (max-width:599px) {
           .lyt-main     { margin-left:0 !important; }
-          .lyt-content  { padding:10px !important; }
-          .lyt-topbar   { padding:0 10px; height:52px; }
+          .lyt-content  { padding:12px; }
+          .lyt-topbar   { padding:0 12px; height:52px; }
           .lyt-sidebar  { width:min(270px, 85vw); }
           .lyt-hamburger{ width:44px; height:44px; }
-          .lyt-nav-item { padding:12px; font-size:13px; }
-          .grid-2col,.grid-3col,.grid-4col { grid-template-columns:1fr !important; gap:10px !important; }
+          .lyt-nav-item { padding:12px; font-size:14px; }
+          .grid-2col,.grid-3col,.grid-4col { grid-template-columns:1fr !important; }
           .hide-phone   { display:none !important; }
-          .tab-btn      { font-size:11px; padding:7px 4px; }
-          .tab-bar      { gap:2px !important; }
+          .tab-btn      { font-size:11px; padding:8px 6px; }
           .dash-main    { grid-template-columns:1fr !important; }
-          .dash-stats   { grid-template-columns:repeat(2,1fr) !important; gap:8px !important; }
+          .dash-stats   { grid-template-columns:repeat(2,1fr) !important; }
           .doc-stats-grid { grid-template-columns:repeat(2,1fr) !important; gap:8px !important; }
           .doc-main-grid  { grid-template-columns:1fr !important; }
           .ins-stats-grid { grid-template-columns:repeat(2,1fr) !important; gap:8px !important; }
@@ -223,7 +222,7 @@ export default function Layout({ children, title, subtitle }) {
           .nsb-wrap { flex-direction:column !important; }
           .nsb-btns { width:100% !important; }
           .nsb-btn-primary,.nsb-btn-secondary { flex:1; text-align:center; }
-          .action-row { gap:6px !important; flex-wrap:wrap !important; }
+          .action-row { gap:6px !important; }
           .meet-btn,.chat-btn,.rx-btn { font-size:11px !important; padding:6px 10px !important; }
           .apt-card { padding:12px !important; }
           .filter-chip,.filter-btn { padding:5px 10px !important; font-size:11px !important; }
@@ -231,40 +230,37 @@ export default function Layout({ children, title, subtitle }) {
           .timeline-grid { grid-template-columns:1fr !important; }
           .book-grid    { grid-template-columns:1fr !important; }
           .rx-stats-grid { grid-template-columns:repeat(2,1fr) !important; }
-          .cal-day { min-height:48px !important; }
-          /* Fix all inline grids on mobile */
-          * { box-sizing:border-box !important; max-width:100% !important; }
-          img,video,canvas { max-width:100% !important; }
-          /* Fix hardcoded widths */
-          [style*="max-width:700"],[style*="max-width: 700"],
-          [style*="max-width:680"],[style*="max-width: 680"],
-          [style*="max-width:600"],[style*="max-width: 600"],
-          [style*="max-width:560"],[style*="max-width: 560"],
-          [style*="max-width:520"],[style*="max-width: 520"] { max-width:100% !important; width:100% !important; }
-          /* Fix inline 2-col grids */
-          [style*="grid-template-columns:1fr 1fr"],
-          [style*="grid-template-columns: 1fr 1fr"],
-          [style*="grid-template-columns:1fr 300px"],
-          [style*="grid-template-columns:1fr 320px"],
-          [style*="grid-template-columns:1fr 2fr"],
-          [style*="grid-template-columns:2fr 1fr"],
-          [style*="grid-template-columns:repeat(2"],
-          [style*="grid-template-columns:repeat(3"],
-          [style*="grid-template-columns:repeat(4"] { grid-template-columns:1fr !important; }
-          /* Fix large padding in cards */
-          [style*="padding:32px"],[style*="padding: 32px"],
-          [style*="padding:40px"],[style*="padding: 40px"],
-          [style*="padding:48px"],[style*="padding: 48px"] { padding:16px !important; }
-          [style*="padding:60px"],[style*="padding: 60px"] { padding:20px !important; }
-          /* Fix font sizes */
-          [style*="fontSize:56"],[style*="fontSize: 56"],
-          [style*="fontSize:48"],[style*="fontSize: 48"] { font-size:32px !important; }
-          [style*="fontSize:36"],[style*="fontSize: 36"],
-          [style*="fontSize:32"],[style*="fontSize: 32"] { font-size:24px !important; }
-          /* Fix overflow */
-          .lyt-content > div { overflow-x:hidden !important; }
-          table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; width:100%; }
+
+          /* ── CALENDAR mobile fix ── */
+          .cal-mobile-wrap { display:flex; flex-direction:column; gap:12px; }
+          .cal-grid { grid-template-columns:1fr !important; }
+          .cal-day { min-height:44px !important; font-size:11px !important; }
+          .cal-side { width:100% !important; position:static !important; }
+          .cal-stats-grid { grid-template-columns:repeat(2,1fr) !important; gap:8px !important; }
+
+          /* ── LAB REPORTS mobile fix ── */
+          .lab-upload-grid { grid-template-columns:1fr !important; }
+          .lab-stats-grid  { grid-template-columns:repeat(3,1fr) !important; gap:6px !important; }
+          .lab-item { flex-wrap:wrap !important; gap:8px !important; }
+          .lab-item-info { min-width:0 !important; flex:1 !important; }
+
+          /* ── HEALTH RECORDS mobile fix ── */
+          .health-rec-grid { grid-template-columns:1fr !important; }
+          .health-rec-card { padding:12px !important; }
+          .health-rec-row  { flex-direction:column !important; gap:8px !important; }
+          .health-rec-meta { flex-wrap:wrap !important; gap:6px !important; }
+
+          /* ── GENERAL page content fix ── */
+          .page-container { padding:0 !important; }
+          .mob-full { width:100% !important; max-width:100% !important; }
+          .mob-stack { flex-direction:column !important; }
+          .mob-wrap  { flex-wrap:wrap !important; }
+          .mob-p12   { padding:12px !important; }
+
+          /* Tables scroll horizontally */
+          table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
         }
+
         /* REDUCED MOTION */
         @media (prefers-reduced-motion:reduce) {
           *,*::before,*::after { animation-duration:0.01ms !important; transition-duration:0.01ms !important; }

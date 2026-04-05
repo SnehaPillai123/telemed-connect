@@ -66,7 +66,7 @@ export default function AppointmentCalendar() {
         .apt-dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin:1px;}
       `}</style>
 
-      <div style={{display:"grid", gridTemplateColumns:"1fr 320px", gap:20, alignItems:"start"}}>
+      <div style={{display:"grid", gridTemplateColumns:"1fr 320px", gap:20, alignItems:"start"}} className="cal-grid cal-mobile-wrap">
         {/* Calendar */}
         <div style={{background:"white", borderRadius:16, border:"1px solid #e5e7eb", overflow:"hidden"}}>
           {/* Header */}
@@ -122,7 +122,7 @@ export default function AppointmentCalendar() {
         </div>
 
         {/* Side panel */}
-        <div style={{display:"flex", flexDirection:"column", gap:14}}>
+        <div style={{display:"flex", flexDirection:"column", gap:14}} className="cal-side">
           {/* Stats */}
           <div style={{background:"white", borderRadius:14, border:"1px solid #e5e7eb", padding:16}}>
             <p style={{fontSize:13, fontWeight:700, color:"#111827", marginBottom:12}}>📊 This Month</p>

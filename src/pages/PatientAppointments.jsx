@@ -245,7 +245,7 @@ export default function PatientAppointments() {
             </div>
           )}
 
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 280px', flexWrap:'wrap', gap:20 }}>
+          <div className="health-rec-grid" style={{ display:'grid', gridTemplateColumns:'1fr 280px', gap:20 }}>
             <div>
               <p style={{ fontSize:14, fontWeight:700, color:'#111827', marginBottom:16 }}>Medical Timeline</p>
               {[...appointments.map(a=>({...a,_type:'appointment'})), ...prescriptions.map(r=>({...r,_type:'prescription'}))].sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)).map((item, i) => (
