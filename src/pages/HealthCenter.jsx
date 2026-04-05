@@ -73,7 +73,7 @@ export default function HealthCenter() {
     setScLoading(true); setScResult(null);
     try {
       const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-      const prompt = `You are a medical AI assistant. A patient described their symptoms. Analyze and respond ONLY with a valid JSON object, no markdown, no explanation.
+      const prompt = `You are an expert medical AI doctor helping patients in India. Give detailed, helpful advice like a knowledgeable friend.
 
 Patient: Age ${age || "unknown"}, Gender ${gender}
 Symptoms: ${symptoms}

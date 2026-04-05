@@ -73,19 +73,27 @@ export default function HealthCenter() {
     setScLoading(true); setScResult(null);
     try {
       const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-      const prompt = `You are a medical AI assistant. A patient described their symptoms. Analyze and respond ONLY with a valid JSON object, no markdown, no explanation.
+      const prompt = `You are an expert medical AI assistant helping patients in India understand their symptoms. Be thorough, warm, and helpful like a knowledgeable doctor friend.
 
-Patient: Age ${age || "unknown"}, Gender ${gender}
-Symptoms: ${symptoms}
+Patient Details:
+- Age: ${age || "not specified"}
+- Gender: ${gender}
+- Symptoms: ${symptoms}
 
-Respond with exactly this JSON structure:
+Analyze these symptoms carefully and respond ONLY with a valid JSON object (no markdown, no backticks, no explanation outside JSON).
+
+Use this exact JSON structure:
 {
-  "possibleConditions": ["condition1", "condition2", "condition3"],
-  "recommendedSpecialist": "Doctor type",
+  "possibleConditions": ["Most likely condition", "Second possibility", "Third possibility"],
+  "recommendedSpecialist": "Specific doctor type (e.g. General Physician, Cardiologist)",
   "urgency": "low" or "medium" or "high",
-  "urgencyReason": "one sentence explanation",
-  "generalAdvice": "2-3 sentences of home care advice",
-  "redFlags": ["warning sign 1", "warning sign 2", "warning sign 3"]
+  "urgencyReason": "Clear one sentence explanation of urgency level",
+  "generalAdvice": "Write 3-4 warm, detailed sentences covering what the patient should do right now, how to manage symptoms at home, and when to expect improvement.",
+  "homeRemedies": ["Specific remedy 1 with how to use it", "Specific remedy 2 with details", "Specific remedy 3 with details"],
+  "dietTips": ["Food/drink to have and why", "Food/drink to avoid and why", "Specific tip for recovery"],
+  "restAdvice": "Detailed advice about rest, sleep position, activity restrictions — 2-3 sentences",
+  "medications": ["Safe OTC medicine 1 available in India with dosage", "Safe OTC medicine 2 if applicable"],
+  "redFlags": ["Specific warning sign 1 that needs emergency care", "Warning sign 2", "Warning sign 3"]
 }`;
 
       const res = await fetch(
@@ -93,7 +101,10 @@ Respond with exactly this JSON structure:
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.4, maxOutputTokens: 1024 }
+          }),
         }
       );
       const data = await res.json();
@@ -102,7 +113,6 @@ Respond with exactly this JSON structure:
       const parsed = JSON.parse(clean);
       setScResult(parsed);
     } catch (err) {
-      // Fallback to mock if Gemini fails
       setScResult(getMockResult(symptoms));
     }
     setScLoading(false);
@@ -213,9 +223,49 @@ Respond with exactly this JSON structure:
                   ))}
                 </div>
                 <div style={{ background:'white', borderRadius:10, border:'1px solid #e5e7eb', padding:'16px', borderLeft:'4px solid #0d9488' }}>
-                  <p style={{ fontSize:13, fontWeight:600, color:'#111827', marginBottom:8 }}>General Advice</p>
-                  <p style={{ fontSize:13, color:'#6b7280', lineHeight:1.7 }}>{scResult.generalAdvice}</p>
+                  <p style={{ fontSize:13, fontWeight:600, color:'#111827', marginBottom:8 }}>💊 General Advice</p>
+                  <p style={{ fontSize:13, color:'#6b7280', lineHeight:1.8 }}>{scResult.generalAdvice}</p>
                 </div>
+                {scResult.restAdvice && (
+                  <div style={{ background:'#f0fdfa', borderRadius:10, border:'1px solid #ccfbf1', padding:'16px' }}>
+                    <p style={{ fontSize:13, fontWeight:600, color:'#0d9488', marginBottom:8 }}>😴 Rest & Activity</p>
+                    <p style={{ fontSize:13, color:'#374151', lineHeight:1.8 }}>{scResult.restAdvice}</p>
+                  </div>
+                )}
+                {scResult.homeRemedies?.length > 0 && (
+                  <div style={{ background:'white', borderRadius:10, border:'1px solid #e5e7eb', padding:'16px' }}>
+                    <p style={{ fontSize:13, fontWeight:600, color:'#111827', marginBottom:10 }}>🌿 Home Remedies</p>
+                    {scResult.homeRemedies.map((r,i) => (
+                      <div key={i} style={{ display:'flex', gap:10, padding:'8px 0', borderBottom:i<scResult.homeRemedies.length-1?'1px solid #f3f4f6':'none' }}>
+                        <span style={{ fontSize:16, flexShrink:0 }}>•</span>
+                        <p style={{ fontSize:13, color:'#374151', lineHeight:1.7 }}>{r}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {scResult.dietTips?.length > 0 && (
+                  <div style={{ background:'#fffbeb', borderRadius:10, border:'1px solid #fde68a', padding:'16px' }}>
+                    <p style={{ fontSize:13, fontWeight:600, color:'#92400e', marginBottom:10 }}>🥗 Diet & Nutrition Tips</p>
+                    {scResult.dietTips.map((t,i) => (
+                      <div key={i} style={{ display:'flex', gap:10, padding:'6px 0', borderBottom:i<scResult.dietTips.length-1?'1px solid #fef3c7':'none' }}>
+                        <span style={{ fontSize:13, flexShrink:0, color:'#d97706' }}>→</span>
+                        <p style={{ fontSize:13, color:'#78350f', lineHeight:1.7 }}>{t}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {scResult.medications?.length > 0 && (
+                  <div style={{ background:'#eff6ff', borderRadius:10, border:'1px solid #bfdbfe', padding:'16px' }}>
+                    <p style={{ fontSize:13, fontWeight:600, color:'#1e40af', marginBottom:10 }}>💊 OTC Medicines (if needed)</p>
+                    {scResult.medications.map((m,i) => (
+                      <div key={i} style={{ display:'flex', gap:10, padding:'6px 0', borderBottom:i<scResult.medications.length-1?'1px solid #dbeafe':'none' }}>
+                        <span style={{ fontSize:13, flexShrink:0, color:'#2563eb' }}>•</span>
+                        <p style={{ fontSize:13, color:'#1e3a8a', lineHeight:1.7 }}>{m}</p>
+                      </div>
+                    ))}
+                    <p style={{ fontSize:11, color:'#6b7280', marginTop:8, fontStyle:'italic' }}>⚠️ Always consult a doctor before taking any medicine.</p>
+                  </div>
+                )}
                 {scResult.redFlags?.length>0 && (
                   <div style={{ background:'#fef2f2', borderRadius:10, border:'1px solid #fecaca', padding:'16px' }}>
                     <p style={{ fontSize:13, fontWeight:600, color:'#dc2626', marginBottom:8 }}>Seek immediate care if:</p>
