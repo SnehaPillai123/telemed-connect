@@ -1,11 +1,11 @@
-import PDFPrescription from "./pages/PDFPrescription";
-import DoctorReviews from "./pages/DoctorReviews";
-import LabReports from "./pages/LabReports";
-import AISymptomChecker from "./pages/AISymptomChecker";import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Toaster } from "react-hot-toast";
 import InsuranceCoverage from "./pages/InsuranceCoverage";
 import VideoCall from "./pages/VideoCall";
+import AppointmentCalendar from "./pages/AppointmentCalendar";
+import HealthAnalytics from "./pages/HealthAnalytics";
+import AdminPanel from "./pages/AdminPanel";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -73,6 +73,9 @@ function App() {
           <Route path="/health-center" element={<PrivateRoute patientOnly><HealthCenter /></PrivateRoute>} />
           <Route path="/nearby-hospitals" element={<PrivateRoute patientOnly><HospitalsEmergency /></PrivateRoute>} />
           <Route path="/video-call/:appointmentId" element={<PrivateRoute><VideoCall /></PrivateRoute>} />
+          <Route path="/appointment-calendar" element={<PrivateRoute><AppointmentCalendar /></PrivateRoute>} />
+          <Route path="/health-analytics" element={<PrivateRoute patientOnly><HealthAnalytics /></PrivateRoute>} />
+          <Route path="/admin" element={<PrivateRoute><AdminPanel /></PrivateRoute>} />
           {/* Old routes redirect to new combined pages */}
           <Route path="/symptom-checker" element={<Navigate to="/health-center" />} />
           <Route path="/ask-before-book" element={<Navigate to="/health-center" />} />
@@ -80,10 +83,7 @@ function App() {
           <Route path="/health-records" element={<Navigate to="/my-appointments" />} />
           <Route path="/emergency" element={<Navigate to="/nearby-hospitals" />} />
           <Route path="*" element={<Navigate to="/" />} />
-        <Route path="/insurance" element={<PrivateRoute><InsuranceCoverage /></PrivateRoute>} /><Route path="/prescription-pdf/:prescriptionId" element={<PrivateRoute><PDFPrescription /></PrivateRoute>} />
-<Route path="/doctor-reviews/:doctorId" element={<PrivateRoute><DoctorReviews /></PrivateRoute>} />
-<Route path="/lab-reports" element={<PrivateRoute patientOnly><LabReports /></PrivateRoute>} />
-<Route path="/ai-symptom-checker" element={<PrivateRoute><AISymptomChecker /></PrivateRoute>} /></Routes>
+        <Route path="/insurance" element={<PrivateRoute><InsuranceCoverage /></PrivateRoute>} /></Routes>
       </Router>
     </AuthProvider>
   );
