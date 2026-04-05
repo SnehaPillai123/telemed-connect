@@ -72,33 +72,37 @@ export default function HealthCenter() {
     if (!symptoms.trim()) return;
     setScLoading(true); setScResult(null);
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true"
-        },
-        body: JSON.stringify({
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 1024,
-          messages: [{
-            role: "user",
-            content: "You are a medical AI for patients in India. Analyze symptoms and return ONLY valid JSON, no extra text. Patient: Age " + (age||"unknown") + ", Gender: " + gender + ", Symptoms: " + symptoms + ". Return JSON with: possibleConditions (array of 3 objects with name, probability 0-100, description), recommendedSpecialist, urgency (low/medium/high), urgencyReason, triageLevel (Self-care/Consultation/Emergency), generalAdvice (3-4 sentences), homeRemedies (array of 3), dietTips (array of 3), restAdvice, medications (array of 2 OTC medicines with dosage), redFlags (array of 3)"
-          }]
-        })
-      });
-      const data = await response.json();
-      if (data.error) throw new Error(data.error.message);
-      const text = data.content?.[0]?.text || "";
-      const s = text.indexOf("{"); const e = text.lastIndexOf("}");
-      if (s !== -1 && e !== -1) {
-        const parsed = JSON.parse(text.slice(s, e + 1));
-        if (parsed.possibleConditions) { setScResult(parsed); }
-        else { setScResult(getMockResult(symptoms)); }
-      } else { setScResult(getMockResult(symptoms)); }
-    } catch(err) {
-      console.error("AI Error:", err.message);
+      const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+      const prompt = `You are a medical AI assistant. A patient described their symptoms. Analyze and respond ONLY with a valid JSON object, no markdown, no explanation.
+
+Patient: Age ${age || "unknown"}, Gender ${gender}
+Symptoms: ${symptoms}
+
+Respond with exactly this JSON structure:
+{
+  "possibleConditions": ["condition1", "condition2", "condition3"],
+  "recommendedSpecialist": "Doctor type",
+  "urgency": "low" or "medium" or "high",
+  "urgencyReason": "one sentence explanation",
+  "generalAdvice": "2-3 sentences of home care advice",
+  "redFlags": ["warning sign 1", "warning sign 2", "warning sign 3"]
+}`;
+
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        }
+      );
+      const data = await res.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const clean = text.replace(/```json|```/g, "").trim();
+      const parsed = JSON.parse(clean);
+      setScResult(parsed);
+    } catch (err) {
+      // Fallback to mock if Gemini fails
       setScResult(getMockResult(symptoms));
     }
     setScLoading(false);
@@ -181,8 +185,7 @@ export default function HealthCenter() {
             {scLoading && (
               <div style={{ background:'white', borderRadius:12, border:'1px solid #e5e7eb', padding:'60px', display:'flex', flexDirection:'column', alignItems:'center', gap:14 }}>
                 <div style={{ width:36, height:36, border:'3px solid #e5e7eb', borderTopColor:'#0d9488', borderRadius:'50%', animation:'spin 0.8s linear infinite' }}/>
-                <p style={{ color:'#6b7280', fontSize:14 }}>Analyzing with AI...</p>
-                <p style={{ color:'#9ca3af', fontSize:12, marginTop:4 }}>Powered by Llama AI via OpenRouter</p>
+                <p style={{ color:'#6b7280', fontSize:14 }}>Analyzing your symptoms...</p>
               </div>
             )}
             {scResult && !scLoading && (
@@ -201,88 +204,18 @@ export default function HealthCenter() {
                   </button>
                 </div>
                 <div style={{ background:'white', borderRadius:10, border:'1px solid #e5e7eb', padding:'16px' }}>
-                  <p style={{ fontSize:13, fontWeight:600, color:'#111827', marginBottom:12 }}>🔬 Possible Conditions</p>
-                  {scResult.possibleConditions?.map((c,i) => {
-                    const prob = typeof c === 'object' ? c.probability : (85 - i*20);
-                    const name = typeof c === 'object' ? c.name : c;
-                    const desc = typeof c === 'object' ? c.description : '';
-                    const color = prob>=70?'#dc2626':prob>=50?'#d97706':'#0d9488';
-                    return (
-                      <div key={i} style={{ marginBottom:12, padding:'10px 12px', background:'#f9fafb', borderRadius:8, border:'1px solid #f3f4f6' }}>
-                        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
-                          <p style={{ fontSize:13, fontWeight:700, color:'#111827' }}>{name}</p>
-                          <span style={{ fontSize:13, fontWeight:800, color:color }}>{prob}%</span>
-                        </div>
-                        <div style={{ height:7, background:'#e5e7eb', borderRadius:4, overflow:'hidden', marginBottom:6 }}>
-                          <div style={{ width:prob+'%', height:'100%', background:color, borderRadius:4, transition:'width 0.8s ease' }}/>
-                        </div>
-                        {desc && <p style={{ fontSize:11, color:'#6b7280', lineHeight:1.5 }}>{desc}</p>}
-                      </div>
-                    );
-                  })}
+                  <p style={{ fontSize:13, fontWeight:600, color:'#111827', marginBottom:10 }}>Possible Conditions</p>
+                  {scResult.possibleConditions?.map((c,i) => (
+                    <div key={i} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 0', borderBottom:i<scResult.possibleConditions.length-1?'1px solid #f3f4f6':'none' }}>
+                      <div style={{ width:6, height:6, borderRadius:'50%', background:'#0d9488', flexShrink:0 }}/>
+                      <p style={{ fontSize:13, color:'#374151' }}>{c}</p>
+                    </div>
+                  ))}
                 </div>
-                {scResult.triageLevel && (
-                  <div style={{ background: scResult.triageLevel==='Emergency'?'#fef2f2':scResult.triageLevel==='Consultation'?'#fffbeb':'#f0fdf4', borderRadius:10, border:'1px solid '+(scResult.triageLevel==='Emergency'?'#fecaca':scResult.triageLevel==='Consultation'?'#fde68a':'#bbf7d0'), padding:'12px 16px' }}>
-                    <p style={{ fontSize:13, fontWeight:700, color: scResult.triageLevel==='Emergency'?'#dc2626':scResult.triageLevel==='Consultation'?'#d97706':'#16a34a' }}>
-                      🏥 Triage Level: {scResult.triageLevel}
-                    </p>
-                  </div>
-                )}
                 <div style={{ background:'white', borderRadius:10, border:'1px solid #e5e7eb', padding:'16px', borderLeft:'4px solid #0d9488' }}>
-                  <p style={{ fontSize:13, fontWeight:600, color:'#111827', marginBottom:8 }}>💊 General Advice</p>
-                  <p style={{ fontSize:13, color:'#6b7280', lineHeight:1.8 }}>{scResult.generalAdvice}</p>
+                  <p style={{ fontSize:13, fontWeight:600, color:'#111827', marginBottom:8 }}>General Advice</p>
+                  <p style={{ fontSize:13, color:'#6b7280', lineHeight:1.7 }}>{scResult.generalAdvice}</p>
                 </div>
-                {scResult.restAdvice && (
-                  <div style={{ background:'#f0fdfa', borderRadius:10, border:'1px solid #ccfbf1', padding:'16px' }}>
-                    <p style={{ fontSize:13, fontWeight:600, color:'#0d9488', marginBottom:8 }}>😴 Rest & Activity</p>
-                    <p style={{ fontSize:13, color:'#374151', lineHeight:1.8 }}>{scResult.restAdvice}</p>
-                  </div>
-                )}
-                {scResult.homeRemedies?.length > 0 && (
-                  <div style={{ background:'white', borderRadius:10, border:'1px solid #e5e7eb', padding:'16px' }}>
-                    <p style={{ fontSize:13, fontWeight:600, color:'#111827', marginBottom:10 }}>🌿 Home Remedies</p>
-                    {scResult.homeRemedies.map((r,i) => (
-                      <div key={i} style={{ display:'flex', gap:10, padding:'8px 0', borderBottom:i<scResult.homeRemedies.length-1?'1px solid #f3f4f6':'none' }}>
-                        <span style={{ fontSize:16, flexShrink:0 }}>•</span>
-                        <p style={{ fontSize:13, color:'#374151', lineHeight:1.7 }}>{r}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {scResult.dietTips?.length > 0 && (
-                  <div style={{ background:'#fffbeb', borderRadius:10, border:'1px solid #fde68a', padding:'16px' }}>
-                    <p style={{ fontSize:13, fontWeight:600, color:'#92400e', marginBottom:10 }}>🥗 Diet & Nutrition Tips</p>
-                    {scResult.dietTips.map((t,i) => (
-                      <div key={i} style={{ display:'flex', gap:10, padding:'6px 0', borderBottom:i<scResult.dietTips.length-1?'1px solid #fef3c7':'none' }}>
-                        <span style={{ fontSize:13, flexShrink:0, color:'#d97706' }}>→</span>
-                        <p style={{ fontSize:13, color:'#78350f', lineHeight:1.7 }}>{t}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {scResult.medications?.length > 0 && (
-                  <div style={{ background:'#eff6ff', borderRadius:10, border:'1px solid #bfdbfe', padding:'16px' }}>
-                    <p style={{ fontSize:13, fontWeight:600, color:'#1e40af', marginBottom:10 }}>💊 OTC Medicines (if needed)</p>
-                    {scResult.medications.map((m,i) => (
-                      <div key={i} style={{ display:'flex', gap:10, padding:'6px 0', borderBottom:i<scResult.medications.length-1?'1px solid #dbeafe':'none' }}>
-                        <span style={{ fontSize:13, flexShrink:0, color:'#2563eb' }}>•</span>
-                        <p style={{ fontSize:13, color:'#1e3a8a', lineHeight:1.7 }}>{m}</p>
-                      </div>
-                    ))}
-                    <p style={{ fontSize:11, color:'#6b7280', marginTop:8, fontStyle:'italic' }}>⚠️ Always consult a doctor before taking any medicine.</p>
-                  </div>
-                )}
-                {scResult.riskFactors?.length > 0 && (
-                  <div style={{ background:'#f5f3ff', borderRadius:10, border:'1px solid #ddd6fe', padding:'16px' }}>
-                    <p style={{ fontSize:13, fontWeight:600, color:'#7c3aed', marginBottom:10 }}>⚠️ Risk Factors For You</p>
-                    {scResult.riskFactors.map((r,i) => (
-                      <div key={i} style={{ display:'flex', gap:10, padding:'6px 0', borderBottom:i<scResult.riskFactors.length-1?'1px solid #ede9fe':'none' }}>
-                        <span style={{ color:'#7c3aed', flexShrink:0 }}>•</span>
-                        <p style={{ fontSize:13, color:'#5b21b6', lineHeight:1.7 }}>{r}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
                 {scResult.redFlags?.length>0 && (
                   <div style={{ background:'#fef2f2', borderRadius:10, border:'1px solid #fecaca', padding:'16px' }}>
                     <p style={{ fontSize:13, fontWeight:600, color:'#dc2626', marginBottom:8 }}>Seek immediate care if:</p>
