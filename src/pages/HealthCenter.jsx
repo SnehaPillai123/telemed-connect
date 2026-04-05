@@ -72,39 +72,17 @@ export default function HealthCenter() {
     if (!symptoms.trim()) return;
     setScLoading(true); setScResult(null);
     try {
-      const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-      const prompt = `You are a medical AI assistant. A patient described their symptoms. Analyze and respond ONLY with a valid JSON object, no markdown, no explanation.
-
-Patient: Age ${age || "unknown"}, Gender ${gender}
-Symptoms: ${symptoms}
-
-Respond with exactly this JSON structure:
-{
-  "possibleConditions": ["condition1", "condition2", "condition3"],
-  "recommendedSpecialist": "Doctor type",
-  "urgency": "low" or "medium" or "high",
-  "urgencyReason": "one sentence explanation",
-  "generalAdvice": "2-3 sentences of home care advice",
-  "redFlags": ["warning sign 1", "warning sign 2", "warning sign 3"]
-}`;
-
-      const res = await fetch(
-        `https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
-        }
-      );
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {"Content-Type": "application/json", "Authorization": "Bearer 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"},
+        body: JSON.stringify({model: "meta-llama/llama-3.2-3b-instruct:free", messages: [{role: "system", content: "You are medical AI for India. Return ONLY JSON with fields: possibleConditions, recommendedSpecialist, urgency, urgencyReason, generalAdvice, homeRemedies, dietTips, restAdvice, medications, redFlags"}, {role: "user", content: "Age: " + (age||"unknown") + ", Gender: " + gender + ", Symptoms: " + symptoms}]})
+      });
       const data = await res.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-      const clean = text.replace(/```json|```/g, "").trim();
-      const parsed = JSON.parse(clean);
-      setScResult(parsed);
-    } catch (err) {
-      // Fallback to mock if Gemini fails
-      setScResult(getMockResult(symptoms));
-    }
+      const text = data.choices?.[0]?.message?.content || "";
+      const s = text.indexOf("{"); const e = text.lastIndexOf("}");
+      if(s>-1&&e>-1){const p=JSON.parse(text.slice(s,e+1)); if(p.possibleConditions){setScResult(p);}else{setScResult(getMockResult(symptoms));}}
+      else{setScResult(getMockResult(symptoms));}
+    } catch(e){setScResult(getMockResult(symptoms));}
     setScLoading(false);
   };
 
