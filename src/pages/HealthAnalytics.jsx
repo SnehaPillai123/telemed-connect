@@ -67,7 +67,7 @@ export default function HealthAnalytics() {
       <style>{`@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}`}</style>
 
       {/* Top stats */}
-      <div style={{display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:20}}>
+      <div style={{display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:20}} className="analytics-stats">
         {[
           {label:"Total Visits", value:appointments.length, icon:"🏥", color:"#0d9488", bg:"#f0fdfa"},
           {label:"Prescriptions", value:prescriptions.length, icon:"💊", color:"#2563eb", bg:"#eff6ff"},
@@ -83,7 +83,7 @@ export default function HealthAnalytics() {
       </div>
 
       {/* Appointment breakdown donut-style */}
-      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:16}}>
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:16, marginBottom:16}} className="analytics-grid">
         <div style={{background:"white", borderRadius:14, border:"1px solid #e5e7eb", padding:20}}>
           <p style={{fontSize:13, fontWeight:700, color:"#111827", marginBottom:16}}>📊 Appointment Breakdown</p>
           {[
@@ -118,7 +118,7 @@ export default function HealthAnalytics() {
 
       {/* Vitals Charts */}
       <p style={{fontSize:14, fontWeight:700, color:"#111827", marginBottom:12}}>📈 Health Vitals Trend</p>
-      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:16, marginBottom:16}}>
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:16, marginBottom:16}} className="analytics-charts">
         <BarChart data={weightData} color="#0d9488" label="⚖️ Weight (kg)" unit=""/>
         <BarChart data={glucoseData} color="#2563eb" label="🩸 Glucose (mg/dL)" unit=""/>
         <BarChart data={bpSystolic} color="#dc2626" label="❤️ Systolic BP (mmHg)" unit=""/>

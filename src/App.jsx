@@ -21,6 +21,9 @@ import Prescription from "./pages/Prescription";
 import Chat from "./pages/Chat";
 import HealthCenter from "./pages/HealthCenter";
 import HospitalsEmergency from "./pages/HospitalsEmergency";
+import LabReports from "./pages/LabReports";
+import PDFPrescription from "./pages/PDFPrescription";
+import DoctorReviews from "./pages/DoctorReviews";
 
 function PrivateRoute({ children, doctorOnly = false, patientOnly = false }) {
   const { user, role, loading } = useAuth();
@@ -73,6 +76,9 @@ function App() {
           <Route path="/health-center" element={<PrivateRoute patientOnly><HealthCenter /></PrivateRoute>} />
           <Route path="/nearby-hospitals" element={<PrivateRoute patientOnly><HospitalsEmergency /></PrivateRoute>} />
           <Route path="/video-call/:appointmentId" element={<PrivateRoute><VideoCall /></PrivateRoute>} />
+          <Route path="/lab-reports" element={<PrivateRoute patientOnly><LabReports /></PrivateRoute>} />
+          <Route path="/prescription-pdf/:prescriptionId" element={<PrivateRoute><PDFPrescription /></PrivateRoute>} />
+          <Route path="/doctor-reviews/:doctorId" element={<PrivateRoute patientOnly><DoctorReviews /></PrivateRoute>} />
           <Route path="/appointment-calendar" element={<PrivateRoute><AppointmentCalendar /></PrivateRoute>} />
           <Route path="/health-analytics" element={<PrivateRoute patientOnly><HealthAnalytics /></PrivateRoute>} />
           <Route path="/admin" element={<PrivateRoute><AdminPanel /></PrivateRoute>} />

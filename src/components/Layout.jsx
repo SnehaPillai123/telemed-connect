@@ -231,6 +231,11 @@ export default function Layout({ children, title, subtitle }) {
           .book-grid    { grid-template-columns:1fr !important; }
           .rx-stats-grid { grid-template-columns:repeat(2,1fr) !important; }
 
+          /* ── ANALYTICS mobile fix ── */
+          .analytics-stats  { grid-template-columns:repeat(2,1fr) !important; gap:8px !important; }
+          .analytics-grid   { grid-template-columns:1fr !important; }
+          .analytics-charts { grid-template-columns:1fr !important; gap:10px !important; }
+
           /* ── CALENDAR mobile fix ── */
           .cal-mobile-wrap { display:flex; flex-direction:column; gap:12px; }
           .cal-grid { grid-template-columns:1fr !important; }
