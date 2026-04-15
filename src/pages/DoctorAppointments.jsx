@@ -38,7 +38,7 @@ export default function DoctorAppointments() {
       const updateData = { status };
       if (status === "confirmed") {
         const roomCode = "telemed-" + id.slice(0, 6) + "-" + Math.random().toString(36).slice(2, 6);
-        updateData.meetLink = "https://meet.google.com/new";
+        // Video call uses Jitsi via /video-call/:appointmentId
         updateData.roomCode = roomCode;
       }
       await updateDoc(doc(db, "appointments", id), updateData);
@@ -79,8 +79,8 @@ export default function DoctorAppointments() {
         .apt-card:hover { border-color: #0d9488; box-shadow: 0 4px 14px rgba(13,148,136,0.07); }
         .action-btn { padding: 7px 14px; border: none; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; font-family: Inter, sans-serif; display: inline-flex; align-items: center; gap: 5px; }
         .action-btn:hover { transform: translateY(-1px); }
-        .meet-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; background: #0d9488; color: white; border-radius: 8px; font-size: 12px; font-weight: 600; text-decoration: none; transition: all 0.15s; border: none; cursor: pointer; }
-        .meet-btn:hover { background: #0f766e; transform: translateY(-1px); }
+        .meet-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; background: #1a73e8; color: white; border-radius: 8px; font-size: 12px; font-weight: 600; text-decoration: none; transition: all 0.15s; }
+        .meet-btn:hover { background: #1557b0; transform: translateY(-1px); }
         .chat-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; background: #7c3aed; color: white; border-radius: 8px; font-size: 12px; font-weight: 600; border: none; cursor: pointer; font-family: Inter, sans-serif; transition: all 0.15s; }
         .chat-btn:hover { background: #6d28d9; transform: translateY(-1px); }
         .action-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f3f4f6; align-items: center; }
@@ -192,10 +192,10 @@ export default function DoctorAppointments() {
 
                 {apt.status === 'confirmed' && (
                   <button className="meet-btn" onClick={() => navigate("/video-call/" + apt.id)}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="white">
-                      <path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z"/>
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24">
+                      <path d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" stroke="white" strokeWidth="1.8" strokeLinecap="round"/>
                     </svg>
-                    🎥 Join Video Call
+                    Join Video Call
                   </button>
                 )}
 

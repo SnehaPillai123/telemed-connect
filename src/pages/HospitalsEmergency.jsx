@@ -95,6 +95,8 @@ export default function HospitalsEmergency() {
         .hosp-stat-val { font-size: 18px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
         .hosp-stat-lbl { font-size: 11px; color: #6b7280; }
 
+        .emergency-grid.grid-2col { display: grid; grid-template-columns: 1fr 300px; gap: 20px; align-items: start; }
+
         @media screen and (max-width: 599px) {
           .hosp-stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
           .hosp-stat-box { padding: 10px !important; }

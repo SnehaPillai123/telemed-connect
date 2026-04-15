@@ -4,196 +4,225 @@ import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
 import Layout from "../components/Layout";
 import { useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
 
-const ADMIN_EMAIL = "snehahp10@gmail.com"; // Set your admin email
+const ADMIN_EMAIL = "snehahp10@gmail.com"; // Change to your admin email
 
 export default function AdminPanel() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("overview");
   const [doctors, setDoctors] = useState([]);
   const [patients, setPatients] = useState([]);
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("doctors");
 
   // Check admin access
   useEffect(() => {
     if (user?.email !== ADMIN_EMAIL) {
-      toast.error("Access denied — Admin only");
-      navigate("/");
+      navigate("/patient-dashboard");
+      return;
     }
+    fetchAll();
   }, [user]);
 
-  useEffect(() => {
-    const fetchAll = async () => {
+  const fetchAll = async () => {
+    try {
       const [dSnap, pSnap, aSnap] = await Promise.all([
         getDocs(collection(db, "doctors")),
         getDocs(collection(db, "patients")),
         getDocs(collection(db, "appointments")),
       ]);
-      setDoctors(dSnap.docs.map(d=>({id:d.id,...d.data()})));
-      setPatients(pSnap.docs.map(d=>({id:d.id,...d.data()})));
-      setAppointments(aSnap.docs.map(d=>({id:d.id,...d.data()})));
-      setLoading(false);
-    };
-    fetchAll();
-  }, []);
-
-  const toggleDoctorApproval = async (doctorId, current) => {
-    await updateDoc(doc(db,"doctors",doctorId), {approved: !current});
-    setDoctors(prev => prev.map(d => d.id===doctorId ? {...d, approved:!current} : d));
-    toast.success(current ? "Doctor suspended" : "Doctor approved!");
+      setDoctors(dSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+      setPatients(pSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const apts = aSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      apts.sort((a,b) => (b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+      setAppointments(apts);
+    } catch(e) { console.error(e); }
+    setLoading(false);
   };
 
+  const toggleDoctorApproval = async (doctorId, current) => {
+    try {
+      await updateDoc(doc(db, "doctors", doctorId), { approved: !current });
+      setDoctors(prev => prev.map(d => d.id === doctorId ? { ...d, approved: !current } : d));
+    } catch(e) { console.error(e); }
+  };
+
+  if (user?.email !== ADMIN_EMAIL) return null;
+
   const stats = [
-    {label:"Total Doctors", value:doctors.length, icon:"👨‍⚕️", color:"#0d9488", bg:"#f0fdfa"},
-    {label:"Total Patients", value:patients.length, icon:"👥", color:"#2563eb", bg:"#eff6ff"},
-    {label:"Total Appointments", value:appointments.length, icon:"📅", color:"#d97706", bg:"#fffbeb"},
-    {label:"Completed", value:appointments.filter(a=>a.status==="completed").length, icon:"✅", color:"#16a34a", bg:"#f0fdf4"},
+    { l:"Total Doctors", v:doctors.length, c:"#0d9488", bg:"#f0fdfa" },
+    { l:"Total Patients", v:patients.length, c:"#2563eb", bg:"#eff6ff" },
+    { l:"Total Appointments", v:appointments.length, c:"#7c3aed", bg:"#f5f3ff" },
+    { l:"Pending Approvals", v:doctors.filter(d=>!d.approved).length, c:"#dc2626", bg:"#fef2f2" },
   ];
 
   return (
-    <Layout title="Admin Panel" subtitle="Super Admin">
+    <Layout title="Admin Panel" subtitle="Platform Management">
       <style>{`
-        .tab-btn{padding:9px 18px;border:none;background:transparent;font-size:13px;font-weight:600;color:#6b7280;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;}
-        .tab-btn.active{color:#0d9488;border-bottom-color:#0d9488;}
-        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+        .fade-in{animation:fadeIn 0.3s ease forwards}
+        .admin-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+        .admin-table{width:100%;border-collapse:collapse}
+        .admin-table th{padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid #e5e7eb;background:#f9fafb}
+        .admin-table td{padding:12px 14px;font-size:13px;color:#374151;border-bottom:1px solid #f3f4f6}
+        .admin-table tr:hover td{background:#fafafa}
+        @media(max-width:599px){.admin-stats{grid-template-columns:repeat(2,1fr)!important}.admin-table th,.admin-table td{padding:8px 10px;font-size:12px}}
       `}</style>
 
       {/* Admin badge */}
-      <div style={{background:"linear-gradient(135deg,#1e1b4b,#312e81)", borderRadius:14, padding:"16px 20px", marginBottom:20, display:"flex", alignItems:"center", gap:12}}>
-        <span style={{fontSize:32}}>🛡️</span>
-        <div>
-          <p style={{fontSize:16, fontWeight:800, color:"white"}}>Super Admin Dashboard</p>
-          <p style={{fontSize:12, color:"rgba(255,255,255,0.7)"}}>Full system control — manage doctors, patients, appointments</p>
+      <div style={{ background:"linear-gradient(135deg,#111827,#1f2937)", borderRadius:12, padding:"14px 20px", marginBottom:20, display:"flex", alignItems:"center", gap:12 }}>
+        <div style={{ width:40, height:40, borderRadius:10, background:"rgba(255,255,255,0.1)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="white" strokeWidth="1.8" strokeLinecap="round"/></svg>
         </div>
+        <div>
+          <p style={{ fontSize:15, fontWeight:700, color:"white" }}>Admin Panel</p>
+          <p style={{ fontSize:12, color:"rgba(255,255,255,0.6)" }}>Logged in as {user?.email}</p>
+        </div>
+        <span style={{ marginLeft:"auto", fontSize:11, fontWeight:700, color:"#0d9488", background:"rgba(13,148,136,0.2)", padding:"4px 12px", borderRadius:20 }}>SUPER ADMIN</span>
       </div>
 
       {/* Stats */}
-      <div style={{display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12, marginBottom:20}}>
-        {stats.map((s,i)=>(
-          <div key={i} style={{background:s.bg, borderRadius:14, border:"1px solid #e5e7eb", padding:16, textAlign:"center"}}>
-            <div style={{fontSize:28, marginBottom:6}}>{s.icon}</div>
-            <p style={{fontSize:28, fontWeight:800, color:s.color, lineHeight:1}}>{s.value}</p>
-            <p style={{fontSize:11, color:"#6b7280", marginTop:4}}>{s.label}</p>
+      <div className="admin-stats">
+        {stats.map((s,i) => (
+          <div key={i} style={{ background:s.bg, borderRadius:10, padding:"14px", border:"1px solid #e5e7eb", textAlign:"center" }}>
+            <p style={{ fontSize:24, fontWeight:800, color:s.c, lineHeight:1, marginBottom:4 }}>{loading?"—":s.v}</p>
+            <p style={{ fontSize:11, color:"#6b7280" }}>{s.l}</p>
           </div>
         ))}
       </div>
 
       {/* Tabs */}
-      <div style={{display:"flex", borderBottom:"1px solid #e5e7eb", marginBottom:20}}>
-        {["overview","doctors","patients","appointments"].map(t=>(
-          <button key={t} className={`tab-btn ${activeTab===t?"active":""}`} onClick={()=>setActiveTab(t)}>
-            {t.charAt(0).toUpperCase()+t.slice(1)}
-          </button>
-        ))}
+      <div className="tab-bar">
+        <button className={"tab-btn "+(activeTab==="doctors"?"active":"")} onClick={()=>setActiveTab("doctors")}>
+          👨‍⚕️ Doctors ({doctors.length})
+        </button>
+        <button className={"tab-btn "+(activeTab==="patients"?"active":"")} onClick={()=>setActiveTab("patients")}>
+          👤 Patients ({patients.length})
+        </button>
+        <button className={"tab-btn "+(activeTab==="appointments"?"active":"")} onClick={()=>setActiveTab("appointments")}>
+          📅 Appointments ({appointments.length})
+        </button>
       </div>
 
-      {/* Overview */}
-      {activeTab==="overview" && (
-        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:16}}>
-          <div style={{background:"white", borderRadius:14, border:"1px solid #e5e7eb", padding:20}}>
-            <p style={{fontSize:13, fontWeight:700, color:"#111827", marginBottom:12}}>📊 Appointment Status</p>
-            {[
-              {label:"Pending", count:appointments.filter(a=>a.status==="pending").length, color:"#f59e0b"},
-              {label:"Confirmed", count:appointments.filter(a=>a.status==="confirmed").length, color:"#0d9488"},
-              {label:"Completed", count:appointments.filter(a=>a.status==="completed").length, color:"#16a34a"},
-              {label:"Cancelled", count:appointments.filter(a=>a.status==="cancelled").length, color:"#ef4444"},
-            ].map((s,i)=>(
-              <div key={i} style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 0", borderBottom:i<3?"1px solid #f3f4f6":"none"}}>
-                <div style={{display:"flex", alignItems:"center", gap:8}}>
-                  <span style={{width:8, height:8, borderRadius:"50%", background:s.color, display:"inline-block"}}/>
-                  <span style={{fontSize:13, color:"#374151"}}>{s.label}</span>
-                </div>
-                <span style={{fontSize:16, fontWeight:700, color:s.color}}>{s.count}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{background:"white", borderRadius:14, border:"1px solid #e5e7eb", padding:20}}>
-            <p style={{fontSize:13, fontWeight:700, color:"#111827", marginBottom:12}}>👨‍⚕️ Recent Doctors</p>
-            {doctors.slice(0,5).map((d,i)=>(
-              <div key={i} style={{display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 0", borderBottom:i<4?"1px solid #f3f4f6":"none"}}>
-                <div>
-                  <p style={{fontSize:13, fontWeight:600, color:"#111827"}}>Dr. {d.fullName}</p>
-                  <p style={{fontSize:11, color:"#6b7280"}}>{d.specialization}</p>
-                </div>
-                <span style={{fontSize:11, fontWeight:600, color:d.approved!==false?"#16a34a":"#f59e0b", background:d.approved!==false?"#f0fdf4":"#fffbeb", padding:"2px 8px", borderRadius:20}}>
-                  {d.approved!==false?"Active":"Pending"}
-                </span>
-              </div>
-            ))}
-          </div>
+      {loading && (
+        <div style={{ display:"flex", justifyContent:"center", padding:"60px 0" }}>
+          <div style={{ width:30, height:30, border:"3px solid #e5e7eb", borderTopColor:"#0d9488", borderRadius:"50%", animation:"spin 0.8s linear infinite" }}/>
         </div>
       )}
 
-      {/* Doctors tab */}
-      {activeTab==="doctors" && (
-        <div style={{background:"white", borderRadius:14, border:"1px solid #e5e7eb", overflow:"hidden"}}>
-          <div style={{padding:"14px 20px", background:"#f9fafb", borderBottom:"1px solid #e5e7eb"}}>
-            <p style={{fontSize:13, fontWeight:700, color:"#111827"}}>{doctors.length} Registered Doctors</p>
-          </div>
-          {doctors.map((d,i)=>(
-            <div key={d.id} style={{display:"flex", alignItems:"center", gap:14, padding:"14px 20px", borderBottom:i<doctors.length-1?"1px solid #f3f4f6":"none"}}>
-              <div style={{width:40, height:40, borderRadius:10, background:"#f0fdfa", border:"1px solid #ccfbf1", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                <span style={{fontSize:12, fontWeight:700, color:"#0d9488"}}>{d.fullName?.split(" ").map(n=>n[0]).join("").slice(0,2)}</span>
-              </div>
-              <div style={{flex:1}}>
-                <p style={{fontSize:14, fontWeight:700, color:"#111827"}}>Dr. {d.fullName}</p>
-                <p style={{fontSize:12, color:"#6b7280"}}>{d.specialization} · ₹{d.consultationFee} · {d.experience} yrs exp</p>
-                <p style={{fontSize:11, color:"#9ca3af"}}>{d.email}</p>
-              </div>
-              <button onClick={()=>toggleDoctorApproval(d.id, d.approved!==false)}
-                style={{padding:"7px 14px", background:d.approved!==false?"#fef2f2":"#f0fdf4", color:d.approved!==false?"#dc2626":"#16a34a", border:`1px solid ${d.approved!==false?"#fecaca":"#bbf7d0"}`, borderRadius:8, fontSize:12, fontWeight:600, cursor:"pointer"}}>
-                {d.approved!==false?"Suspend":"Approve"}
-              </button>
-            </div>
-          ))}
+      {/* DOCTORS TAB */}
+      {!loading && activeTab === "doctors" && (
+        <div style={{ background:"white", borderRadius:12, border:"1px solid #e5e7eb", overflow:"auto" }}>
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Doctor</th>
+                <th>Specialization</th>
+                <th>Experience</th>
+                <th>Fee</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {doctors.map((d,i) => (
+                <tr key={d.id} className="fade-in" style={{ animationDelay:i*0.03+"s", opacity:0 }}>
+                  <td>
+                    <div style={{ display:"flex", gap:10, alignItems:"center" }}>
+                      <div style={{ width:32, height:32, borderRadius:8, background:"#f0fdfa", border:"1px solid #ccfbf1", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                        <span style={{ fontSize:10, fontWeight:700, color:"#0d9488" }}>{(d.fullName||"").split(" ").map(n=>n[0]).join("").toUpperCase().slice(0,2)}</span>
+                      </div>
+                      <div>
+                        <p style={{ fontSize:13, fontWeight:600, color:"#111827" }}>Dr. {d.fullName}</p>
+                        <p style={{ fontSize:11, color:"#9ca3af" }}>{d.email||"—"}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{d.specialization||"—"}</td>
+                  <td>{d.experience||"—"} yrs</td>
+                  <td>₹{d.consultationFee||"—"}</td>
+                  <td>
+                    <span style={{ fontSize:11, fontWeight:600, color:d.approved!==false?"#16a34a":"#d97706", background:d.approved!==false?"#f0fdf4":"#fffbeb", padding:"3px 9px", borderRadius:20 }}>
+                      {d.approved!==false?"Approved":"Pending"}
+                    </span>
+                  </td>
+                  <td>
+                    <button onClick={()=>toggleDoctorApproval(d.id, d.approved!==false)}
+                      style={{ padding:"5px 12px", background:d.approved!==false?"#fef2f2":"#f0fdf4", color:d.approved!==false?"#dc2626":"#16a34a", border:"1px solid "+(d.approved!==false?"#fecaca":"#bbf7d0"), borderRadius:7, fontSize:12, fontWeight:600, cursor:"pointer", fontFamily:"Inter,sans-serif" }}>
+                      {d.approved!==false?"Suspend":"Approve"}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {doctors.length===0 && <tr><td colSpan={6} style={{ textAlign:"center", padding:"40px", color:"#9ca3af" }}>No doctors registered yet</td></tr>}
+            </tbody>
+          </table>
         </div>
       )}
 
-      {/* Patients tab */}
-      {activeTab==="patients" && (
-        <div style={{background:"white", borderRadius:14, border:"1px solid #e5e7eb", overflow:"hidden"}}>
-          <div style={{padding:"14px 20px", background:"#f9fafb", borderBottom:"1px solid #e5e7eb"}}>
-            <p style={{fontSize:13, fontWeight:700, color:"#111827"}}>{patients.length} Registered Patients</p>
-          </div>
-          {patients.map((p,i)=>(
-            <div key={p.id} style={{display:"flex", alignItems:"center", gap:14, padding:"14px 20px", borderBottom:i<patients.length-1?"1px solid #f3f4f6":"none"}}>
-              <div style={{width:40, height:40, borderRadius:"50%", background:"#eff6ff", border:"1px solid #bfdbfe", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0}}>
-                <span style={{fontSize:12, fontWeight:700, color:"#2563eb"}}>{p.fullName?.split(" ").map(n=>n[0]).join("").slice(0,2)||"?"}</span>
-              </div>
-              <div style={{flex:1}}>
-                <p style={{fontSize:14, fontWeight:700, color:"#111827"}}>{p.fullName||"Unknown"}</p>
-                <p style={{fontSize:12, color:"#6b7280"}}>{p.email}</p>
-                <p style={{fontSize:11, color:"#9ca3af"}}>{p.bloodGroup||"—"} · {p.phone||"—"}</p>
-              </div>
-              <span style={{fontSize:11, fontWeight:600, color:"#0d9488", background:"#f0fdfa", padding:"3px 10px", borderRadius:20}}>Active</span>
-            </div>
-          ))}
+      {/* PATIENTS TAB */}
+      {!loading && activeTab === "patients" && (
+        <div style={{ background:"white", borderRadius:12, border:"1px solid #e5e7eb", overflow:"auto" }}>
+          <table className="admin-table">
+            <thead>
+              <tr><th>Patient</th><th>Blood Group</th><th>Phone</th><th>Joined</th></tr>
+            </thead>
+            <tbody>
+              {patients.map((p,i) => (
+                <tr key={p.id} className="fade-in" style={{ animationDelay:i*0.03+"s", opacity:0 }}>
+                  <td>
+                    <div style={{ display:"flex", gap:10, alignItems:"center" }}>
+                      <div style={{ width:32, height:32, borderRadius:8, background:"#eff6ff", border:"1px solid #bfdbfe", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+                        <span style={{ fontSize:10, fontWeight:700, color:"#2563eb" }}>{(p.fullName||"").split(" ").map(n=>n[0]).join("").toUpperCase().slice(0,2)||"P"}</span>
+                      </div>
+                      <div>
+                        <p style={{ fontSize:13, fontWeight:600, color:"#111827" }}>{p.fullName||"—"}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{p.bloodGroup||"—"}</td>
+                  <td>{p.phone||"—"}</td>
+                  <td>{p.createdAt?.toDate?.()?.toLocaleDateString("en-IN")||"—"}</td>
+                </tr>
+              ))}
+              {patients.length===0 && <tr><td colSpan={4} style={{ textAlign:"center", padding:"40px", color:"#9ca3af" }}>No patients registered yet</td></tr>}
+            </tbody>
+          </table>
         </div>
       )}
 
-      {/* Appointments tab */}
-      {activeTab==="appointments" && (
-        <div style={{background:"white", borderRadius:14, border:"1px solid #e5e7eb", overflow:"hidden"}}>
-          <div style={{padding:"14px 20px", background:"#f9fafb", borderBottom:"1px solid #e5e7eb"}}>
-            <p style={{fontSize:13, fontWeight:700, color:"#111827"}}>{appointments.length} Total Appointments</p>
-          </div>
-          {appointments.slice(0,20).map((a,i)=>(
-            <div key={a.id} style={{display:"flex", alignItems:"center", gap:12, padding:"12px 20px", borderBottom:i<appointments.length-1?"1px solid #f3f4f6":"none"}}>
-              <div style={{flex:1}}>
-                <p style={{fontSize:13, fontWeight:700, color:"#111827"}}>{a.patientName} → Dr. {a.doctorName}</p>
-                <p style={{fontSize:12, color:"#6b7280"}}>{a.appointmentDate} · {a.appointmentTime} · {a.doctorSpecialization}</p>
-              </div>
-              <span style={{fontSize:11, fontWeight:600, padding:"3px 10px", borderRadius:20,
-                color:a.status==="completed"?"#16a34a":a.status==="confirmed"?"#0d9488":a.status==="pending"?"#d97706":"#dc2626",
-                background:a.status==="completed"?"#f0fdf4":a.status==="confirmed"?"#f0fdfa":a.status==="pending"?"#fffbeb":"#fef2f2",
-                textTransform:"capitalize"}}>
-                {a.status}
-              </span>
-            </div>
-          ))}
+      {/* APPOINTMENTS TAB */}
+      {!loading && activeTab === "appointments" && (
+        <div style={{ background:"white", borderRadius:12, border:"1px solid #e5e7eb", overflow:"auto" }}>
+          <table className="admin-table">
+            <thead>
+              <tr><th>Patient</th><th>Doctor</th><th>Date</th><th>Time</th><th>Status</th><th>Payment</th></tr>
+            </thead>
+            <tbody>
+              {appointments.slice(0,50).map((a,i) => (
+                <tr key={a.id} className="fade-in" style={{ animationDelay:i*0.02+"s", opacity:0 }}>
+                  <td>{a.patientName||"—"}</td>
+                  <td>Dr. {a.doctorName||"—"}</td>
+                  <td>{a.appointmentDate||"—"}</td>
+                  <td>{a.appointmentTime||"—"}</td>
+                  <td>
+                    <span style={{ fontSize:11, fontWeight:600, padding:"2px 8px", borderRadius:20,
+                      color:a.status==="completed"?"#16a34a":a.status==="confirmed"?"#0d9488":a.status==="cancelled"?"#dc2626":"#d97706",
+                      background:a.status==="completed"?"#f0fdf4":a.status==="confirmed"?"#f0fdfa":a.status==="cancelled"?"#fef2f2":"#fffbeb"
+                    }}>
+                      {(a.status||"pending").charAt(0).toUpperCase()+(a.status||"pending").slice(1)}
+                    </span>
+                  </td>
+                  <td>
+                    {a.paymentId ? <span style={{ fontSize:11, color:"#16a34a", fontWeight:600 }}>Paid ✓</span> : <span style={{ fontSize:11, color:"#9ca3af" }}>—</span>}
+                  </td>
+                </tr>
+              ))}
+              {appointments.length===0 && <tr><td colSpan={6} style={{ textAlign:"center", padding:"40px", color:"#9ca3af" }}>No appointments yet</td></tr>}
+            </tbody>
+          </table>
         </div>
       )}
     </Layout>
